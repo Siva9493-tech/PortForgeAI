@@ -1,0 +1,98 @@
+---
+/**
+ * Features.astro — #features
+ * --------------------------
+ * Section opener (eyebrow / display-lg / lead) followed by a 3-up feature
+ * card grid (2-up at lg, 1-up below). Icons are imported from lucide;
+ * every surface/colour is a design token. Card structure follows the
+ * `feature-card` spec in DESIGN.md.
+ */
+import {
+	FileText,
+	Github,
+	Globe,
+	Palette,
+	Rocket,
+	Sparkles,
+} from 'lucide-astro';
+
+interface Feature {
+	icon: typeof Sparkles;
+	name: string;
+	description: string;
+}
+
+const features: Feature[] = [
+	{
+		icon: Github,
+		name: 'GitHub Import',
+		description:
+			'Automatically import repositories, pinned projects, commit history, and programming languages.',
+	},
+	{
+		icon: Sparkles,
+		name: 'AI Portfolio Generator',
+		description:
+			'AI transforms your information into a professional portfolio with clean layouts and strong writing.',
+	},
+	{
+		icon: FileText,
+		name: 'Smart Resume Import',
+		description:
+			'Upload your resume and automatically extract education, experience, projects, and skills.',
+	},
+	{
+		icon: Palette,
+		name: 'Multiple Portfolio Themes',
+		description:
+			'Switch between beautiful portfolio themes without changing your content.',
+	},
+	{
+		icon: Rocket,
+		name: 'SEO & Performance',
+		description:
+			'Generate lightning-fast portfolios with excellent SEO and Core Web Vitals.',
+	},
+	{
+		icon: Globe,
+		name: 'One Click Publish',
+		description:
+			'Preview your portfolio and publish it instantly with your own custom domain later.',
+	},
+];
+
+const headline = 'Everything you need to build a professional portfolio.';
+const lead =
+	'From importing your work to publishing your own website, PortForge AI helps you build a portfolio that recruiters actually want to see.';
+---
+
+<section id="features" class="container py-section">
+	<div class="container-narrow mx-auto text-center">
+		<p class="text-eyebrow text-ink-subtle">Features</p>
+		<h2 class="mt-xs text-balance text-display-lg text-ink">{headline}</h2>
+		<p class="mx-auto mt-md max-w-prose text-body-lg text-ink-muted">{lead}</p>
+	</div>
+
+	<div
+		class="mt-xxl grid grid-cols-1 gap-lg lg:grid-cols-2 xl:grid-cols-3"
+	>
+		{
+			features.map((feature) => (
+				<article
+					class="card card-hover flex flex-col gap-md p-xl transition-colors duration-200"
+				>
+					<span
+						class="flex h-10 w-10 items-center justify-center rounded-md bg-surface-2 text-ink"
+						aria-hidden="true"
+					>
+						<feature.icon size="18" />
+					</span>
+					<div class="flex flex-col gap-xs">
+						<h3 class="text-card-title text-ink">{feature.name}</h3>
+						<p class="text-body text-ink-muted">{feature.description}</p>
+					</div>
+				</article>
+			))
+		}
+	</div>
+</section>

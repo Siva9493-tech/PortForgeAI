@@ -1,0 +1,123 @@
+---
+/**
+ * About.astro — #about "Why PortForge AI"
+ * ----------------------------------------
+ * Explains why students, developers, designers, and professionals should
+ * choose PortForge AI over building a portfolio by hand. Six value cards on
+ * a responsive 3-up grid, followed by a concise closing CTA banner that
+ * carries the `#get-started` anchor referenced by the Hero and Navbar.
+ * No testimonials, no fictional quotes, no raw colors — tokens only.
+ */
+import { ArrowRight, Briefcase, Code, Globe, Rocket, SlidersHorizontal, Sparkles } from 'lucide-astro';
+
+interface ValueCard {
+	icon: typeof Code;
+	title: string;
+	description: string;
+}
+
+const cards: ValueCard[] = [
+	{
+		icon: Code,
+		title: 'No Coding Required',
+		description:
+			'Create a professional portfolio without writing HTML, CSS, or JavaScript.',
+	},
+	{
+		icon: Sparkles,
+		title: 'AI-Powered Writing',
+		description:
+			'Generate professional summaries, project descriptions, and portfolio content in seconds.',
+	},
+	{
+		icon: SlidersHorizontal,
+		title: 'Fully Customizable',
+		description:
+			'Edit every section, change layouts, personalize themes, and make your portfolio uniquely yours.',
+	},
+	{
+		icon: Briefcase,
+		title: 'Recruiter Friendly',
+		description:
+			'Professional layouts designed to present your skills, projects, and achievements clearly.',
+	},
+	{
+		icon: Rocket,
+		title: 'Fast & SEO Optimized',
+		description:
+			'Every portfolio is optimized for speed, accessibility, and search engines.',
+	},
+	{
+		icon: Globe,
+		title: 'Own Your Portfolio',
+		description:
+			'Export your portfolio and host it wherever you want without vendor lock-in.',
+	},
+];
+---
+
+<section id="about" class="container py-section">
+	<div class="container-narrow mx-auto text-center">
+		<p class="text-eyebrow text-ink-subtle">Why PortForge AI</p>
+		<h2 class="mt-xs text-balance text-display-lg text-ink">
+			Why PortForge AI?
+		</h2>
+		<p class="mx-auto mt-md max-w-prose text-body-lg text-ink-muted">
+			Building a portfolio should be about showcasing your work, not struggling
+			with design, coding, or deployment. PortForge AI helps you focus on your
+			achievements while AI handles the presentation.
+		</p>
+	</div>
+
+	<div class="mt-xxl grid grid-cols-1 gap-lg sm:grid-cols-2 lg:grid-cols-3">
+		{
+			cards.map((card) => (
+				<article
+					class="card card-hover flex flex-col gap-md p-xl transition-colors duration-200"
+				>
+					<span
+						class="flex h-10 w-10 items-center justify-center rounded-md bg-surface-2 text-ink"
+						aria-hidden="true"
+					>
+						<card.icon size="18" />
+					</span>
+					<div class="flex flex-col gap-xs">
+						<h3 class="text-card-title text-ink">{card.title}</h3>
+						<p class="text-body text-ink-muted">{card.description}</p>
+					</div>
+				</article>
+			))
+		}
+	</div>
+
+	<!-- Closing CTA banner (target for the #get-started anchor) -->
+	<div
+		id="get-started"
+		class="mx-auto mt-xxl max-w-4xl rounded-lg border border-hairline bg-surface-1 p-xl md:p-xxl edge-highlight"
+	>
+		<div class="container-narrow mx-auto flex flex-col items-center gap-lg text-center">
+			<h3 class="text-balance text-headline text-ink">
+				Your portfolio, built in the time it takes to read this.
+			</h3>
+			<p class="max-w-prose text-body text-ink-muted">
+				Connect your information and let PortForge AI turn it into a polished
+				portfolio you can export and host anywhere.
+			</p>
+			<div class="flex flex-col gap-xs sm:flex-row">
+				<a
+					href="/#get-started"
+					class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover"
+				>
+					Build My Portfolio
+					<ArrowRight size="16" aria-hidden="true" />
+				</a>
+				<a
+					href="/#home-preview"
+					class="inline-flex items-center justify-center rounded-md border border-hairline bg-surface-1 px-md py-sm text-button text-ink transition-colors duration-200 hover:bg-surface-2"
+				>
+					See Live Demo
+				</a>
+			</div>
+		</div>
+	</div>
+</section>

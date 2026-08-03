@@ -1,0 +1,139 @@
+---
+/**
+ * Footer.astro — Global site footer
+ * ---------------------------------
+ * Professional footer for the AI portfolio platform. Brand + tagline with
+ * three text link columns (Quick Links, Product, Resources), an icon-only
+ * Social column (GitHub, LinkedIn, X), and a bottom meta bar. Built on the
+ * design tokens only; no inline styles or raw colors.
+ */
+import { Github, Linkedin, Sparkles, Twitter } from 'lucide-astro';
+
+interface Link {
+	label: string;
+	href: string;
+}
+
+interface Column {
+	title: string;
+	links: Link[];
+}
+
+interface SocialLink {
+	icon: typeof Github;
+	label: string;
+	href: string;
+}
+
+const columns: Column[] = [
+	{
+		title: 'Quick Links',
+		links: [
+			{ label: 'Home', href: '/' },
+			{ label: 'Features', href: '/#features' },
+			{ label: 'How It Works', href: '/#pricing' },
+			{ label: 'Showcase', href: '/#templates' },
+			{ label: 'Documentation', href: '/docs' },
+		],
+	},
+	{
+		title: 'Product',
+		links: [
+			{ label: 'Portfolio Builder', href: '/#home' },
+			{ label: 'AI Generator', href: '/#pricing' },
+			{ label: 'Resume Import', href: '/#features' },
+			{ label: 'Theme Library', href: '/#templates' },
+		],
+	},
+	{
+		title: 'Resources',
+		links: [
+			{ label: 'FAQ', href: '/faq' },
+			{ label: 'Privacy Policy', href: '/privacy' },
+			{ label: 'Terms of Service', href: '/terms' },
+			{ label: 'Contact', href: '/contact' },
+		],
+	},
+];
+
+const socials: SocialLink[] = [
+	{ label: 'GitHub', href: 'https://github.com', icon: Github },
+	{ label: 'LinkedIn', href: 'https://www.linkedin.com', icon: Linkedin },
+	{ label: 'X (Twitter)', href: 'https://x.com', icon: Twitter },
+];
+---
+
+<footer class="border-t border-hairline">
+	<div class="container grid grid-cols-2 gap-lg py-xxl lg:grid-cols-6">
+		<!-- Brand -->
+		<div class="col-span-2 flex flex-col gap-sm lg:col-span-2">
+			<a href="/" class="flex items-center gap-sm">
+				<span
+					class="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-on-primary"
+					aria-hidden="true"
+				>
+					<Sparkles size="16" />
+				</span>
+				<span class="text-body font-semibold tracking-tight text-ink">PortForge AI</span>
+			</a>
+			<p class="max-w-xs text-caption text-ink-tertiary">
+				AI-powered portfolio builder helping students and professionals create
+				beautiful portfolios in minutes.
+			</p>
+		</div>
+
+		<!-- Link columns -->
+		{
+			columns.map((col) => (
+				<nav aria-label={col.title} class="flex flex-col gap-xs">
+					<p class="text-eyebrow text-ink-subtle">{col.title}</p>
+					<ul class="flex flex-col gap-xs">
+						{col.links.map((link) => (
+							<li>
+								<a
+									href={link.href}
+									class="text-caption text-ink-subtle transition-colors duration-200 hover:text-ink"
+								>
+									{link.label}
+								</a>
+							</li>
+						))}
+					</ul>
+				</nav>
+			))
+		}
+
+		<!-- Social -->
+		<nav aria-label="Social" class="flex flex-col gap-xs">
+			<p class="text-eyebrow text-ink-subtle">Social</p>
+			<ul class="flex flex-row gap-sm">
+				{socials.map((social) => (
+					<li>
+						<a
+							href={social.href}
+							aria-label={social.label}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-1 text-ink-subtle transition-colors duration-200 hover:bg-surface-2 hover:text-ink"
+						>
+							<social.icon size="16" aria-hidden="true" />
+						</a>
+					</li>
+				))}
+			</ul>
+		</nav>
+	</div>
+
+	<!-- Footer bottom -->
+	<div class="border-t border-hairline">
+		<div
+			class="container flex flex-col items-center justify-between gap-sm py-lg text-center sm:flex-row sm:text-left"
+		>
+			<p class="text-caption text-ink-tertiary">© 2026 PortForge AI</p>
+			<p class="text-caption text-ink-tertiary">Built with Astro + Tailwind CSS</p>
+			<p class="text-caption text-ink-tertiary">
+				Designed for Developers, Students & Professionals.
+			</p>
+		</div>
+	</div>
+</footer>

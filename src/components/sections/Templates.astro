@@ -1,0 +1,99 @@
+---
+/**
+ * Templates.astro — #templates section
+ * -------------------------------------
+ * A premium "Portfolio Showcase" gallery. Four cards present the variety of
+ * portfolio styles visitors can generate — framed as examples, not products
+ * for sale. No ordering/pricing language; each card lists the kind of
+ * content the style suits best. Built entirely on design tokens + the `.card`
+ * component, no inline styles or raw colors.
+ */
+import { Briefcase, Check, Code2, GraduationCap, Palette } from 'lucide-astro';
+
+interface Showcase {
+	icon: typeof Code2;
+	name: string;
+	label: string;
+	content: string[];
+}
+
+const showcases: Showcase[] = [
+	{
+		icon: Code2,
+		name: 'Developer Portfolio',
+		label: 'Built for engineers',
+		content: ['Clean, technical layout', 'GitHub activity', 'Projects', 'Skills', 'Experience'],
+	},
+	{
+		icon: GraduationCap,
+		name: 'Student Portfolio',
+		label: 'Built for learners',
+		content: ['Education', 'Certifications', 'Internships', 'Projects', 'Achievements'],
+	},
+	{
+		icon: Palette,
+		name: 'Designer Portfolio',
+		label: 'Built for creatives',
+		content: ['Visual gallery', 'Case studies', 'Creative projects', 'Testimonials', 'Contact'],
+	},
+	{
+		icon: Briefcase,
+		name: 'Professional Portfolio',
+		label: 'Built for leaders',
+		content: [
+			'Executive summary',
+			'Experience timeline',
+			'Skills',
+			'Publications',
+			'Contact',
+		],
+	},
+];
+---
+
+<section id="templates" class="container py-section">
+	<div class="container-narrow mx-auto text-center">
+		<p class="text-eyebrow text-ink-subtle">Showcase</p>
+		<h2 class="mt-xs text-balance text-display-lg text-ink">
+			Portfolio Showcase
+		</h2>
+		<p class="mx-auto mt-md max-w-prose text-body-lg text-ink-muted">
+			Explore modern portfolio styles designed for developers, students,
+			designers, and professionals. Every portfolio is fully customizable while
+			keeping your content at the center.
+		</p>
+	</div>
+
+	<div class="mt-xxl grid grid-cols-1 gap-lg md:grid-cols-2 xl:grid-cols-4">
+		{
+			showcases.map((card) => (
+				<article class="card card-hover flex flex-col gap-md p-xl transition-colors duration-200">
+					<span
+						class="flex h-10 w-10 items-center justify-center rounded-md bg-surface-2 text-ink"
+						aria-hidden="true"
+					>
+						<card.icon size="18" />
+					</span>
+					<div class="flex flex-col gap-xs">
+						<span class="text-eyebrow text-ink-tertiary">{card.label}</span>
+						<h3 class="text-card-title text-ink">{card.name}</h3>
+					</div>
+					<ul class="flex flex-1 flex-col gap-xs">
+						{
+							card.content.map((item) => (
+								<li class="flex items-start gap-xs text-body-sm text-ink-muted">
+									<Check
+										size="14"
+										class="mt-[2px] shrink-0 text-semantic-success"
+										aria-hidden="true"
+									/>
+									{item}
+								</li>
+							))
+						}
+					</ul>
+				</article>
+			))
+		}
+	</div>
+</section>

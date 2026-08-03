@@ -1,0 +1,62 @@
+/**
+ * utilities.css — Low-level, composable custom utilities
+ * -------------------------------------------------------
+ * Built with `@utility` so they behave like first-class Tailwind utilities:
+ * they participate in variants (md:container, hover:focus-ring) and get
+ * emitted only when used. Each does ONE job.
+ */
+
+/* Reusable page container: centers content, caps width, fluid padding. */
+@utility container {
+	width: 100%;
+	margin-inline: auto;
+	max-width: var(--container-page);
+	padding-inline: var(--spacing-md);
+}
+
+@utility container-narrow {
+	width: 100%;
+	margin-inline: auto;
+	max-width: var(--container-narrow);
+	padding-inline: var(--spacing-md);
+}
+
+@utility container-wide {
+	width: 100%;
+	margin-inline: auto;
+	max-width: var(--container-wide);
+	padding-inline: var(--spacing-md);
+}
+
+/* Lavender focus ring for interactive elements not using :focus-visible. */
+@utility ring-focus {
+	outline: 2px solid var(--color-primary-focus);
+	outline-offset: 2px;
+}
+
+/* Balance short headings so lines break evenly. */
+@utility text-balance {
+	text-wrap: balance;
+}
+
+/* Disable tap highlight on touch (complements base reset). */
+@utility no-tap-highlight {
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Restrict text width for comfortable reading lines. */
+@utility max-w-prose {
+	max-width: 65ch;
+}
+
+/* Hairline top-edge highlight for lifted panels ("pixel rendered" feel). */
+@utility edge-highlight {
+	box-shadow: inset 0 1px 0 0 var(--color-hairline-strong);
+}
+
+/* Glass surface for sticky chrome (nav, modals) over content. */
+@utility surface-glass {
+	background: color-mix(in srgb, var(--color-canvas) 72%, transparent);
+	backdrop-filter: blur(12px) saturate(140%);
+	-webkit-backdrop-filter: blur(12px) saturate(140%);
+}

@@ -1,0 +1,15 @@
+/**
+ * globals.css — PortForge AI design foundation entrypoint
+ * -------------------------------------------------------
+ * Import order matters: fonts and Tailwind first, then token files
+ * (which must be loaded before the custom layers that consume them).
+ * Astro bundles this via the Vite Tailwind plugin.
+ */
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+@import "tailwindcss";
+
+@import "./theme.css";
+@import "./base.css";
+@import "./utilities.css";
+@import "./components.css";

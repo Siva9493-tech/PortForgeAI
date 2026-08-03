@@ -1,0 +1,440 @@
+---
+/**
+ * Hero.astro — Landing opener
+ * ---------------------------
+ * Redesigned opener for PortForge AI as an AI-powered dynamic portfolio
+ * builder. Centered copy block (AI badge → headline → lead → CTA pair →
+ * trust indicators) sits above a realistic, animated builder preview:
+ *
+ *   sidebar (Import sources · Personal information · Experience · Projects ·
+ *   Skills · GitHub connected · AI generating) + a live portfolio preview.
+ *
+ * Built ONLY from existing design tokens (theme.css) and utilities; raw
+ * colors, new constants, and new global styles are avoided. The generation
+ * loop lives in a scoped script (respects reduced-motion).
+ */
+import {
+	ArrowRight,
+	Briefcase,
+	Check,
+	FolderGit2,
+	Github,
+	Linkedin,
+	Play,
+	Sparkles,
+	User,
+	Wrench,
+} from 'lucide-astro';
+
+const buildSteps = [
+	{ icon: User, label: 'Personal Information' },
+	{ icon: Briefcase, label: 'Experience' },
+	{ icon: FolderGit2, label: 'Projects' },
+	{ icon: Wrench, label: 'Skills' },
+];
+
+const skills = ['TypeScript', 'React', 'Node.js', 'PostgreSQL', 'AWS'];
+
+const projects = [
+	{ title: 'Forge CLI', tag: 'Tooling' },
+	{ title: 'Pulse', tag: 'Product' },
+	{ title: 'OSS', tag: 'Open source' },
+];
+
+const experience = [
+	{ role: 'Staff Engineer', org: 'Meridian Cloud' },
+	{ role: 'Senior Engineer', org: 'Atlas Labs' },
+];
+
+const trustItems = ['Free to start', 'No coding required', 'Export anytime'];
+---
+
+<section id="home" class="relative overflow-hidden py-section">
+	<!-- Ambient depth — token-only radial glows + faint hairline grid -->
+	<div class="pointer-events-none absolute inset-0" aria-hidden="true">
+		<div class="hero-glow hero-glow-a"></div>
+		<div class="hero-glow hero-glow-b"></div>
+		<div class="hero-grid"></div>
+	</div>
+
+	<div class="container relative">
+		<!-- Copy block -->
+		<div class="container-narrow mx-auto text-center">
+			<span
+				class="inline-flex items-center gap-xs rounded-pill border border-hairline bg-surface-1 px-sm py-xs text-eyebrow text-ink-subtle"
+			>
+				<Sparkles size="13" class="text-primary" aria-hidden="true" />
+				AI portfolio builder
+			</span>
+
+			<h1 class="mt-md text-balance text-display-xl text-ink">
+				Build a developer portfolio that gets you hired
+			</h1>
+
+			<p class="mx-auto mt-lg max-w-prose text-body-lg text-ink-muted">
+				PortForge AI connects your GitHub, résumé, and LinkedIn — then organizes
+				it all into a fast, mobile-first portfolio you can export anytime. No
+				coding, no blank pages, no design skills required.
+			</p>
+
+			<div class="mt-xl flex flex-col items-center justify-center gap-xs sm:flex-row">
+				<a
+					href="/#get-started"
+					class="group inline-flex w-full items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover sm:w-auto"
+				>
+					Build My Portfolio
+					<ArrowRight
+						size="16"
+						class="transition-transform duration-200 group-hover:translate-x-[2px]"
+						aria-hidden="true"
+					/>
+				</a>
+				<a
+					href="#home-preview"
+					class="inline-flex w-full items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button text-ink transition-colors duration-200 hover:bg-surface-2 sm:w-auto"
+				>
+					<span
+						class="flex h-4 w-4 items-center justify-center rounded-pill bg-primary text-on-primary"
+					>
+						<Play size="9" class="translate-x-[1px]" aria-hidden="true" />
+					</span>
+					See Live Demo
+				</a>
+			</div>
+
+			<ul class="mt-lg flex flex-wrap items-center justify-center gap-x-lg gap-y-xs">
+				{trustItems.map((item) => (
+					<li class="flex items-center gap-xs text-caption text-ink-tertiary">
+						<Check size="14" class="text-semantic-success" aria-hidden="true" />
+						{item}
+					</li>
+				))}
+			</ul>
+		</div>
+
+		<!-- Portfolio builder preview -->
+		<div
+			id="home-preview"
+			class="mx-auto mt-xxl max-w-5xl overflow-hidden rounded-xl border border-hairline bg-surface-1 shadow-lg edge-highlight"
+		>
+			<!-- Window chrome -->
+			<div class="flex items-center gap-xs border-b border-hairline px-md py-sm">
+				<span class="h-2 w-2 rounded-pill bg-hairline-strong" aria-hidden="true"></span>
+				<span class="h-2 w-2 rounded-pill bg-hairline-strong" aria-hidden="true"></span>
+				<span class="h-2 w-2 rounded-pill bg-hairline-strong" aria-hidden="true"></span>
+				<span class="ml-sm hidden flex-1 justify-center sm:flex">
+					<span class="rounded-md bg-surface-2 px-sm py-xxs text-mono text-ink-tertiary">
+						app.portforge.ai/builder
+					</span>
+				</span>
+				<span
+					class="inline-flex items-center gap-xs rounded-pill border border-hairline bg-surface-2 px-sm py-xxs text-caption text-ink-muted"
+				>
+					<span aria-hidden="true" class="h-1.5 w-1.5 rounded-pill bg-semantic-success"></span>
+					<span id="forge-sync">Connecting GitHub</span>
+				</span>
+			</div>
+
+			<div class="grid md:grid-cols-[220px_1fr]">
+				<!-- Builder sidebar -->
+				<aside
+					class="flex flex-col gap-lg border-hairline bg-canvas p-md md:border-r"
+				>
+					<!-- Import sources -->
+					<div class="flex flex-col gap-sm">
+						<p class="text-eyebrow text-ink-tertiary">Import sources</p>
+						<div class="flex flex-col gap-xxs">
+							<div class="flex items-center gap-xs rounded-md px-xs py-xs">
+								<span
+									class="flex h-5 w-5 items-center justify-center rounded-pill bg-surface-2 text-ink-subtle"
+								>
+									<Github size="12" aria-hidden="true" />
+								</span>
+								<span class="flex-1 text-body-sm text-ink-subtle">GitHub</span>
+								<Check size="13" class="text-semantic-success" aria-hidden="true" />
+							</div>
+							<div class="flex items-center gap-xs rounded-md px-xs py-xs">
+								<span
+									class="flex h-5 w-5 items-center justify-center rounded-pill bg-surface-2 text-ink-subtle"
+								>
+									<User size="12" aria-hidden="true" />
+								</span>
+								<span class="flex-1 text-body-sm text-ink-subtle">Resume</span>
+								<Check size="13" class="text-semantic-success" aria-hidden="true" />
+							</div>
+							<div class="flex items-center gap-xs rounded-md px-xs py-xs">
+								<span
+									class="flex h-5 w-5 items-center justify-center rounded-pill bg-surface-2 text-ink-subtle"
+								>
+									<Linkedin size="12" aria-hidden="true" />
+								</span>
+								<span class="flex-1 text-body-sm text-ink-subtle">LinkedIn</span>
+								<Sparkles size="12" class="text-primary" aria-hidden="true" />
+							</div>
+						</div>
+					</div>
+
+					<!-- Builder steps -->
+					<div class="flex flex-col gap-sm">
+						<p class="text-eyebrow text-ink-tertiary">Your portfolio</p>
+						<ul id="forge-steps" class="flex flex-col gap-xxs">
+							{buildSteps.map((step) => (
+								<li data-forge-step class="forge-step">
+									<div class="flex items-center gap-xs rounded-md bg-surface-2 px-sm py-xs text-body-sm text-ink">
+										<span
+											class="flex h-5 w-5 items-center justify-center rounded-pill bg-surface-1 text-ink-subtle"
+										>
+											<step.icon size="12" aria-hidden="true" />
+										</span>
+										<span class="flex-1">{step.label}</span>
+										<span class="forge-dot" aria-hidden="true">
+											<Check size="11" />
+										</span>
+									</div>
+								</li>
+							))}
+						</ul>
+					</div>
+
+					<!-- AI generating -->
+					<div class="rounded-md border border-hairline bg-surface-2 p-sm" aria-live="polite">
+						<div class="flex items-center justify-between">
+							<p class="text-eyebrow text-ink-subtle">AI generating</p>
+							<Sparkles size="12" class="text-primary" aria-hidden="true" />
+						</div>
+						<div class="mt-sm h-1.5 overflow-hidden rounded-pill bg-surface-1">
+							<div id="forge-bar" class="forge-bar"></div>
+						</div>
+						<p class="mt-sm text-caption text-ink-tertiary" id="forge-status">
+							Drafting summary…
+						</p>
+					</div>
+				</aside>
+
+				<!-- Live portfolio preview -->
+				<div class="bg-surface-1 p-md md:p-lg">
+					<div class="flex items-center justify-between pb-md">
+						<p class="text-eyebrow text-ink-tertiary">Live preview</p>
+						<span class="rounded-pill bg-surface-2 px-xs py-xxs text-caption text-ink-muted">
+							Mobile-first · Static
+						</span>
+					</div>
+
+					<div class="rounded-lg border border-hairline bg-surface-2 p-md shadow-xs">
+						<header class="flex items-center gap-sm">
+							<span
+								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-hairline-strong bg-surface-1 text-button font-medium text-ink"
+								aria-hidden="true"
+							>
+								AJ
+							</span>
+							<div class="flex flex-col gap-xxs">
+								<h2 class="text-card-title text-ink">Alex Jordan</h2>
+								<p class="text-caption text-ink-subtle">Staff Engineer · Berlin</p>
+							</div>
+							<span class="ml-auto hidden text-caption text-ink-tertiary md:block">
+								github.com/alexjordan
+							</span>
+						</header>
+
+						<div class="mt-md flex flex-col gap-md">
+							<section class="flex flex-col gap-xs">
+								<h3 class="text-eyebrow text-ink-tertiary">Experience</h3>
+								<ul class="flex flex-col gap-2">
+									{experience.map((job) => (
+										<li class="flex items-center justify-between gap-2 text-body-sm text-ink-muted">
+											<span class="text-ink">{job.role}</span>
+											<span class="text-caption text-ink-tertiary">{job.org}</span>
+										</li>
+									))}
+								</ul>
+							</section>
+
+							<section class="flex flex-col gap-xs">
+								<h3 class="text-eyebrow text-ink-tertiary">Projects</h3>
+								<ul class="grid grid-cols-3 gap-2">
+									{projects.map((p) => (
+										<li class="rounded-md border border-hairline bg-surface-1 px-sm py-sm">
+											<p class="truncate text-body-sm text-ink">{p.title}</p>
+											<p class="text-caption text-ink-tertiary">{p.tag}</p>
+										</li>
+									))}
+								</ul>
+							</section>
+
+							<section class="flex flex-col gap-xs">
+								<h3 class="text-eyebrow text-ink-tertiary">Skills</h3>
+								<div class="flex flex-wrap gap-xxs">
+									{skills.map((s) => (
+										<span class="rounded-pill border border-hairline bg-surface-1 px-sm py-xxs text-caption text-ink-muted">
+											{s}
+										</span>
+									))}
+								</div>
+							</section>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	/* ---- Ambient depth (tokens only) ---- */
+	.hero-glow {
+		position: absolute;
+		border-radius: var(--radius-pill);
+		filter: blur(64px);
+	}
+	.hero-glow-a {
+		top: -8rem;
+		left: 50%;
+		width: 42rem;
+		height: 30rem;
+		transform: translateX(-50%);
+		background: radial-gradient(
+			circle,
+			color-mix(in srgb, var(--color-primary) 16%, transparent) 0%,
+			transparent 68%
+		);
+	}
+	.hero-glow-b {
+		bottom: -6rem;
+		right: -6rem;
+		width: 30rem;
+		height: 24rem;
+		background: radial-gradient(
+			circle,
+			color-mix(in srgb, var(--color-primary-hover) 10%, transparent) 0%,
+			transparent 70%
+		);
+	}
+	.hero-grid {
+		position: absolute;
+		inset: 0;
+		background-image:
+			linear-gradient(
+				color-mix(in srgb, var(--color-hairline) 55%, transparent) 1px,
+				transparent 1px
+			),
+			linear-gradient(
+				90deg,
+				color-mix(in srgb, var(--color-hairline) 55%, transparent) 1px,
+				transparent 1px
+			);
+		background-size: 56px 56px;
+		mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
+		-webkit-mask-image: radial-gradient(
+			ellipse 70% 60% at 50% 0%,
+			black 40%,
+			transparent 100%
+		);
+	}
+
+	/* ---- Animated builder steps ---- */
+	.forge-step {
+		transition: opacity var(--duration-base) var(--ease-smooth);
+	}
+	.forge-step:not(.forge-active) {
+		opacity: 1;
+	}
+	.forge-dot {
+		display: none;
+		align-items: center;
+		justify-content: center;
+		width: 14px;
+		height: 14px;
+		border-radius: var(--radius-pill);
+		background: var(--color-semantic-success);
+		color: var(--color-canvas);
+	}
+	.forge-step.forge-done .forge-dot {
+		display: flex;
+	}
+	.forge-bar {
+		height: 100%;
+		width: 0%;
+		border-radius: var(--radius-pill);
+		background: linear-gradient(90deg, var(--color-primary), var(--color-primary-hover));
+		transition: width var(--duration-slow) var(--ease-out-soft);
+	}
+	/* Subtle shimmer across the active step. */
+	.forge-step.forge-active > div {
+		position: relative;
+		overflow: hidden;
+	}
+	.forge-step.forge-active > div::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			color-mix(in srgb, var(--color-primary) 14%, transparent),
+			transparent
+		);
+		animation: forge-shimmer 1.4s ease-in-out infinite;
+	}
+	@keyframes forge-shimmer {
+		0% {
+			transform: translateX(-100%);
+		}
+		100% {
+			transform: translateX(100%);
+		}
+	}
+</style>
+
+<script>
+	// Decorative "portfolio generation" loop; recycles after completion.
+	const reducedMotion =
+		typeof window.matchMedia === 'function' &&
+		window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	const steps = Array.from(document.querySelectorAll<HTMLElement>('[data-forge-step]'));
+	const bar = document.getElementById('forge-bar');
+	const statusEl = document.getElementById('forge-status');
+	const syncEl = document.getElementById('forge-sync');
+
+	const total = steps.length;
+	const labels = steps.map(
+		(el) => el.querySelector('span:nth-of-type(2)')?.textContent?.trim() ?? '',
+	);
+
+	function render(step: number) {
+		steps.forEach((node, k) => {
+			node.classList.toggle('forge-done', k < step);
+			node.classList.toggle('forge-active', k === step);
+		});
+		if (bar) {
+			bar.style.width =
+				step >= total ? '100%' : `${Math.round((step / total) * 100)}%`;
+		}
+		if (statusEl) {
+			statusEl.textContent =
+				step === 0
+					? 'Importing GitHub…'
+					: step >= total
+						? 'Portfolio ready'
+						: `Drafting ${labels[step]}…`;
+		}
+		if (syncEl) {
+			syncEl.textContent = step === 0 ? 'Importing GitHub' : 'Linked · ai-alex';
+		}
+	}
+
+	if (steps.length) {
+		if (reducedMotion) {
+			render(1);
+		} else {
+			render(0);
+			let index = 0;
+			const timer = window.setInterval(() => {
+				index = (index + 1) % (total + 1);
+				render(index);
+			}, 1100);
+			window.addEventListener('pagehide', () => window.clearInterval(timer));
+		}
+	}
+</script>

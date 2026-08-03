@@ -1,0 +1,194 @@
+---
+/**
+ * Navbar.astro — Production-ready responsive SaaS navigation
+ * -----------------------------------------------------------
+ * Reusable top navigation for PortForge AI, built entirely on the
+ * existing design system (theme tokens + custom utilities). No inline
+ * styles, no hardcoded colors, no duplicated CSS.
+ *
+ * Behaviour:
+ *  - Sticky bar, transparent at the top of the page.
+ *  - Glass/blur surface appears once the user scrolls (`nav-scroll`).
+ *  - Desktop links collapse into an animated hamburger menu below `md`.
+ *  - Fully keyboard accessible: focusable links, aria-expanded toggle,
+ *    Esc to close, aria-controls wiring.
+ */
+
+import { ArrowRight, Menu, Sparkles, X } from 'lucide-astro';
+
+interface NavLink {
+	label: string;
+	href: string;
+}
+
+const links: NavLink[] = [
+	{ label: 'Home', href: '/' },
+	{ label: 'Features', href: '/#features' },
+	{ label: 'Showcase', href: '/#templates' },
+	{ label: 'How It Works', href: '/#pricing' },
+	{ label: 'About', href: '/#about' },
+];
+---
+
+<header
+	id="site-nav"
+	class="sticky top-0 z-50 border-b border-transparent transition duration-300"
+>
+	<nav aria-label="Primary" class="container flex h-14 items-center justify-between gap-4">
+		<!-- Brand -->
+		<a href="/" class="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none">
+			<span
+				aria-hidden="true"
+				class="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-on-primary"
+			>
+				<Sparkles size="16" />
+			</span>
+			<span class="text-body font-semibold tracking-tight text-ink">PortForge AI</span>
+		</a>
+
+		<ul class="hidden items-center gap-1 md:flex">
+			{
+				links.map((item) => (
+					<li>
+						<a
+							href={item.href}
+							aria-current={item.label === 'Home' ? 'page' : undefined}
+							class="rounded-md px-sm py-xs text-body-sm text-ink-subtle transition-colors duration-200 hover:text-ink hover:bg-surface-2"
+						>
+							{item.label}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+
+		<!-- Right-side actions -->
+		<div class="hidden items-center gap-xs md:flex">
+			<a
+				href="/#sign-in"
+				class="text-body-sm text-ink-subtle transition-colors duration-200 hover:text-ink"
+			>
+				Sign In
+			</a>
+			<a
+				href="/#get-started"
+				class="inline-flex items-center gap-xs rounded-md bg-primary px-sm py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover"
+			>
+				Get Started
+				<ArrowRight size="16" aria-hidden="true" />
+			</a>
+		</div>
+
+		<!-- Hamburger (mobile) -->
+		<button
+			id="nav-toggle"
+			type="button"
+			class="inline-flex h-10 w-10 items-center justify-center rounded-md text-ink transition-colors duration-200 hover:text-ink-muted md:hidden"
+			aria-label="Open menu"
+			aria-controls="nav-menu"
+			aria-expanded="false"
+		>
+			<Menu id="nav-icon-open" size="22" aria-hidden="true" />
+			<X id="nav-icon-close" size="22" aria-hidden="true" class="hidden" />
+		</button>
+	</nav>
+
+	<!-- Mobile menu (animated accordion) -->
+	<div
+		id="nav-menu"
+		class="menu-closed grid transition-[grid-template-rows] duration-300 ease-out-soft md:hidden"
+	>
+		<div class="overflow-hidden">
+			<div class="container border-t border-hairline surface-glass pb-md">
+				<ul class="flex flex-col gap-xs py-sm">
+					{
+						links.map((item) => (
+							<li>
+								<a
+									href={item.href}
+									class="block rounded-md px-sm py-sm text-body text-ink transition-colors duration-200 hover:text-ink-muted hover:bg-surface-2"
+								>
+									{item.label}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+
+				<div class="flex flex-col gap-xs border-t border-hairline py-md">
+					<a
+						href="/#sign-in"
+						class="rounded-md text-body-sm text-ink-subtle transition-colors duration-200 hover:text-ink"
+					>
+						Sign In
+					</a>
+					<a
+						href="/#get-started"
+						class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-sm py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover"
+					>
+						Get Started
+						<ArrowRight size="16" aria-hidden="true" />
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</header>
+
+<style>
+	/* Glass/blur treatment once scrolled — tokens only, no raw colors. */
+	#site-nav.nav-scroll {
+		background: color-mix(in srgb, var(--color-canvas) 72%, transparent);
+		-webkit-backdrop-filter: blur(12px) saturate(140%);
+		backdrop-filter: blur(12px) saturate(140%);
+		border-color: var(--color-hairline);
+		box-shadow: inset 0 1px 0 0 var(--color-hairline-strong);
+	}
+
+	/* Mobile menu accordion open/closed states. */
+	.menu-open {
+		grid-template-rows: 1fr;
+	}
+	.menu-closed {
+		grid-template-rows: 0fr;
+	}
+</style>
+
+<script is:inline>
+	(() => {
+		const header = document.getElementById('site-nav');
+		const toggle = document.getElementById('nav-toggle');
+		const menu = document.getElementById('nav-menu');
+		const iconOpen = document.getElementById('nav-icon-open');
+		const iconClose = document.getElementById('nav-icon-close');
+
+		if (!menu || !toggle || !iconOpen || !iconClose) return;
+
+		const applyScroll = () => {
+			header?.classList.toggle('nav-scroll', window.scrollY > 8);
+		};
+
+		const setOpen = (open) => {
+			menu.classList.toggle('menu-open', open);
+			menu.classList.toggle('menu-closed', !open);
+			iconOpen.classList.toggle('hidden', open);
+			iconClose.classList.toggle('hidden', !open);
+			toggle.setAttribute('aria-expanded', String(open));
+			toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+			if (!open) toggle.focus();
+		};
+
+		toggle.addEventListener('click', () => setOpen(!menu.classList.contains('menu-open')));
+
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') setOpen(false);
+		});
+
+		window.addEventListener('resize', () => {
+			if (window.matchMedia('(min-width: 768px)').matches) setOpen(false);
+		});
+
+		applyScroll();
+		window.addEventListener('scroll', applyScroll, { passive: true });
+	})();
+</script>

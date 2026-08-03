@@ -1,0 +1,197 @@
+/**
+ * theme.css — PortForge AI Design Tokens
+ * --------------------------------------
+ * Single source of truth for every design token in Tailwind CSS v4.
+ * `@theme` blocks generate utilities + variants (bg-surface-1, text-ink,
+ * rounded-lg, shadow-md, max-w-page, md:…) directly from these variables.
+ *
+ * Inspiration: Linear's near-black canvas, four-step surface ladder,
+ * lavender-blue accent, hairline borders, and negative-tracked display type.
+ * The System is dark by default; light mode is intentionally out of scope
+ * for the marketing canvas per DESIGN.md.
+ */
+
+@theme {
+	/* ------------------------------------------------------------------ */
+	/* 1. Brand & Accent (lavender is deliberately scarce)                */
+	/* ------------------------------------------------------------------ */
+	--color-primary: #5e6ad2; /* brand mark, primary CTA, link emphasis */
+	--color-primary-hover: #828fff; /* primary CTA hover */
+	--color-primary-focus: #5e69d1; /* focus-ring tint */
+	--color-on-primary: #ffffff; /* text on primary fills */
+	--color-brand-secure: #7a7fad; /* muted security surfaces */
+
+	/* ------------------------------------------------------------------ */
+	/* 2. Surface ladder (hierarchy without drop-shadow)                  */
+	/* ------------------------------------------------------------------ */
+	--color-canvas: #010102; /* page background — near-black blue tint */
+	--color-surface-1: #0f1011; /* default cards / panels */
+	--color-surface-2: #141516; /* featured cards, hovered surfaces */
+	--color-surface-3: #18191a; /* sub-nav, dropdown menus */
+	--color-surface-4: #191a1b; /* deepest lifted surface */
+
+	/* Hairline borders */
+	--color-hairline: #23252a;
+	--color-hairline-strong: #34343a;
+	--color-hairline-tertiary: #3e3e44;
+
+	/* Inverse (light) surfaces — inverse pill CTA */
+	--color-inverse-canvas: #ffffff;
+	--color-inverse-surface-1: #f5f6f6;
+	--color-inverse-surface-2: #f6f7f7;
+	--color-inverse-ink: #000000;
+
+	/* ------------------------------------------------------------------ */
+	/* 3. Text — ink scale                                                 */
+	/* ------------------------------------------------------------------ */
+	--color-ink: #f7f8f8; /* headlines + emphasized body */
+	--color-ink-muted: #d0d6e0; /* secondary type */
+	--color-ink-subtle: #8a8f98; /* tertiary type, footer columns */
+	--color-ink-tertiary: #62666d; /* disabled / footnotes */
+
+	/* ------------------------------------------------------------------ */
+	/* 4. Semantic                                                        */
+	/* ------------------------------------------------------------------ */
+	--color-semantic-success: #27a644;
+	--color-semantic-danger: #e5484d;
+	--color-semantic-warning: #f5a623;
+	--color-semantic-overlay: rgba(0, 0, 0, 0.72); /* modal scrim */
+
+	/* ------------------------------------------------------------------ */
+	/* 5. Typography — font families                                       */
+	/* ------------------------------------------------------------------ */
+	/* Inter is the closest open-source substitute for Linear Display +    */
+	/* Linear Text; JetBrains Mono stands in for Linear Mono.              */
+	--font-sans:
+		"Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+		Roboto, "Helvetica Neue", Arial, sans-serif;
+	--font-mono:
+		"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SF Mono",
+		Menlo, Consolas, monospace;
+	--font-display: var(--font-sans);
+
+	/* ------------------------------------------------------------------ */
+	/* 6. Type scale — fluid (mobile-first, clamp)                         */
+	/*    Follows DESIGN.md hierarchy with negative tracking.              */
+	/* ------------------------------------------------------------------ */
+	--text-display-xl: clamp(2.5rem, 1.5rem + 4vw, 5rem); /* 80 → 40 */
+	--text-display-xl--line-height: 1.05;
+	--text-display-xl--letter-spacing: -0.03em;
+	--text-display-xl--font-weight: 600;
+
+	--text-display-lg: clamp(2.25rem, 1.5rem + 3vw, 3.5rem); /* 56 */
+	--text-display-lg--line-height: 1.1;
+	--text-display-lg--letter-spacing: -0.02em;
+	--text-display-lg--font-weight: 600;
+
+	--text-display-md: clamp(2rem, 1.5rem + 2vw, 2.5rem); /* 40 */
+	--text-display-md--line-height: 1.15;
+	--text-display-md--letter-spacing: -0.015em;
+	--text-display-md--font-weight: 600;
+
+	--text-headline: clamp(1.5rem, 1.25rem + 1vw, 1.75rem); /* 28 */
+	--text-headline--line-height: 1.2;
+	--text-headline--letter-spacing: -0.01em;
+	--text-headline--font-weight: 600;
+
+	--text-card-title: 1.375rem; /* 22 */
+	--text-card-title--line-height: 1.25;
+	--text-card-title--letter-spacing: -0.01em;
+	--text-card-title--font-weight: 500;
+
+	--text-subhead: 1.25rem; /* 20 */
+	--text-subhead--line-height: 1.4;
+	--text-subhead--letter-spacing: -0.01em;
+	--text-subhead--font-weight: 400;
+
+	--text-body-lg: 1.125rem; /* 18 */
+	--text-body-lg--line-height: 1.5;
+	--text-body-lg--letter-spacing: -0.01em;
+
+	--text-body: 1rem; /* 16 */
+	--text-body--line-height: 1.5;
+	--text-body--letter-spacing: -0.005em;
+
+	--text-body-sm: 0.875rem; /* 14 */
+	--text-body-sm--line-height: 1.5;
+
+	--text-caption: 0.75rem; /* 12 */
+	--text-caption--line-height: 1.4;
+
+	--text-button: 0.875rem; /* 14 */
+	--text-button--line-height: 1.2;
+	--text-button--font-weight: 500;
+
+	--text-eyebrow: 0.8125rem; /* 13 */
+	--text-eyebrow--line-height: 1.3;
+	--text-eyebrow--letter-spacing: 0.04em;
+	--text-eyebrow--font-weight: 500;
+
+	--text-mono: 0.8125rem; /* 13 */
+	--text-mono--line-height: 1.5;
+
+	/* ------------------------------------------------------------------ */
+	/* 7. Spacing scale — base unit 4px                                    */
+	/* ------------------------------------------------------------------ */
+	--spacing-xxs: 0.25rem; /* 4 */
+	--spacing-xs: 0.5rem; /* 8 */
+	--spacing-sm: 0.75rem; /* 12 */
+	--spacing-md: 1rem; /* 16 */
+	--spacing-lg: 1.5rem; /* 24 */
+	--spacing-xl: 2rem; /* 32 */
+	--spacing-xxl: 3rem; /* 48 */
+	--spacing-section: 6rem; /* 96 */
+	/* Remaining Tailwind rem scale (p-1 … p-16) stays available on top. */
+
+	/* ------------------------------------------------------------------ */
+	/* 8. Border radius system                                              */
+	/* ------------------------------------------------------------------ */
+	--radius-xs: 0.25rem; /* 4  — chips, badges */
+	--radius-sm: 0.375rem; /* 6  — inline tags */
+	--radius-md: 0.5rem; /* 8  — buttons, inputs */
+	--radius-lg: 0.75rem; /* 12 — cards */
+	--radius-xl: 1rem; /* 16 — product panels */
+	--radius-2xl: 1.5rem; /* 24 — oversized banners */
+	--radius-pill: 9999px; /* tabs, status pills */
+
+	/* ------------------------------------------------------------------ */
+	/* 9. Shadow system                                                     */
+	/*    Used for overlays & elevation ONLY — Linear favours hairline      */
+	/*    borders + surface ladder for depth. Shadows are deep-black and    */
+	/*    low-opacity so they read as "lift" on near-black surfaces.        */
+	/* ------------------------------------------------------------------ */
+	--shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+	--shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.45), 0 1px 2px -1px rgb(0 0 0 / 0.45);
+	--shadow-md:
+		0 4px 8px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.45);
+	--shadow-lg:
+		0 16px 24px -8px rgb(0 0 0 / 0.55), 0 8px 12px -8px rgb(0 0 0 / 0.5);
+	--shadow-xl:
+		0 24px 48px -12px rgb(0 0 0 / 0.6), 0 12px 24px -16px rgb(0 0 0 / 0.55);
+	--shadow-glow: 0 0 0 1px var(--color-hairline-strong) inset;
+
+	/* ------------------------------------------------------------------ */
+	/* 10. Container widths                                                 */
+	/* ------------------------------------------------------------------ */
+	--container-page: 80rem; /* 1280px — default content max width */
+	--container-narrow: 48rem; /* 768px  — lead / editorial blocks */
+	--container-wide: 90rem; /* 1440px — desktop-XL */
+
+	/* ------------------------------------------------------------------ */
+	/* 11. Responsive breakpoints (mobile-first)                           */
+	/* ------------------------------------------------------------------ */
+	--breakpoint-sm: 40rem; /* 640px */
+	--breakpoint-md: 48rem; /* 768px — nav collapse, 1→2 col */
+	--breakpoint-lg: 64rem; /* 1024px — tablet → desktop grids */
+	--breakpoint-xl: 80rem; /* 1280px — desktop */
+	--breakpoint-2xl: 90rem; /* 1440px — desktop-xl */
+
+	/* ------------------------------------------------------------------ */
+	/* 12. Motion & easing                                                 */
+	/* ------------------------------------------------------------------ */
+	--ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+	--ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+	--duration-fast: 120ms;
+	--duration-base: 200ms;
+	--duration-slow: 320ms;
+}

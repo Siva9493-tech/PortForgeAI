@@ -1,0 +1,190 @@
+---
+/**
+ * How-it-works section (replaces Pricing)
+ * ----------------------------------------
+ * Explains the end-to-end portfolio creation workflow in five connected
+ * steps. Mobile-first: a vertical timeline that becomes a horizontal
+ * stepper on larger screens. Connector lines are drawn with scoped CSS
+ * using design tokens only (no inline styles, no raw colors).
+ *
+ * NOTE: keeps the `#pricing` anchor id so the Navbar's existing
+ * "Pricing (Soon)" link still resolves on this page.
+ */
+import { Brain, Github, Palette, Rocket, Sparkles } from 'lucide-astro';
+
+interface Step {
+	icon: typeof Github;
+	name: string;
+	description: string;
+}
+
+const steps: Step[] = [
+	{
+		icon: Github,
+		name: 'Import Your Information',
+		description:
+			'Connect GitHub, upload your resume, or import LinkedIn to quickly bring your professional information into PortForge AI.',
+	},
+	{
+		icon: Brain,
+		name: 'AI Understands Your Profile',
+		description:
+			'Our AI analyzes your experience, projects, skills, and achievements to organize everything intelligently.',
+	},
+	{
+		icon: Palette,
+		name: 'Choose Your Portfolio Style',
+		description:
+			'Select a professional portfolio theme that matches your personality and career goals.',
+	},
+	{
+		icon: Sparkles,
+		name: 'Generate & Customize',
+		description:
+			'Instantly generate your portfolio and customize every section before publishing.',
+	},
+	{
+		icon: Rocket,
+		name: 'Publish & Share',
+		description:
+			'Deploy your portfolio and share your personalized portfolio link with recruiters and companies.',
+	},
+];
+---
+
+<section id="pricing" class="container py-section">
+	<div class="container-narrow mx-auto text-center">
+		<p class="text-eyebrow text-ink-subtle">How it works</p>
+		<h2 class="mt-xs text-balance text-display-lg text-ink">
+			How PortForge AI Works
+		</h2>
+		<p class="mx-auto mt-md max-w-prose text-body-lg text-ink-muted">
+			From raw information to a shareable portfolio link — a guided five-step
+			workflow with no blank page in sight.
+		</p>
+	</div>
+
+	<ol class="workflow mt-xxl">
+		{steps.map((step, index) => (
+			<li class="workflow-step">
+				<div class="workflow-rail" aria-hidden="true">
+					<span class="workflow-node">
+						<step.icon size="16" />
+					</span>
+				</div>
+				<div class="workflow-card card flex flex-col gap-sm p-xl">
+					<div class="flex items-center justify-between">
+						<span class="text-mono text-ink-tertiary">
+							{String(index + 1).padStart(2, '0')}
+						</span>
+						<span class="text-caption text-ink-tertiary">Step {index + 1}</span>
+					</div>
+					<div class="flex flex-col gap-xs">
+						<h3 class="text-card-title text-ink">{step.name}</h3>
+						<p class="text-body text-ink-muted">{step.description}</p>
+					</div>
+				</div>
+			</li>
+		))}
+	</ol>
+</section>
+
+<style>
+	/* Outer flow — stacked on mobile, a connected row on desktop. */
+	.workflow {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-md);
+		margin: 0;
+		list-style: none;
+		padding: 0;
+	}
+
+	/* Each step: icon/rail column + card. */
+	.workflow-step {
+		display: grid;
+		grid-template-columns: var(--spacing-xxl) 1fr;
+		align-items: start;
+		column-gap: var(--spacing-md);
+		position: relative;
+	}
+
+	/* Vertical rail connecting the numbered nodes. */
+	.workflow-rail {
+		position: relative;
+		display: flex;
+		justify-content: center;
+		align-self: stretch;
+	}
+	.workflow-rail::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 50%;
+		width: 1px;
+		transform: translateX(-50%);
+		background: var(--color-hairline);
+	}
+	.workflow-step:first-child .workflow-rail::before {
+		top: 50%;
+	}
+	.workflow-step:last-child .workflow-rail::before {
+		bottom: 50%;
+	}
+
+	/* Node chip sits above the line so it reads as a seamless connector. */
+	.workflow-node {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--spacing-xxl);
+		height: var(--spacing-xxl);
+		border-radius: var(--radius-pill);
+		background: var(--color-surface-2);
+		border: 1px solid var(--color-hairline);
+		color: var(--color-ink);
+	}
+
+	/* Desktop: convert the vertical rail into a horizontal connector. */
+	/* (64rem matches the --breakpoint-lg design token; @media cannot use var().) */
+	@media (min-width: 64rem) {
+		.workflow {
+			flex-direction: row;
+			gap: 0;
+		}
+		.workflow-step {
+			flex: 1 1 0;
+			min-width: 0;
+			grid-template-columns: 1fr;
+			justify-items: stretch;
+			column-gap: 0;
+		}
+		.workflow-rail {
+			width: 100%;
+			height: var(--spacing-xxl);
+		}
+		.workflow-rail::before {
+			display: none;
+		}
+		/* Horizontal line flowing from each node to the next (cells touch, gap 0). */
+		.workflow-step:not(:last-child) .workflow-rail::after {
+			content: "";
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 50%;
+			height: 1px;
+			transform: translateY(-50%);
+			background: var(--color-hairline);
+		}
+		.workflow-node {
+			position: absolute;
+			top: 0;
+			left: 50%;
+			transform: translateX(-50%);
+		}
+	}
+</style>
