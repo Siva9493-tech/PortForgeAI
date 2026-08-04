@@ -1,0 +1,101 @@
+---
+import {
+	BarChart3,
+	Bot,
+	FileUp,
+	FolderKanban,
+	Github,
+	LayoutDashboard,
+	LayoutTemplate,
+	Settings,
+	Sparkles,
+} from 'lucide-astro';
+
+interface Props {
+	active?: string;
+}
+
+const { active = 'Dashboard' } = Astro.props;
+
+interface NavItem {
+	label: string;
+	href: string;
+	icon: typeof LayoutDashboard;
+}
+
+const navItems: NavItem[] = [
+	{ label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+	{ label: 'My Portfolios', href: '#', icon: FolderKanban },
+	{ label: 'Templates', href: '#', icon: LayoutTemplate },
+	{ label: 'Resume Import', href: '#', icon: FileUp },
+	{ label: 'GitHub Import', href: '#', icon: Github },
+	{ label: 'AI Assistant', href: '#', icon: Bot },
+	{ label: 'Analytics', href: '#', icon: BarChart3 },
+	{ label: 'Settings', href: '#', icon: Settings },
+];
+---
+
+<aside
+	id="sidebar"
+	class="flex w-14 shrink-0 flex-col border-r border-hairline bg-surface-1 md:w-64"
+	aria-label="Dashboard sidebar"
+>
+	<div
+		class="flex h-14 shrink-0 items-center justify-center border-b border-hairline md:justify-start md:px-md"
+	>
+		<span
+			class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-on-primary"
+			aria-hidden="true"
+		>
+			<Sparkles size="16" />
+		</span>
+		<span class="hidden text-body font-semibold tracking-tight text-ink md:inline">
+			PortForge AI
+		</span>
+	</div>
+
+	<nav aria-label="Sidebar navigation" class="flex-1 overflow-y-auto">
+		<ul class="flex flex-col gap-1 p-sm">
+			{
+				navItems.map((item) => {
+					const isActive = item.label === active;
+					return (
+						<li>
+							<a
+								href={item.href}
+								aria-label={item.label}
+								aria-current={isActive ? 'page' : undefined}
+								class="group flex items-center justify-center gap-xs rounded-md px-sm py-sm text-body-sm transition-colors duration-200 md:justify-start md:gap-sm md:px-md"
+								class:list={[
+									isActive
+										? 'bg-surface-2 font-medium text-ink'
+										: 'text-ink-subtle hover:bg-surface-2 hover:text-ink',
+								]}
+							>
+								<span
+									class="flex h-5 w-5 shrink-0 items-center justify-center"
+									aria-hidden="true"
+								>
+									<item.icon size="18" />
+								</span>
+								<span class="hidden shrink-0 truncate md:inline">{item.label}</span>
+							</a>
+						</li>
+					);
+				})
+			}
+		</ul>
+	</nav>
+
+	<div class="border-t border-hairline p-sm" aria-label="Account">
+		<div class="flex items-center gap-sm">
+			<span
+				class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2"
+				aria-hidden="true"
+			></span>
+			<span class="hidden min-w-0 flex-1 truncate text-body-sm text-ink-subtle md:block">
+				Account
+			</span>
+		</div>
+	</div>
+</aside>

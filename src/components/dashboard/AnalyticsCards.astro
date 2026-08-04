@@ -1,0 +1,75 @@
+---
+import { CircleCheckBig, Eye, FolderOpen, Rocket } from 'lucide-astro';
+
+interface Card {
+	title: string;
+	value: string;
+	subtitle: string;
+	icon: typeof FolderOpen;
+}
+
+const cards: Card[] = [
+	{
+		title: 'Total Portfolios',
+		value: '0',
+		subtitle: 'Portfolios Created',
+		icon: FolderOpen,
+	},
+	{
+		title: 'Portfolio Views',
+		value: '0',
+		subtitle: 'Total Views',
+		icon: Eye,
+	},
+	{
+		title: 'Completion',
+		value: '0%',
+		subtitle: 'Profile Completion',
+		icon: CircleCheckBig,
+	},
+	{
+		title: 'Published',
+		value: '0',
+		subtitle: 'Live Portfolios',
+		icon: Rocket,
+	},
+];
+---
+
+<section
+	id="analytics-cards"
+	aria-labelledby="analytics-heading"
+	class="mt-xl grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-4"
+>
+	<h2 id="analytics-heading" class="sr-only">
+		Analytics
+	</h2>
+
+	{
+		cards.map((card) => (
+			<article
+				class="card flex flex-col gap-sm p-md shadow-xs"
+				aria-labelledby={`${card.title.replace(/\s+/g, '-').toLowerCase()}-title`}
+			>
+				<div class="flex items-center justify-between gap-sm">
+					<h3
+						id={`${card.title.replace(/\s+/g, '-').toLowerCase()}-title`}
+						class="text-body-sm font-medium text-ink-muted"
+					>
+						{card.title}
+					</h3>
+					<span
+						class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-2 text-primary"
+						aria-hidden="true"
+					>
+						<card.icon size="16" />
+					</span>
+				</div>
+
+				<p class="text-display-md text-ink">{card.value}</p>
+
+				<p class="text-caption text-ink-subtle">{card.subtitle}</p>
+			</article>
+		))
+	}
+</section>

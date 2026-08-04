@@ -1,0 +1,79 @@
+---
+import { FileUp, Github, Plus, Sparkles } from 'lucide-astro';
+
+interface Action {
+	id: string;
+	title: string;
+	description: string;
+	icon: typeof Plus;
+}
+
+const actions: Action[] = [
+	{
+		id: 'qa-create-portfolio',
+		title: 'Create Portfolio',
+		description: 'Start a new AI-powered portfolio.',
+		icon: Plus,
+	},
+	{
+		id: 'qa-import-resume',
+		title: 'Import Resume',
+		description: 'Upload your resume to generate content.',
+		icon: FileUp,
+	},
+	{
+		id: 'qa-import-github',
+		title: 'Import GitHub',
+		description: 'Fetch repositories automatically.',
+		icon: Github,
+	},
+	{
+		id: 'qa-ai-assistant',
+		title: 'AI Assistant',
+		description: 'Generate headlines, bios and project descriptions.',
+		icon: Sparkles,
+	},
+];
+---
+
+<section
+	id="quick-actions"
+	aria-labelledby="quick-actions-heading"
+	class="mt-xl"
+>
+	<div class="mb-md">
+		<h2 id="quick-actions-heading" class="text-heading-md text-ink">
+			Quick Actions
+		</h2>
+		<p class="mt-1 text-body-sm text-ink-muted">
+			Start building your portfolio faster.
+		</p>
+	</div>
+
+	<div class="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-4">
+		{
+			actions.map((action) => (
+				<article
+					class="card card-hover flex flex-col gap-sm p-md"
+					aria-labelledby={action.id}
+				>
+					<span
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-1 text-primary"
+						aria-hidden="true"
+					>
+						<action.icon size="18" />
+					</span>
+
+					<div class="flex flex-col gap-1">
+						<h3 id={action.id} class="text-body font-medium text-ink">
+							{action.title}
+						</h3>
+						<p class="text-caption text-ink-subtle">
+							{action.description}
+						</p>
+					</div>
+				</article>
+			))
+		}
+	</div>
+</section>

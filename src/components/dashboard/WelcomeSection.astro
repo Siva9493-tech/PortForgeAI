@@ -1,0 +1,63 @@
+---
+import { Download, FileUp, Github, Hand, Plus, ShieldCheck, Sparkles } from 'lucide-astro';
+---
+
+<section id="welcome" aria-labelledby="welcome-heading" class="flex flex-col gap-lg">
+	<div class="flex max-w-2xl flex-col gap-sm">
+		<p class="flex items-center gap-xs text-eyebrow font-medium uppercase tracking-tight text-primary">
+			<Hand size="14" aria-hidden="true" />
+			Welcome back!
+		</p>
+
+		<h1 id="welcome-heading" class="text-display-md text-ink">
+			Ready to build your next portfolio?
+		</h1>
+
+		<p class="text-body-lg text-ink-subtle">
+			Create, manage, and publish beautiful AI-powered portfolios from one workspace.
+		</p>
+
+		<div class="mt-md flex flex-col gap-sm sm:flex-row sm:flex-wrap">
+			<button
+				type="button"
+				class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover"
+			>
+				<Plus size="16" aria-hidden="true" />
+				Create Portfolio
+			</button>
+
+			<button
+				type="button"
+				class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+			>
+				<FileUp size="16" aria-hidden="true" />
+				Import Resume
+			</button>
+
+			<button
+				type="button"
+				class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+			>
+				<Github size="16" aria-hidden="true" />
+				Import GitHub
+			</button>
+		</div>
+	</div>
+
+	<aside class="card shrink-0 p-md lg:w-72" aria-label="Workspace features">
+		<ul class="flex flex-col gap-sm">
+			<li class="flex items-center gap-xs rounded-pill border border-hairline bg-surface-2 px-sm py-xs">
+				<Sparkles size="14" class="text-primary" aria-hidden="true" />
+				<span class="text-caption font-medium text-ink-subtle">Portfolio Builder</span>
+			</li>
+			<li class="flex items-center gap-xs rounded-pill border border-hairline bg-surface-2 px-sm py-xs">
+				<ShieldCheck size="14" class="text-primary" aria-hidden="true" />
+				<span class="text-caption font-medium text-ink-subtle">AI Ready</span>
+			</li>
+			<li class="flex items-center gap-xs rounded-pill border border-hairline bg-surface-2 px-sm py-xs">
+				<Download size="14" class="text-primary" aria-hidden="true" />
+				<span class="text-caption font-medium text-ink-subtle">Export Anytime</span>
+			</li>
+		</ul>
+	</aside>
+</section>

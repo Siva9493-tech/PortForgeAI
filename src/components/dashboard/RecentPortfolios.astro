@@ -1,0 +1,121 @@
+---
+import { Clock3, ExternalLink, FolderOpen, Palette } from 'lucide-astro';
+
+interface Portfolio {
+	id: string;
+	name: string;
+	theme: string;
+	updated: string;
+	status: 'Draft' | 'Published';
+	statusTone: 'neutral' | 'success';
+}
+
+const portfolios: Portfolio[] = [
+	{
+		id: 'rp-developer',
+		name: 'Developer Portfolio',
+		theme: 'Modern Dark',
+		updated: '2 hours ago',
+		status: 'Draft',
+		statusTone: 'neutral',
+	},
+	{
+		id: 'rp-student',
+		name: 'Student Portfolio',
+		theme: 'Minimal',
+		updated: 'Yesterday',
+		status: 'Published',
+		statusTone: 'success',
+	},
+	{
+		id: 'rp-designer',
+		name: 'Designer Portfolio',
+		theme: 'Creative',
+		updated: '3 days ago',
+		status: 'Draft',
+		statusTone: 'neutral',
+	},
+];
+
+const statusTones = {
+	neutral: {
+		dot: 'bg-ink-tertiary',
+		label: 'text-ink-subtle',
+	},
+	success: {
+		dot: 'bg-semantic-success',
+		label: 'text-semantic-success',
+	},
+};
+---
+
+<section
+	id="recent-portfolios"
+	aria-labelledby="recent-portfolios-heading"
+	class="mt-xl"
+>
+	<div class="mb-md">
+		<h2 id="recent-portfolios-heading" class="text-heading-md text-ink">
+			Recent Portfolios
+		</h2>
+		<p class="mt-1 text-body-sm text-ink-muted">
+			Continue editing your recently created portfolios.
+		</p>
+	</div>
+
+	<div class="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3">
+		{
+			portfolios.map((portfolio) => {
+				const tone = statusTones[portfolio.statusTone];
+				return (
+					<article
+						class="card card-hover flex flex-col p-md"
+						aria-labelledby={portfolio.id}
+					>
+						<div class="flex items-center justify-between gap-sm">
+							<span
+								class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-1 text-primary"
+								aria-hidden="true"
+							>
+								<FolderOpen size="18" />
+							</span>
+
+							<span
+								class="inline-flex items-center gap-xs rounded-pill border border-hairline bg-surface-2 px-sm py-xs"
+							>
+								<span class={`h-1.5 w-1.5 rounded-full ${tone.dot}`} aria-hidden="true"></span>
+								<span class={`text-caption font-medium ${tone.label}`}>
+									{portfolio.status}
+								</span>
+							</span>
+						</div>
+
+						<div class="mt-md flex flex-col gap-sm">
+							<h3 id={portfolio.id} class="text-body font-medium text-ink">
+								{portfolio.name}
+							</h3>
+
+							<p class="flex items-center gap-xs text-caption text-ink-subtle">
+								<Palette size="13" aria-hidden="true" />
+								{portfolio.theme}
+							</p>
+
+							<p class="flex items-center gap-xs text-caption text-ink-subtle">
+								<Clock3 size="13" aria-hidden="true" />
+								Updated {portfolio.updated}
+							</p>
+						</div>
+
+						<button
+							type="button"
+							class="mt-md inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+						>
+							Open
+							<ExternalLink size="14" class="text-ink-subtle" aria-hidden="true" />
+						</button>
+					</article>
+				);
+			})
+		}
+	</div>
+</section>

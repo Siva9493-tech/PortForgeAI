@@ -1,0 +1,23 @@
+---
+import AnalyticsCards from '../components/dashboard/AnalyticsCards.astro';
+import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
+import EmptyState from '../components/dashboard/EmptyState.astro';
+import QuickActions from '../components/dashboard/QuickActions.astro';
+import RecentPortfolios from '../components/dashboard/RecentPortfolios.astro';
+import WelcomeSection from '../components/dashboard/WelcomeSection.astro';
+
+const title = 'Dashboard — PortForge AI';
+const description = 'Build and manage your AI-powered portfolio from your PortForge AI dashboard.';
+---
+
+<DashboardLayout title={title} description={description} pageLabel="Dashboard">
+	<WelcomeSection />
+
+	<AnalyticsCards />
+
+	<QuickActions />
+
+	<RecentPortfolios />
+
+	<EmptyState />
+</DashboardLayout>

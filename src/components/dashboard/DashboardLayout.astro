@@ -1,0 +1,53 @@
+---
+import '../../styles/globals.css';
+import Sidebar from './Sidebar.astro';
+import Topbar from './Topbar.astro';
+
+interface Props {
+	title?: string;
+	description?: string;
+	pageLabel?: string;
+}
+
+const {
+	title = 'Dashboard — PortForge AI',
+	description = 'Manage your PortForge AI workspace.',
+	pageLabel = 'Dashboard',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#010102" />
+		<meta name="color-scheme" content="dark" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+	</head>
+	<body>
+		<a
+			href="#dashboard-main"
+			class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface-2 focus:px-sm focus:py-xs focus:text-body-sm focus:text-ink"
+		>
+			Skip to content
+		</a>
+
+		<div class="shell flex h-dvh overflow-hidden">
+			<Sidebar />
+
+			<div class="flex min-w-0 flex-1 flex-col">
+				<Topbar title={pageLabel} />
+
+				<main id="dashboard-main" tabindex="-1" class="flex-1 overflow-y-auto p-md md:p-xl">
+					<slot />
+				</main>
+			</div>
+		</div>
+	</body>
+</html>
+

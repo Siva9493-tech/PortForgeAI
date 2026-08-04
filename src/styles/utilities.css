@@ -60,3 +60,10 @@
 	backdrop-filter: blur(12px) saturate(140%);
 	-webkit-backdrop-filter: blur(12px) saturate(140%);
 }
+
+/* Dashed placeholder panel for empty app states and wireframes. */
+@utility placeholder-block {
+	border: 1px dashed var(--color-hairline-strong);
+	border-radius: var(--radius-md);
+	background-color: var(--color-surface-2);
+}

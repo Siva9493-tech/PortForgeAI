@@ -1,0 +1,45 @@
+---
+import { FileUp, FolderPlus, Plus } from 'lucide-astro';
+---
+
+<section
+	id="empty-state"
+	aria-labelledby="empty-state-heading"
+	class="mt-xl flex items-center justify-center"
+>
+	<div class="card flex w-full max-w-[28rem] flex-col items-center gap-sm p-lg text-center">
+		<span
+			class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-primary"
+			aria-hidden="true"
+		>
+			<FolderPlus size="24" />
+		</span>
+
+		<div class="flex flex-col gap-xs">
+			<h2 id="empty-state-heading" class="text-heading-md text-ink">
+				No portfolios yet
+			</h2>
+			<p class="text-body-sm text-ink-subtle">
+				Create your first AI-powered portfolio to showcase your skills, projects, and achievements.
+			</p>
+		</div>
+
+		<div class="mt-sm flex flex-col gap-sm sm:flex-row sm:flex-wrap sm:justify-center">
+			<button
+				type="button"
+				class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover"
+			>
+				<Plus size="16" aria-hidden="true" />
+				Create Portfolio
+			</button>
+
+			<button
+				type="button"
+				class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+			>
+				<FileUp size="16" aria-hidden="true" />
+				Import Resume
+			</button>
+		</div>
+	</div>
+</section>
