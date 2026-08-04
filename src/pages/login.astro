@@ -1,0 +1,286 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { LogIn } from 'lucide-astro';
+
+const title = 'Log in — PortForge AI';
+const description = 'Sign in to your PortForge AI account and pick up where you left off.';
+---
+
+<Layout title={title} description={description}>
+	<main
+		class="flex min-h-[calc(100dvh_-_3.5rem)] items-center justify-center px-md py-xl"
+	>
+		<section
+			id="login-card"
+			class="card w-full max-w-[28rem] p-lg shadow-md edge-highlight md:p-xl"
+		>
+			<header class="flex flex-col items-center gap-sm text-center">
+				<span
+					class="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-on-primary"
+					aria-hidden="true"
+				>
+					<LogIn size="18" />
+				</span>
+				<h1 class="text-headline text-ink">Welcome back</h1>
+				<p class="text-body-sm text-ink-subtle">
+					Sign in to continue building your portfolio.
+				</p>
+			</header>
+
+			<form id="login-form" novalidate class="mt-lg flex flex-col gap-md">
+				<div
+					id="form-error"
+					class="rounded-md border border-semantic-danger bg-surface-2 px-sm py-sm text-body-sm text-semantic-danger"
+					role="alert"
+					tabindex="-1"
+					hidden
+				></div>
+
+				<div class="flex flex-col gap-xs">
+					<label for="email" class="text-body-sm font-medium text-ink-muted">
+						Email <span class="text-semantic-danger" aria-hidden="true">*</span>
+					</label>
+					<input
+						id="email"
+						name="email"
+						type="email"
+						autocomplete="email"
+						placeholder="you@example.com"
+						required
+						class="input"
+						aria-describedby="email-error"
+					/>
+					<p id="email-error" class="field-error text-caption text-semantic-danger"></p>
+				</div>
+
+				<div class="flex flex-col gap-xs">
+					<div class="flex items-center justify-between gap-sm">
+						<label for="password" class="text-body-sm font-medium text-ink-muted">
+							Password
+							<span class="text-semantic-danger" aria-hidden="true">*</span>
+						</label>
+						<a
+							href="/forgot-password"
+							class="text-body-sm font-medium text-primary transition-colors duration-200 hover:text-primary-hover"
+						>
+							Forgot password?
+						</a>
+					</div>
+					<input
+						id="password"
+						name="password"
+						type="password"
+						autocomplete="current-password"
+						placeholder="Your password"
+						required
+						class="input"
+						aria-describedby="password-error"
+					/>
+					<p id="password-error" class="field-error text-caption text-semantic-danger"></p>
+				</div>
+
+				<div class="flex flex-col gap-sm">
+					<button
+						type="submit"
+						id="login-submit"
+						class="inline-flex w-full items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+					>
+						Login
+					</button>
+
+					<div class="flex items-center gap-sm" aria-hidden="true">
+						<span class="h-px flex-1 bg-hairline"></span>
+						<span class="text-caption text-ink-tertiary">or continue with</span>
+						<span class="h-px flex-1 bg-hairline"></span>
+					</div>
+
+					<button
+						type="button"
+						id="google-button"
+						class="inline-flex w-full items-center justify-center gap-sm rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
+					>
+						<svg
+							class="h-4 w-4 text-ink-muted"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							aria-hidden="true"
+						>
+							<path
+								d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+							/>
+						</svg>
+						Continue with Google
+					</button>
+				</div>
+			</form>
+
+			<div class="mt-lg border-t border-hairline pt-md text-center">
+				<p class="text-body-sm text-ink-subtle">
+					New to PortForge AI?
+					<a
+						href="/signup"
+						class="font-medium text-primary transition-colors duration-200 hover:text-primary-hover"
+					>
+						Create an account
+					</a>
+				</p>
+			</div>
+		</section>
+	</main>
+</Layout>
+
+<style>
+	.input {
+		width: 100%;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--color-hairline);
+		background-color: var(--color-surface-2);
+		padding: var(--spacing-sm) var(--spacing-md);
+		color: var(--color-ink);
+		font-size: var(--text-body);
+		line-height: 1.5;
+		transition: border-color var(--duration-fast) var(--ease-smooth);
+	}
+	.input::placeholder {
+		color: var(--color-ink-tertiary);
+	}
+	.input:focus {
+		border-color: var(--color-primary-focus);
+		outline: 2px solid color-mix(in srgb, var(--color-primary-focus) 60%, transparent);
+		outline-offset: 2px;
+	}
+	.input[aria-invalid="true"] {
+		border-color: var(--color-semantic-danger);
+	}
+	.field-error {
+		min-height: 1.25rem;
+	}
+</style>
+
+<script>
+	import { signIn, signInWithGoogle } from '../lib/auth';
+
+	const form = document.getElementById('login-form') as HTMLFormElement | null;
+	const submitButton = document.getElementById('login-submit') as HTMLButtonElement | null;
+	const googleButton = document.getElementById('google-button') as HTMLButtonElement | null;
+	const formError = document.getElementById('form-error') as HTMLElement | null;
+
+	const email = document.getElementById('email') as HTMLInputElement | null;
+	const password = document.getElementById('password') as HTMLInputElement | null;
+
+	const emailError = document.getElementById('email-error') as HTMLElement | null;
+	const passwordError = document.getElementById('password-error') as HTMLElement | null;
+
+	const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+	function setError(
+		input: HTMLInputElement | null,
+		error: HTMLElement | null,
+		message: string,
+	): boolean {
+		if (error) error.textContent = message;
+		if (input) input.setAttribute('aria-invalid', message ? 'true' : 'false');
+		return message === '';
+	}
+
+	function validate(): HTMLInputElement | null {
+		let firstInvalid: HTMLInputElement | null = null;
+		const mark = (
+			input: HTMLInputElement | null,
+			error: HTMLElement | null,
+			message: string,
+		) => {
+			if (!setError(input, error, message) && !firstInvalid) firstInvalid = input;
+		};
+
+		const emailValue = email?.value.trim() ?? '';
+		mark(
+			email,
+			emailError,
+			!emailValue
+				? 'Please enter your email address.'
+				: EMAIL_RE.test(emailValue)
+					? ''
+					: 'Please enter a valid email address.',
+		);
+
+		const passwordValue = password?.value ?? '';
+		mark(password, passwordError, passwordValue ? '' : 'Please enter your password.');
+
+		return firstInvalid;
+	}
+
+	function setBusy(busy: boolean) {
+		if (submitButton) {
+			submitButton.disabled = busy;
+			submitButton.setAttribute('aria-busy', String(busy));
+		}
+		if (googleButton) {
+			googleButton.disabled = busy;
+			googleButton.setAttribute('aria-busy', String(busy));
+		}
+	}
+
+	function friendlyError(message: string): string {
+		if (/invalid login/i.test(message)) {
+			return 'The email or password you entered is incorrect.';
+		}
+		if (/email not confirmed/i.test(message)) {
+			return 'Please confirm your email before signing in.';
+		}
+		return message;
+	}
+
+	function showFormError(message: string) {
+		if (formError) {
+			formError.textContent = friendlyError(message);
+			formError.hidden = false;
+			formError.focus();
+		}
+	}
+
+	async function handleSubmit(event: Event) {
+		event.preventDefault();
+		if (!form) return;
+		if (formError) formError.hidden = true;
+
+		const firstInvalid = validate();
+		if (firstInvalid) {
+			firstInvalid.focus();
+			return;
+		}
+
+		setBusy(true);
+
+		const { error } = await signIn(
+			email?.value.trim() ?? '',
+			password?.value ?? '',
+		);
+
+		setBusy(false);
+
+		if (error) {
+			showFormError(error.message);
+			return;
+		}
+
+		window.location.assign('/');
+	}
+
+	async function handleGoogle(event: Event) {
+		event.preventDefault();
+		if (!googleButton) return;
+		if (formError) formError.hidden = true;
+
+		setBusy(true);
+
+		const { error } = await signInWithGoogle();
+
+		setBusy(false);
+
+		if (error) showFormError(error.message);
+	}
+
+	form?.addEventListener('submit', handleSubmit);
+	googleButton?.addEventListener('click', handleGoogle);
+</script>
