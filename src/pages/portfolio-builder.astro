@@ -1,0 +1,51 @@
+---
+import Achievements from '../components/portfolio/Achievements.astro';
+import Certifications from '../components/portfolio/Certifications.astro';
+import Education from '../components/portfolio/Education.astro';
+import Experience from '../components/portfolio/Experience.astro';
+import GitHubImport from '../components/portfolio/GitHubImport.astro';
+import LinkedInImport from '../components/portfolio/LinkedInImport.astro';
+import PersonalInformation from '../components/portfolio/PersonalInformation.astro';
+import PortfolioLayout from '../components/portfolio/PortfolioLayout.astro';
+import Projects from '../components/portfolio/Projects.astro';
+import ResumeUpload from '../components/portfolio/ResumeUpload.astro';
+import SocialLinks from '../components/portfolio/SocialLinks.astro';
+import Skills from '../components/portfolio/Skills.astro';
+import WizardNavigation from '../components/portfolio/WizardNavigation.astro';
+import WizardSidebar from '../components/portfolio/WizardSidebar.astro';
+
+const title = 'Portfolio Builder — PortForge AI';
+const description = 'Create your professional portfolio with the PortForge AI guided builder.';
+---
+
+<PortfolioLayout title={title} description={description}>
+	<div class="grid grid-cols-1 gap-md lg:grid-cols-[15rem_1fr]">
+		<WizardSidebar />
+
+		<div class="flex min-w-0 flex-col">
+			<PersonalInformation />
+
+			<Education />
+
+			<Experience />
+
+			<Projects />
+
+			<Skills />
+
+			<Certifications />
+
+			<Achievements />
+
+			<SocialLinks />
+
+			<ResumeUpload />
+
+			<GitHubImport />
+
+			<LinkedInImport />
+
+			<WizardNavigation />
+		</div>
+	</div>
+</PortfolioLayout>

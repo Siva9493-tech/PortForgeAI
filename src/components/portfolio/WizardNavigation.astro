@@ -1,0 +1,45 @@
+---
+import { ArrowLeft, ArrowRight } from 'lucide-astro';
+---
+
+<nav
+	id="wizard-navigation"
+	aria-label="Portfolio wizard navigation"
+	class="mt-md flex flex-col gap-sm border-t border-hairline pt-md"
+>
+	<div class="flex items-center justify-center gap-xs" aria-label="Progress">
+		<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+			Progress
+		</span>
+		<span class="text-caption text-ink-tertiary" aria-hidden="true">·</span>
+		<span class="text-caption font-medium text-ink">9%</span>
+	</div>
+
+	<div class="grid grid-cols-1 items-center gap-sm sm:grid-cols-[auto_1fr_auto]">
+		<button
+			type="button"
+			disabled
+			class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+		>
+			<ArrowLeft size="16" aria-hidden="true" />
+			Previous
+		</button>
+
+		<div class="flex min-w-0 flex-col items-center justify-center text-center">
+			<span class="truncate text-body-sm font-medium text-ink">
+				Step 1 of 11
+			</span>
+			<span class="hidden truncate text-caption text-ink-tertiary sm:block">
+				Personal Information
+			</span>
+		</div>
+
+		<button
+			type="button"
+			class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover sm:w-auto"
+		>
+			Next
+			<ArrowRight size="16" aria-hidden="true" />
+		</button>
+	</div>
+</nav>

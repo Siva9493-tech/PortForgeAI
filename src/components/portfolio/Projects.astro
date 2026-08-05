@@ -1,0 +1,122 @@
+---
+import { Plus } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+---
+
+<section
+	id="projects"
+	aria-labelledby="projects-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="projects-heading" class="text-heading-md text-ink">
+			Projects
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Showcase your best technical projects.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<div class="flex flex-col gap-xs">
+			<label for="project-name" class="text-body-sm font-medium text-ink-muted">
+				Project Name
+			</label>
+			<input
+				id="project-name"
+				name="projectName"
+				type="text"
+				placeholder="PortForge AI"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="project-role" class="text-body-sm font-medium text-ink-muted">
+				Project Role
+			</label>
+			<input
+				id="project-role"
+				name="projectRole"
+				type="text"
+				placeholder="Full Stack Developer"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="technologies" class="text-body-sm font-medium text-ink-muted">
+				Technologies Used
+			</label>
+			<input
+				id="technologies"
+				name="technologies"
+				type="text"
+				placeholder="Astro, TypeScript, Tailwind CSS, Supabase"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="github-url" class="text-body-sm font-medium text-ink-muted">
+				GitHub Repository
+			</label>
+			<input
+				id="github-url"
+				name="githubUrl"
+				type="url"
+				placeholder="https://github.com/username/project"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="demo-url" class="text-body-sm font-medium text-ink-muted">
+				Live Demo URL
+			</label>
+			<input
+				id="demo-url"
+				name="demoUrl"
+				type="url"
+				placeholder="https://project.vercel.app"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="project-description" class="text-body-sm font-medium text-ink-muted">
+				Project Description
+			</label>
+			<textarea
+				id="project-description"
+				name="description"
+				rows="6"
+				placeholder="Describe the project, your contributions, features, and impact..."
+				class={inputClass}
+			></textarea>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="key-highlights" class="text-body-sm font-medium text-ink-muted">
+				Key Highlights
+			</label>
+			<textarea
+				id="key-highlights"
+				name="highlights"
+				rows="4"
+				placeholder="Mention important achievements or results..."
+				class={inputClass}
+			></textarea>
+		</div>
+	</form>
+
+	<button
+		type="button"
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+	>
+		<Plus size="16" aria-hidden="true" />
+		Add Another Project
+	</button>
+</section>

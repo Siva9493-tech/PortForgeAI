@@ -1,0 +1,122 @@
+---
+import { Upload } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+---
+
+<section
+	id="personal-information"
+	aria-labelledby="personal-information-heading"
+	class="flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h1 id="personal-information-heading" class="text-heading-md text-ink">
+			Personal Information
+		</h1>
+		<p class="text-body-sm text-ink-subtle">
+			Provide your basic professional details.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="full-name" class="text-body-sm font-medium text-ink-muted">
+				Full Name
+				<span class="text-semantic-danger" aria-hidden="true">*</span>
+			</label>
+			<input
+				id="full-name"
+				name="fullName"
+				type="text"
+				autocomplete="name"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="professional-title" class="text-body-sm font-medium text-ink-muted">
+				Professional Title
+			</label>
+			<input
+				id="professional-title"
+				name="professionalTitle"
+				type="text"
+				autocomplete="organization-title"
+				placeholder="AI & ML Engineer"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="email" class="text-body-sm font-medium text-ink-muted">
+				Email Address
+			</label>
+			<input
+				id="email"
+				name="email"
+				type="email"
+				autocomplete="email"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="phone" class="text-body-sm font-medium text-ink-muted">
+				Phone Number
+			</label>
+			<input
+				id="phone"
+				name="phone"
+				type="tel"
+				autocomplete="tel"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="location" class="text-body-sm font-medium text-ink-muted">
+				Location
+			</label>
+			<input
+				id="location"
+				name="location"
+				type="text"
+				autocomplete="address-level2"
+				placeholder="Guntur, Andhra Pradesh"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="about" class="text-body-sm font-medium text-ink-muted">
+				About Me
+			</label>
+			<textarea
+				id="about"
+				name="about"
+				rows="6"
+				placeholder="Write a short professional introduction..."
+				class={inputClass}
+			></textarea>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2" role="group" aria-labelledby="profile-photo-label">
+			<p id="profile-photo-label" class="text-body-sm font-medium text-ink-muted">
+				Profile Photo
+			</p>
+			<div
+				class="flex flex-col items-center justify-center gap-xs rounded-md border border-dashed border-hairline-strong bg-surface-1 px-md py-lg text-center"
+			>
+				<span
+					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
+					aria-hidden="true"
+				>
+					<Upload size="18" />
+				</span>
+				<p class="text-body-sm font-medium text-ink">Upload Profile Photo</p>
+				<p class="text-caption text-ink-tertiary">PNG, JPG · Maximum 5 MB</p>
+			</div>
+		</div>
+	</form>
+</section>

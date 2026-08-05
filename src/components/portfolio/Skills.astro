@@ -1,0 +1,122 @@
+---
+import { Plus } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+---
+
+<section
+	id="skills"
+	aria-labelledby="skills-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="skills-heading" class="text-heading-md text-ink">
+			Skills
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Highlight your technical and professional expertise.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<div class="flex flex-col gap-xs">
+			<label for="programming-languages" class="text-body-sm font-medium text-ink-muted">
+				Programming Languages
+			</label>
+			<input
+				id="programming-languages"
+				name="programmingLanguages"
+				type="text"
+				placeholder="Python, Java, C++, JavaScript"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="frameworks" class="text-body-sm font-medium text-ink-muted">
+				Frameworks & Libraries
+			</label>
+			<input
+				id="frameworks"
+				name="frameworks"
+				type="text"
+				placeholder="React, Astro, Tailwind CSS, TensorFlow"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="databases" class="text-body-sm font-medium text-ink-muted">
+				Databases
+			</label>
+			<input
+				id="databases"
+				name="databases"
+				type="text"
+				placeholder="MySQL, PostgreSQL, MongoDB"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="dev-tools" class="text-body-sm font-medium text-ink-muted">
+				Developer Tools
+			</label>
+			<input
+				id="dev-tools"
+				name="devTools"
+				type="text"
+				placeholder="Git, GitHub, VS Code, Docker"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="cloud-platforms" class="text-body-sm font-medium text-ink-muted">
+				Cloud & Platforms
+			</label>
+			<input
+				id="cloud-platforms"
+				name="cloudPlatforms"
+				type="text"
+				placeholder="Vercel, Google Cloud, Firebase"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="soft-skills" class="text-body-sm font-medium text-ink-muted">
+				Soft Skills
+			</label>
+			<textarea
+				id="soft-skills"
+				name="softSkills"
+				rows="4"
+				placeholder="Leadership, Communication, Teamwork, Problem Solving..."
+				class={inputClass}
+			></textarea>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="additional-skills" class="text-body-sm font-medium text-ink-muted">
+				Additional Skills
+			</label>
+			<textarea
+				id="additional-skills"
+				name="additionalSkills"
+				rows="4"
+				placeholder="Mention any additional skills or technologies..."
+				class={inputClass}
+			></textarea>
+		</div>
+	</form>
+
+	<button
+		type="button"
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+	>
+		<Plus size="16" aria-hidden="true" />
+		Add More Skills
+	</button>
+</section>

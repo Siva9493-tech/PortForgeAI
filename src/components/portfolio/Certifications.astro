@@ -1,0 +1,108 @@
+---
+import { Plus } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+---
+
+<section
+	id="certifications"
+	aria-labelledby="certifications-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="certifications-heading" class="text-heading-md text-ink">
+			Certifications
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Show your professional certifications and achievements.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<div class="flex flex-col gap-xs">
+			<label for="certification-name" class="text-body-sm font-medium text-ink-muted">
+				Certification Name
+			</label>
+			<input
+				id="certification-name"
+				name="certificationName"
+				type="text"
+				placeholder="Machine Learning Internship"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="issuing-organization" class="text-body-sm font-medium text-ink-muted">
+				Issuing Organization
+			</label>
+			<input
+				id="issuing-organization"
+				name="issuingOrganization"
+				type="text"
+				placeholder="APSSDC"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="issue-date" class="text-body-sm font-medium text-ink-muted">
+				Issue Date
+			</label>
+			<input
+				id="issue-date"
+				name="issueDate"
+				type="month"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="credential-id" class="text-body-sm font-medium text-ink-muted">
+				Credential ID
+			</label>
+			<input
+				id="credential-id"
+				name="credentialId"
+				type="text"
+				placeholder="ABC123XYZ"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="credential-url" class="text-body-sm font-medium text-ink-muted">
+				Credential URL
+			</label>
+			<input
+				id="credential-url"
+				name="credentialUrl"
+				type="url"
+				placeholder="https://..."
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="certification-description" class="text-body-sm font-medium text-ink-muted">
+				Description
+			</label>
+			<textarea
+				id="certification-description"
+				name="description"
+				rows="4"
+				placeholder="Describe what you learned or achieved..."
+				class={inputClass}
+			></textarea>
+		</div>
+	</form>
+
+	<button
+		type="button"
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+	>
+		<Plus size="16" aria-hidden="true" />
+		Add Another Certification
+	</button>
+</section>

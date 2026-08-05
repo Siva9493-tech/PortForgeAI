@@ -1,0 +1,122 @@
+---
+import { Plus } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+---
+
+<section
+	id="education"
+	aria-labelledby="education-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="education-heading" class="text-heading-md text-ink">
+			Education
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Tell us about your academic background.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<div class="flex flex-col gap-xs">
+			<label for="degree" class="text-body-sm font-medium text-ink-muted">
+				Degree
+			</label>
+			<input
+				id="degree"
+				name="degree"
+				type="text"
+				placeholder="Bachelor of Technology"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="institution" class="text-body-sm font-medium text-ink-muted">
+				Institution
+			</label>
+			<input
+				id="institution"
+				name="institution"
+				type="text"
+				placeholder="Vasireddy Venkatadri Institute of Technology"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="field-of-study" class="text-body-sm font-medium text-ink-muted">
+				Field of Study
+			</label>
+			<input
+				id="field-of-study"
+				name="fieldOfStudy"
+				type="text"
+				placeholder="Computer Science and Engineering (AI & ML)"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="start-year" class="text-body-sm font-medium text-ink-muted">
+				Start Year
+			</label>
+			<input
+				id="start-year"
+				name="startYear"
+				type="number"
+				placeholder="2023"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="end-year" class="text-body-sm font-medium text-ink-muted">
+				End Year
+			</label>
+			<input
+				id="end-year"
+				name="endYear"
+				type="number"
+				placeholder="2027"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="cgpa" class="text-body-sm font-medium text-ink-muted">
+				CGPA / Percentage
+			</label>
+			<input
+				id="cgpa"
+				name="cgpa"
+				type="text"
+				placeholder="8.9 CGPA"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="education-description" class="text-body-sm font-medium text-ink-muted">
+				Description
+			</label>
+			<textarea
+				id="education-description"
+				name="description"
+				rows="4"
+				placeholder="Write achievements, coursework or academic highlights..."
+				class={inputClass}
+			></textarea>
+		</div>
+	</form>
+
+	<button
+		type="button"
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+	>
+		<Plus size="16" aria-hidden="true" />
+		Add Another Education
+	</button>
+</section>

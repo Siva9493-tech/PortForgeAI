@@ -1,0 +1,136 @@
+---
+import { Plus } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+
+const employmentTypes = ['Full Time', 'Part Time', 'Internship', 'Freelance'];
+---
+
+<section
+	id="experience"
+	aria-labelledby="experience-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="experience-heading" class="text-heading-md text-ink">
+			Experience
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Show your internships, jobs and professional experience.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<div class="flex flex-col gap-xs">
+			<label for="job-title" class="text-body-sm font-medium text-ink-muted">
+				Job Title
+			</label>
+			<input
+				id="job-title"
+				name="jobTitle"
+				type="text"
+				placeholder="Machine Learning Intern"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="company" class="text-body-sm font-medium text-ink-muted">
+				Company
+			</label>
+			<input
+				id="company"
+				name="company"
+				type="text"
+				placeholder="APSSDC"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="employment-type" class="text-body-sm font-medium text-ink-muted">
+				Employment Type
+			</label>
+			<select id="employment-type" name="employmentType" class={inputClass}>
+				<option value="" disabled selected>
+					Select an option
+				</option>
+				{
+					employmentTypes.map((type) => <option value={type}>{type}</option>)
+				}
+			</select>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="experience-location" class="text-body-sm font-medium text-ink-muted">
+				Location
+			</label>
+			<input
+				id="experience-location"
+				name="location"
+				type="text"
+				placeholder="Guntur, Andhra Pradesh"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="start-date" class="text-body-sm font-medium text-ink-muted">
+				Start Date
+			</label>
+			<input
+				id="start-date"
+				name="startDate"
+				type="month"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="end-date" class="text-body-sm font-medium text-ink-muted">
+				End Date
+			</label>
+			<input
+				id="end-date"
+				name="endDate"
+				type="month"
+				class={inputClass}
+			/>
+		</div>
+
+		<label
+			for="currently-working"
+			class="flex items-center gap-sm text-body-sm text-ink md:col-span-2"
+		>
+			<input
+				id="currently-working"
+				name="currentlyWorking"
+				type="checkbox"
+				class="h-4 w-4 shrink-0 accent-primary"
+			/>
+			<span>Currently Working Here</span>
+		</label>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="experience-description" class="text-body-sm font-medium text-ink-muted">
+				Description
+			</label>
+			<textarea
+				id="experience-description"
+				name="description"
+				rows="5"
+				placeholder="Describe your responsibilities, achievements and technologies used..."
+				class={inputClass}
+			></textarea>
+		</div>
+	</form>
+
+	<button
+		type="button"
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+	>
+		<Plus size="16" aria-hidden="true" />
+		Add Another Experience
+	</button>
+</section>

@@ -1,0 +1,119 @@
+---
+import { Plus } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+
+const categories = [
+	'Award',
+	'Hackathon',
+	'Competition',
+	'Research',
+	'Leadership',
+	'Open Source',
+	'Other',
+];
+---
+
+<section
+	id="achievements"
+	aria-labelledby="achievements-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="achievements-heading" class="text-heading-md text-ink">
+			Achievements
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Highlight your awards, accomplishments and recognitions.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<div class="flex flex-col gap-xs">
+			<label for="achievement-title" class="text-body-sm font-medium text-ink-muted">
+				Achievement Title
+			</label>
+			<input
+				id="achievement-title"
+				name="achievementTitle"
+				type="text"
+				placeholder="Winner — Smart India Hackathon"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="organization" class="text-body-sm font-medium text-ink-muted">
+				Organization
+			</label>
+			<input
+				id="organization"
+				name="organization"
+				type="text"
+				placeholder="Government of India"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="achievement-date" class="text-body-sm font-medium text-ink-muted">
+				Achievement Date
+			</label>
+			<input
+				id="achievement-date"
+				name="achievementDate"
+				type="month"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="achievement-category" class="text-body-sm font-medium text-ink-muted">
+				Achievement Category
+			</label>
+			<select id="achievement-category" name="category" class={inputClass}>
+				<option value="" disabled selected>
+					Select a category
+				</option>
+				{
+					categories.map((category) => <option value={category}>{category}</option>)
+				}
+			</select>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="achievement-description" class="text-body-sm font-medium text-ink-muted">
+				Description
+			</label>
+			<textarea
+				id="achievement-description"
+				name="description"
+				rows="5"
+				placeholder="Describe your achievement and its impact..."
+				class={inputClass}
+			></textarea>
+		</div>
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label for="supporting-link" class="text-body-sm font-medium text-ink-muted">
+				Supporting Link
+			</label>
+			<input
+				id="supporting-link"
+				name="supportingLink"
+				type="url"
+				placeholder="https://..."
+				class={inputClass}
+			/>
+		</div>
+	</form>
+
+	<button
+		type="button"
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+	>
+		<Plus size="16" aria-hidden="true" />
+		Add Another Achievement
+	</button>
+</section>

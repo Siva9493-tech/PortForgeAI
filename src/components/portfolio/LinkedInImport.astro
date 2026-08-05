@@ -1,0 +1,109 @@
+---
+import { CheckCircle2, Linkedin } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+
+const importModes = [
+	'Import Everything',
+	'Import Experience Only',
+	'Import Education Only',
+	'Import Skills Only',
+	'Custom Import',
+];
+---
+
+<section
+	id="linkedin-import"
+	aria-labelledby="linkedin-import-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="linkedin-import-heading" class="text-heading-md text-ink">
+			LinkedIn Import
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Connect your LinkedIn profile to automatically generate professional portfolio
+			content in the future.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<div class="flex flex-col gap-xs">
+			<label
+				for="linkedin-profile-url"
+				class="text-body-sm font-medium text-ink-muted"
+			>
+				LinkedIn Profile URL
+			</label>
+			<input
+				id="linkedin-profile-url"
+				name="linkedinProfileUrl"
+				type="url"
+				placeholder="https://linkedin.com/in/yourname"
+				class={inputClass}
+			/>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label for="import-mode" class="text-body-sm font-medium text-ink-muted">
+				Import Mode
+			</label>
+			<select id="import-mode" name="importMode" class={inputClass}>
+				<option value="" disabled selected>
+					Select an import mode
+				</option>
+				{importModes.map((mode) => <option value={mode}>{mode}</option>)}
+			</select>
+		</div>
+	</form>
+
+	<div class="mx-auto w-full max-w-narrow">
+		<div class="card flex flex-col items-center gap-sm p-xl text-center">
+			<span
+				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
+				aria-hidden="true"
+			>
+				<Linkedin size="22" />
+			</span>
+
+			<p class="text-heading-sm text-ink">Connect LinkedIn</p>
+			<p class="max-w-prose text-body text-ink-muted">
+				Future versions will securely import your professional profile, work experience
+				and skills.
+			</p>
+
+			<button
+				type="button"
+				disabled
+				class="mt-2 inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+			>
+				Connect LinkedIn
+			</button>
+		</div>
+	</div>
+
+	<div class="card flex flex-col gap-md p-lg">
+		<h3 class="text-heading-sm text-ink">What will be imported?</h3>
+		<ul class="flex list-disc flex-col gap-xs pl-4 text-body-sm text-ink-muted marker:text-ink-subtle">
+			<li>Professional headline</li>
+			<li>Work experience</li>
+			<li>Education</li>
+			<li>Skills</li>
+			<li>Certifications</li>
+			<li>Profile summary</li>
+		</ul>
+	</div>
+
+	<div class="card flex flex-col items-start gap-xs border-semantic-success/25 p-lg">
+		<div class="flex items-center gap-xs">
+			<CheckCircle2 size="18" class="shrink-0 text-semantic-success" aria-hidden="true" />
+			<h3 class="text-heading-sm text-ink">Portfolio Builder Complete</h3>
+		</div>
+		<p class="text-body-sm text-ink-muted">
+			You have completed all Portfolio Builder steps.
+			In future versions your information will be combined into a beautiful
+			AI-powered portfolio.
+		</p>
+	</div>
+</section>

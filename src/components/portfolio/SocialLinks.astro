@@ -1,0 +1,106 @@
+---
+import { Plus } from 'lucide-astro';
+
+const inputClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+
+const links = [
+	{
+		id: 'linkedin',
+		name: 'linkedinProfile',
+		label: 'LinkedIn Profile',
+		placeholder: 'https://linkedin.com/in/yourname',
+	},
+	{
+		id: 'github',
+		name: 'githubProfile',
+		label: 'GitHub Profile',
+		placeholder: 'https://github.com/username',
+	},
+	{
+		id: 'portfolio-website',
+		name: 'portfolioWebsite',
+		label: 'Portfolio Website',
+		placeholder: 'https://yourportfolio.com',
+	},
+	{
+		id: 'twitter',
+		name: 'twitterProfile',
+		label: 'Twitter / X Profile',
+		placeholder: 'https://x.com/username',
+	},
+	{
+		id: 'instagram',
+		name: 'instagram',
+		label: 'Instagram',
+		placeholder: 'https://instagram.com/username',
+	},
+	{
+		id: 'youtube',
+		name: 'youtubeChannel',
+		label: 'YouTube Channel',
+		placeholder: 'https://youtube.com/@username',
+	},
+];
+---
+
+<section
+	id="social-links"
+	aria-labelledby="social-links-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="social-links-heading" class="text-heading-md text-ink">
+			Social Links
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Connect your professional online presence.
+		</p>
+	</div>
+
+	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		{
+			links.map((link) => (
+				<div class="flex flex-col gap-xs">
+					<label
+						for={`social-link-${link.id}`}
+						class="text-body-sm font-medium text-ink-muted"
+					>
+						{link.label}
+					</label>
+					<input
+						id={`social-link-${link.id}`}
+						name={link.name}
+						type="url"
+						placeholder={link.placeholder}
+						class={inputClass}
+					/>
+				</div>
+			))
+		}
+
+		<div class="flex flex-col gap-xs md:col-span-2">
+			<label
+				for="social-link-other"
+				class="text-body-sm font-medium text-ink-muted"
+			>
+				Other Website
+			</label>
+			<input
+				id="social-link-other"
+				name="otherWebsite"
+				type="url"
+				placeholder="https://..."
+				class={inputClass}
+			/>
+		</div>
+	</form>
+
+	<button
+		type="button"
+		class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+	>
+		<Plus size="16" aria-hidden="true" />
+		Add Another Link
+	</button>
+</section>
