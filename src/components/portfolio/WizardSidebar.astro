@@ -1,24 +1,48 @@
 ---
-interface Step {
+import { Check } from 'lucide-astro';
+import { WIZARD_STEPS, isSectionCompleted, wizardStore } from '../../lib/portfolio';
+import type { StepId } from '../../lib/portfolio';
+
+const state = wizardStore.getState();
+
+interface StepDisplay {
+	stepId: StepId;
 	number: number;
 	title: string;
+	isActive: boolean;
+	isCompleted: boolean;
+	isVisited: boolean;
+	isUpcoming: boolean;
 }
 
-const steps: Step[] = [
-	{ number: 1, title: 'Personal Information' },
-	{ number: 2, title: 'Education' },
-	{ number: 3, title: 'Experience' },
-	{ number: 4, title: 'Projects' },
-	{ number: 5, title: 'Skills' },
-	{ number: 6, title: 'Certifications' },
-	{ number: 7, title: 'Achievements' },
-	{ number: 8, title: 'Social Links' },
-	{ number: 9, title: 'Resume Upload' },
-	{ number: 10, title: 'GitHub Import' },
-	{ number: 11, title: 'LinkedIn Import' },
-];
+const stepsWithState: StepDisplay[] = WIZARD_STEPS.map((step) => {
+	const isActive = state.currentStep === step.id;
+	const isCompleted = isSectionCompleted(state.data, step.id);
+	const isVisited = state.visitedSteps.includes(step.id);
+	return {
+		stepId: step.id,
+		number: step.number,
+		title: step.title,
+		isActive,
+		isCompleted,
+		isVisited,
+		isUpcoming: !isActive && !isVisited,
+	};
+});
 
-const firstStepNumber = 1;
+function itemClasses({ isActive, isCompleted, isVisited }: StepDisplay): string {
+	const base = 'flex w-full items-center gap-sm rounded-md px-sm py-sm text-left';
+	if (isActive) return `${base} bg-surface-2 text-ink`;
+	if (isCompleted || isVisited) return `${base} text-ink-muted`;
+	return `${base} text-ink-subtle`;
+}
+
+function badgeClasses(isActive: boolean, isCompleted: boolean): string {
+	const base = 'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-caption font-medium';
+	if (isActive) return `${base} bg-primary text-on-primary`;
+	if (isCompleted) return `${base} bg-surface-2 text-semantic-success`;
+	return `${base} bg-surface-1 text-ink-tertiary`;
+}
 ---
 
 <aside
@@ -28,42 +52,142 @@ const firstStepNumber = 1;
 >
 	<div class="mb-md flex items-center justify-between gap-sm">
 		<h2 class="text-body font-semibold text-ink">Portfolio Builder</h2>
-		<span class="text-caption text-ink-tertiary">{steps.length} Steps</span>
+		<span class="text-caption text-ink-tertiary">{WIZARD_STEPS.length} Steps</span>
 	</div>
 
 	<nav aria-label="Builder steps">
 		<ol class="flex flex-col gap-1">
 			{
-				steps.map((step) => {
-					const isActive = step.number === firstStepNumber;
-					return (
-						<li>
-							<div
-								class:list={[
-									'flex items-center gap-sm rounded-md px-sm py-sm',
-									isActive
-										? 'bg-surface-2 text-ink'
-										: 'text-ink-subtle',
-								]}
-								aria-current={isActive ? 'step' : undefined}
+				stepsWithState.map((item) => (
+					<li>
+						<button
+							type="button"
+							data-step-id={item.stepId}
+							data-state={
+								item.isActive
+									? 'active'
+									: item.isCompleted
+										? 'completed'
+										: item.isVisited
+											? 'visited'
+											: 'upcoming'
+							}
+							aria-current={item.isActive ? 'step' : undefined}
+							class={itemClasses(item)}
+						>
+							<span
+								class={badgeClasses(item.isActive, item.isCompleted)}
+								data-step-number={item.number}
+								aria-hidden="true"
 							>
-								<span
-									class:list={[
-										'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-caption font-medium',
-										isActive
-											? 'bg-primary text-on-primary'
-											: 'bg-surface-1 text-ink-tertiary',
-									]}
-									aria-hidden="true"
-								>
-									{step.number}
-								</span>
-								<span class="truncate text-body-sm">{step.title}</span>
-							</div>
-						</li>
-					);
-				})
+								{item.isCompleted && !item.isActive ? <Check size="14" /> : item.number}
+							</span>
+							<span class="truncate text-body-sm">{item.title}</span>
+						</button>
+					</li>
+				))
 			}
 		</ol>
 	</nav>
 </aside>
+
+<script>
+	import { isSectionCompleted, wizardStore } from '../../lib/portfolio';
+	import type { StepId } from '../../lib/portfolio';
+
+	const sidebar = document.getElementById('wizard-sidebar');
+
+	if (sidebar) {
+		const buttons = Array.from(
+			sidebar.querySelectorAll<HTMLButtonElement>('[data-step-id]')
+		);
+
+		const stepState = (button: HTMLButtonElement) => {
+			const stepId = button.dataset.stepId as StepId | undefined;
+			if (!stepId) return null;
+			const state = wizardStore.getState();
+			return {
+				stepId,
+				isActive: state.currentStep === stepId,
+				isCompleted: isSectionCompleted(state.data, stepId),
+				isVisited: state.visitedSteps.includes(stepId),
+			};
+		};
+
+		const createCheckIcon = () => {
+			const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			svg.setAttribute('data-check-icon', '');
+			svg.setAttribute('viewBox', '0 0 24 24');
+			svg.setAttribute('width', '14');
+			svg.setAttribute('height', '14');
+			svg.setAttribute('fill', 'none');
+			svg.setAttribute('stroke', 'currentColor');
+			svg.setAttribute('stroke-width', '2');
+			svg.setAttribute('stroke-linecap', 'round');
+			svg.setAttribute('stroke-linejoin', 'round');
+			svg.setAttribute('aria-hidden', 'true');
+			svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+			return svg;
+		};
+
+		const applyState = () => {
+			for (const button of buttons) {
+				const info = stepState(button);
+				if (!info) continue;
+
+				button.classList.toggle('bg-surface-2', info.isActive);
+				button.classList.toggle('text-ink', info.isActive);
+				button.classList.toggle(
+					'text-ink-muted',
+					!info.isActive && (info.isVisited || info.isCompleted)
+				);
+				button.classList.toggle(
+					'text-ink-subtle',
+					!info.isActive && !info.isVisited && !info.isCompleted
+				);
+
+				const badge = button.querySelector<HTMLSpanElement>('[data-step-number]');
+				if (badge) {
+					badge.classList.toggle('bg-primary', info.isActive);
+					badge.classList.toggle('text-on-primary', info.isActive);
+					badge.classList.toggle('bg-surface-2', !info.isActive && info.isCompleted);
+					badge.classList.toggle('text-semantic-success', !info.isActive && info.isCompleted);
+					badge.classList.toggle('bg-surface-1', !info.isActive && !info.isCompleted);
+					badge.classList.toggle('text-ink-tertiary', !info.isActive && !info.isCompleted);
+
+					const showCheck = !info.isActive && info.isCompleted;
+					const icon = badge.querySelector('[data-check-icon]');
+					if (showCheck && !icon) {
+						badge.replaceChildren(createCheckIcon());
+					} else if (!showCheck && icon) {
+						badge.textContent = badge.dataset.stepNumber ?? '';
+					}
+				}
+
+				if (info.isActive) {
+					button.setAttribute('aria-current', 'step');
+				} else {
+					button.removeAttribute('aria-current');
+				}
+
+				button.dataset.state = info.isActive
+					? 'active'
+					: info.isCompleted
+						? 'completed'
+						: info.isVisited
+							? 'visited'
+							: 'upcoming';
+			}
+		};
+
+		for (const button of buttons) {
+			button.addEventListener('click', () => {
+				const stepId = button.dataset.stepId as StepId | undefined;
+				if (stepId) wizardStore.goToStep(stepId);
+			});
+		}
+
+		wizardStore.subscribe(applyState);
+		applyState();
+	}
+</script>

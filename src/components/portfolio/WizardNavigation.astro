@@ -1,5 +1,13 @@
 ---
 import { ArrowLeft, ArrowRight } from 'lucide-astro';
+import { TOTAL_STEPS, WIZARD_STEPS, wizardStore } from '../../lib/portfolio';
+
+const state = wizardStore.getState();
+const currentIndex = WIZARD_STEPS.findIndex((step) => step.id === state.currentStep);
+const currentStep = WIZARD_STEPS[Math.max(0, currentIndex)];
+const isFirst = currentIndex === 0;
+const isLast = currentIndex === WIZARD_STEPS.length - 1;
+const percent = Math.round(((currentIndex + 1) / TOTAL_STEPS) * 100);
 ---
 
 <nav
@@ -7,18 +15,37 @@ import { ArrowLeft, ArrowRight } from 'lucide-astro';
 	aria-label="Portfolio wizard navigation"
 	class="mt-md flex flex-col gap-sm border-t border-hairline pt-md"
 >
-	<div class="flex items-center justify-center gap-xs" aria-label="Progress">
-		<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
-			Progress
-		</span>
-		<span class="text-caption text-ink-tertiary" aria-hidden="true">·</span>
-		<span class="text-caption font-medium text-ink">9%</span>
+	<div class="flex flex-col gap-sm">
+		<div class="flex items-center justify-center gap-xs">
+			<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+				Progress
+			</span>
+			<span class="text-caption text-ink-tertiary" aria-hidden="true">·</span>
+			<span class="text-caption font-medium text-ink" data-progress-percent>
+				{percent}%
+			</span>
+		</div>
+
+		<div
+			role="progressbar"
+			aria-label="Portfolio progress"
+			aria-valuemin="0"
+			aria-valuemax="100"
+			aria-valuenow={percent}
+			class="h-2 w-full overflow-hidden rounded-full bg-surface-2"
+		>
+			<div
+				class="h-full rounded-full bg-primary transition-[width] duration-300"
+				data-progress-fill
+			></div>
+		</div>
 	</div>
 
 	<div class="grid grid-cols-1 items-center gap-sm sm:grid-cols-[auto_1fr_auto]">
 		<button
 			type="button"
-			disabled
+			data-nav="previous"
+			disabled={isFirst}
 			class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
 		>
 			<ArrowLeft size="16" aria-hidden="true" />
@@ -26,20 +53,60 @@ import { ArrowLeft, ArrowRight } from 'lucide-astro';
 		</button>
 
 		<div class="flex min-w-0 flex-col items-center justify-center text-center">
-			<span class="truncate text-body-sm font-medium text-ink">
-				Step 1 of 11
+			<span class="truncate text-body-sm font-medium text-ink" data-step-number>
+				Step {currentIndex + 1} of {TOTAL_STEPS}
 			</span>
-			<span class="hidden truncate text-caption text-ink-tertiary sm:block">
-				Personal Information
+			<span class="hidden truncate text-caption text-ink-tertiary sm:block" data-step-title>
+				{currentStep.title}
 			</span>
 		</div>
 
 		<button
 			type="button"
-			class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover sm:w-auto"
+			data-nav="next"
+			disabled={isLast}
+			class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
 		>
 			Next
 			<ArrowRight size="16" aria-hidden="true" />
 		</button>
 	</div>
 </nav>
+
+<script>
+	import { TOTAL_STEPS, WIZARD_STEPS, wizardStore } from '../../lib/portfolio';
+
+	const nav = document.getElementById('wizard-navigation');
+
+	if (nav) {
+		const prev = nav.querySelector<HTMLButtonElement>('[data-nav="previous"]');
+		const next = nav.querySelector<HTMLButtonElement>('[data-nav="next"]');
+		const stepNumber = nav.querySelector<HTMLElement>('[data-step-number]');
+		const stepTitle = nav.querySelector<HTMLElement>('[data-step-title]');
+		const percentText = nav.querySelector<HTMLElement>('[data-progress-percent]');
+		const progressbar = nav.querySelector<HTMLElement>('[role="progressbar"]');
+		const fill = nav.querySelector<HTMLElement>('[data-progress-fill]');
+
+		const applyState = () => {
+			const state = wizardStore.getState();
+			const index = WIZARD_STEPS.findIndex((step) => step.id === state.currentStep);
+			const step = WIZARD_STEPS[Math.max(0, index)];
+
+			const percent = Math.round(((index + 1) / TOTAL_STEPS) * 100);
+
+			if (prev) prev.disabled = index === 0;
+			if (next) next.disabled = index === WIZARD_STEPS.length - 1;
+			if (stepNumber) stepNumber.textContent = `Step ${index + 1} of ${TOTAL_STEPS}`;
+			if (stepTitle) stepTitle.textContent = step.title;
+			if (percentText) percentText.textContent = `${percent}%`;
+			if (progressbar) progressbar.setAttribute('aria-valuenow', String(percent));
+			if (fill) fill.style.width = `${percent}%`;
+		};
+
+		prev?.addEventListener('click', () => wizardStore.previous());
+		next?.addEventListener('click', () => wizardStore.next());
+
+		wizardStore.subscribe(applyState);
+		applyState();
+	}
+</script>

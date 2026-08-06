@@ -13,9 +13,26 @@ import SocialLinks from '../components/portfolio/SocialLinks.astro';
 import Skills from '../components/portfolio/Skills.astro';
 import WizardNavigation from '../components/portfolio/WizardNavigation.astro';
 import WizardSidebar from '../components/portfolio/WizardSidebar.astro';
+import { WIZARD_STEPS, wizardStore } from '../lib/portfolio';
 
 const title = 'Portfolio Builder — PortForge AI';
 const description = 'Create your professional portfolio with the PortForge AI guided builder.';
+
+const activeStepId = wizardStore.getState().currentStep;
+
+const sectionsByStep = {
+	personalInformation: PersonalInformation,
+	education: Education,
+	experience: Experience,
+	projects: Projects,
+	skills: Skills,
+	certifications: Certifications,
+	achievements: Achievements,
+	socialLinks: SocialLinks,
+	resume: ResumeUpload,
+	githubImport: GitHubImport,
+	linkedinImport: LinkedInImport,
+};
 ---
 
 <PortfolioLayout title={title} description={description}>
@@ -23,29 +40,74 @@ const description = 'Create your professional portfolio with the PortForge AI gu
 		<WizardSidebar />
 
 		<div class="flex min-w-0 flex-col">
-			<PersonalInformation />
-
-			<Education />
-
-			<Experience />
-
-			<Projects />
-
-			<Skills />
-
-			<Certifications />
-
-			<Achievements />
-
-			<SocialLinks />
-
-			<ResumeUpload />
-
-			<GitHubImport />
-
-			<LinkedInImport />
+			<div id="wizard-step-container">
+				{
+					WIZARD_STEPS.map((step) => {
+						const SectionComponent = sectionsByStep[step.id];
+						return (
+							<div
+								data-step-section-id={step.id}
+								tabindex="-1"
+								hidden={step.id !== activeStepId}
+							>
+								<SectionComponent />
+							</div>
+						);
+					})
+				}
+			</div>
 
 			<WizardNavigation />
 		</div>
 	</div>
 </PortfolioLayout>
+
+<script>
+	import { wizardStore } from '../lib/portfolio';
+	import { applySectionValues, collectSectionData } from '../lib/portfolio';
+	import type { PortfolioData } from '../lib/portfolio';
+
+	const container = document.getElementById('wizard-step-container');
+
+	if (container) {
+		const sections = Array.from(
+			container.querySelectorAll<HTMLElement>('[data-step-section-id]')
+		);
+
+		for (const section of sections) {
+			const stepId = section.dataset.stepSectionId as keyof PortfolioData | undefined;
+			if (stepId) applySectionValues(section, stepId);
+		}
+
+		const persistTarget = (event: Event) => {
+			const target = event.target as Element | null;
+			const wrapper = target?.closest<HTMLElement>('[data-step-section-id]');
+			const stepId = wrapper?.dataset.stepSectionId as keyof PortfolioData | undefined;
+			if (wrapper && stepId) collectSectionData(wrapper, stepId);
+		};
+
+		container.addEventListener('input', persistTarget);
+		container.addEventListener('change', persistTarget);
+
+		let lastStep = wizardStore.getState().currentStep;
+
+		const applyState = () => {
+			const { currentStep } = wizardStore.getState();
+			let active: HTMLElement | null = null;
+
+			for (const section of sections) {
+				const isVisible = section.dataset.stepSectionId === currentStep;
+				section.hidden = !isVisible;
+				if (isVisible) active = section;
+			}
+
+			if (currentStep !== lastStep) {
+				lastStep = currentStep;
+				active?.focus({ preventScroll: true });
+			}
+		};
+
+		wizardStore.subscribe(applyState);
+		applyState();
+	}
+</script>
