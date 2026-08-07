@@ -1,5 +1,18 @@
 ---
-import { FileUp } from 'lucide-astro';
+import { FileUp, RefreshCw, Trash2 } from 'lucide-astro';
+import { wizardStore } from '../../lib/portfolio';
+import type { ResumeData } from '../../lib/portfolio';
+
+const inputId = 'resume-upload-input';
+
+function formatSize(bytes: number): string {
+	if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+	if (bytes > 0) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+	return '';
+}
+
+const initial = wizardStore.getState().data.resume as ResumeData;
+const hasFile = Boolean(initial.fileName);
 ---
 
 <section
@@ -16,8 +29,8 @@ import { FileUp } from 'lucide-astro';
 		</p>
 	</div>
 
-	<div class="mx-auto w-full max-w-narrow">
-		<div class="card flex flex-col items-center gap-sm p-xl text-center">
+	<div class="mx-auto w-full max-w-narrow" data-resume-upload data-step="resume">
+		<div class="card flex flex-col items-center gap-sm p-xl text-center animate-step-in" data-resume-dropzone hidden={hasFile}>
 			<span
 				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
 				aria-hidden="true"
@@ -27,29 +40,69 @@ import { FileUp } from 'lucide-astro';
 
 			<p class="text-heading-sm text-ink">Upload Resume</p>
 
-			<p class="text-body text-ink-muted">
-				Drag &amp; Drop your resume here
-			</p>
-			<p class="text-body-sm text-ink-tertiary">or</p>
-			<p class="text-body-sm font-medium text-ink-muted">Click to browse</p>
-
-			<label for="resume-file" class="sr-only">
-				Upload Resume (PDF, DOCX — maximum 10 MB)
+			<label for={inputId} class="inline-flex cursor-pointer flex-col items-center gap-sm">
+				<span class="text-body text-ink-muted">Drag &amp; Drop your resume here</span>
+				<span class="text-body-sm text-ink-tertiary">or</span>
+				<span class="text-body-sm font-medium text-ink-muted">Click to browse</span>
 			</label>
-			<input
-				id="resume-file"
-				name="resume"
-				type="file"
-				accept=".pdf,.doc,.docx"
-				disabled
-				class="sr-only"
-			/>
 
 			<span class="mt-2 flex flex-col items-center gap-1 border-t border-hairline pt-3">
-				<span class="text-caption text-ink-tertiary">PDF, DOCX</span>
+				<span class="text-caption text-ink-tertiary">PDF, DOC, DOCX</span>
 				<span class="text-caption text-ink-tertiary">Maximum Size 10 MB</span>
 			</span>
+
+			<p class="text-caption text-semantic-danger" role="alert" data-resume-error hidden></p>
 		</div>
+
+		<div class="card flex flex-col gap-md p-lg animate-step-in" data-resume-preview hidden={!hasFile}>
+			<div class="flex flex-col items-center gap-4 sm:flex-row">
+				<span
+					class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-primary"
+					aria-hidden="true"
+				>
+					<FileUp size="22" />
+				</span>
+
+				<div class="flex min-w-0 flex-1 flex-col gap-0.5 text-center sm:text-left">
+					<p class="truncate text-body font-medium text-ink" data-resume-name>
+						{initial.fileName}
+					</p>
+					<p class="text-caption text-ink-muted" data-resume-meta>
+						{hasFile ? `${formatSize(initial.fileSize)} · ${initial.fileType}` : ''}
+					</p>
+					<p class="text-caption font-medium text-semantic-success" data-resume-status>
+						{hasFile ? 'Ready' : ''}
+					</p>
+				</div>
+			</div>
+
+			<div class="flex flex-wrap justify-center gap-2 sm:flex-wrap">
+				<button
+					type="button"
+					data-resume-replace
+					class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-body-sm font-semibold text-on-primary transition duration-200 hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2 focus:ring-offset-surface-1"
+				>
+					<RefreshCw size="15" aria-hidden="true" />
+					Replace Resume
+				</button>
+				<button
+					type="button"
+					data-resume-remove
+					class="inline-flex items-center justify-center gap-2 rounded-md border border-hairline bg-surface-1 px-4 py-2 text-body-sm font-medium text-semantic-danger transition duration-200 hover:bg-surface-2 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2 focus:ring-offset-surface-1"
+				>
+					<Trash2 size="15" aria-hidden="true" />
+					Remove Resume
+				</button>
+			</div>
+		</div>
+
+		<input
+			id={inputId}
+			type="file"
+			accept=".pdf,.doc,.docx"
+			class="sr-only"
+			data-resume-input
+		/>
 	</div>
 
 	<div class="card flex flex-col gap-md p-lg">
@@ -62,3 +115,147 @@ import { FileUp } from 'lucide-astro';
 		</ul>
 	</div>
 </section>
+
+<script>
+	import { wizardStore } from '../../lib/portfolio';
+
+	const root = document.querySelector<HTMLElement>('[data-resume-upload]');
+
+	if (!root) {
+		throw new Error('Resume upload root not found');
+	}
+
+	interface StoredResume {
+		fileName: string;
+		fileType: string;
+		fileSize: number;
+	}
+
+	const stepId = 'resume';
+	const maxSize = 10 * 1024 * 1024;
+	const input = root.querySelector<HTMLInputElement>('[data-resume-input]');
+	const dropzone = root.querySelector<HTMLElement>('[data-resume-dropzone]');
+	const preview = root.querySelector<HTMLElement>('[data-resume-preview]');
+	const errorEl = root.querySelector<HTMLElement>('[data-resume-error]');
+	const nameEl = root.querySelector<HTMLElement>('[data-resume-name]');
+	const metaEl = root.querySelector<HTMLElement>('[data-resume-meta]');
+	const statusEl = root.querySelector<HTMLElement>('[data-resume-status]');
+	const replaceBtn = root.querySelector<HTMLButtonElement>('[data-resume-replace]');
+	const removeBtn = root.querySelector<HTMLButtonElement>('[data-resume-remove]');
+
+	const acceptedExtensions = ['.pdf', '.doc', '.docx'];
+	const acceptedMimes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+	function readResume(): StoredResume {
+		return (wizardStore.getState().data[stepId] as StoredResume) ?? {
+			fileName: '',
+			fileType: '',
+			fileSize: 0,
+		};
+	}
+
+	function commit(next: StoredResume): void {
+		wizardStore.setSectionData(stepId as never, next as never);
+	}
+
+	function setError(message: string): void {
+		if (!errorEl) return;
+		errorEl.textContent = message;
+		errorEl.hidden = !message;
+	}
+
+	function formatSize(bytes: number): string {
+		if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+		if (bytes > 0) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+		return '';
+	}
+
+	function render(resume: StoredResume): void {
+		const has = Boolean(resume.fileName);
+		if (dropzone) dropzone.hidden = has;
+		if (preview) preview.hidden = !has;
+		setError('');
+
+		if (!has) return;
+		if (nameEl) nameEl.textContent = resume.fileName;
+		if (metaEl) metaEl.textContent = `${formatSize(resume.fileSize)} · ${resume.fileType}`;
+		if (statusEl) statusEl.textContent = 'Ready';
+	}
+
+	function resetInput(): void {
+		if (input) input.value = '';
+	}
+
+	function process(file: File | undefined | null): void {
+		if (!file) return;
+
+		const lower = file.name.toLowerCase();
+		const typeOk =
+			acceptedMimes.includes(file.type) ||
+			acceptedExtensions.some((ext) => lower.endsWith(ext));
+
+		if (!typeOk) {
+			setError('Unsupported format. Please use PDF, DOC, or DOCX.');
+			return;
+		}
+
+		if (file.size > maxSize) {
+			setError(`File is larger than the maximum allowed size of ${formatSize(maxSize)}.`);
+			return;
+		}
+
+		commit({ fileName: file.name, fileType: upperExt(lower) || file.type || 'document', fileSize: file.size });
+		render(readResume());
+	}
+
+	function upperExt(name: string): string {
+		const dot = name.lastIndexOf('.');
+		return dot >= 0 ? name.slice(dot + 1).toUpperCase() : '';
+	}
+
+	if (input) {
+		input.addEventListener('change', () => {
+			process(input.files?.[0]);
+			resetInput();
+		});
+	}
+
+	if (dropzone) {
+		const highlight = () => dropzone.classList.add('border-primary-focus');
+		const unhighlight = () => dropzone.classList.remove('border-primary-focus');
+
+		for (const eventName of ['dragenter', 'dragover'] as const) {
+			dropzone.addEventListener(eventName, (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				highlight();
+			});
+		}
+		for (const eventName of ['dragleave', 'dragend'] as const) {
+			dropzone.addEventListener(eventName, (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				unhighlight();
+			});
+		}
+		dropzone.addEventListener('drop', (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			unhighlight();
+			process(event.dataTransfer?.files?.[0]);
+		});
+	}
+
+	if (replaceBtn) {
+		replaceBtn.addEventListener('click', () => input?.click());
+	}
+
+	if (removeBtn) {
+		removeBtn.addEventListener('click', () => {
+			commit({ fileName: '', fileType: '', fileSize: 0 });
+			render(readResume());
+		});
+	}
+
+	render(readResume());
+</script>

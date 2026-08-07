@@ -1,0 +1,298 @@
+---
+import { RefreshCw, Trash2, Upload } from 'lucide-astro';
+import { wizardStore } from '../../lib/portfolio';
+import type { ProfilePhotoData, StepId } from '../../lib/portfolio';
+
+interface Props {
+	name?: string;
+	label?: string;
+	accept?: string;
+	maxSize?: number;
+	stepId?: StepId;
+	field?: string;
+	hint?: string;
+}
+
+const {
+	name = 'profile-photo',
+	label = 'Profile Photo',
+	accept = 'image/png,image/jpeg,image/webp',
+	maxSize = 5 * 1024 * 1024,
+	stepId = 'personalInformation',
+	field = 'profilePhoto',
+	hint = 'PNG, JPG, WEBP · Maximum 5 MB',
+} = Astro.props;
+
+function formatSize(bytes: number): string {
+	if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+	if (bytes > 0) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+	return '';
+}
+
+const sectionData = wizardStore.getState().data[stepId] as unknown as
+	| Record<string, unknown>
+	| null
+	| undefined;
+
+const stored = (sectionData?.[field] ?? null) as ProfilePhotoData | null;
+const hasPhoto = Boolean(stored?.name && stored.dataUrl);
+const inputId = `${name}-input`;
+---
+
+<section
+	id={`${name}-upload`}
+	class="flex flex-col gap-4"
+	data-profile-upload
+	data-step={stepId}
+	data-field={field}
+	data-max-size={maxSize}
+	data-accept={accept}
+	aria-label={`${label} upload and management`}
+>
+	<input
+		id={inputId}
+		type="file"
+		accept={accept}
+		class="sr-only"
+		data-upload-input
+	/>
+
+	<div
+		class="flex flex-col items-center justify-center gap-sm rounded-md border border-dashed border-hairline-strong bg-surface-1 px-md py-lg text-center transition-colors duration-200 hover:bg-surface-2 focus-within:border-primary-focus focus-within:bg-surface-1 animate-step-in"
+		data-upload-dropzone
+		hidden={hasPhoto}
+	>
+		<label for={inputId} class="inline-flex cursor-pointer flex-col items-center gap-sm">
+			<span
+				class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
+				aria-hidden="true"
+			>
+				<Upload size="18" />
+			</span>
+			<span class="text-body-sm font-medium text-ink">Upload {label}</span>
+			<span class="text-caption text-ink-tertiary">Click to browse or drag &amp; drop</span>
+			<span class="text-caption text-ink-tertiary">{hint}</span>
+		</label>
+		<p class="text-caption text-semantic-danger" role="alert" data-upload-error hidden></p>
+	</div>
+
+	<div
+		class="flex flex-col items-center gap-lg sm:flex-row animate-step-in"
+		data-upload-preview
+		hidden={!hasPhoto}
+	>
+		<figure class="w-full max-w-44 shrink-0">
+			<img
+				data-upload-image
+				src={stored?.dataUrl}
+				alt="Profile photo preview"
+				class="aspect-square w-full rounded-md border border-hairline bg-surface-2 object-cover"
+			/>
+			<figcaption class="mt-2 text-center">
+				<p class="truncate text-body-sm font-medium text-ink" data-upload-file-name>
+					{stored?.name}
+				</p>
+				<p class="text-caption text-ink-tertiary" data-upload-size>
+					{stored ? formatSize(stored.size) : ''}
+				</p>
+			</figcaption>
+		</figure>
+
+		<div class="flex flex-wrap justify-center gap-2 sm:justify-start sm:flex-col">
+<button
+				type="button"
+				data-upload-replace
+				class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-body-sm font-semibold text-on-primary transition duration-200 hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2 focus:ring-offset-surface-1"
+			>
+				<RefreshCw size="15" aria-hidden="true" />
+				Replace Photo
+			</button>
+			<button
+				type="button"
+				data-upload-remove
+				class="inline-flex items-center justify-center gap-2 rounded-md border border-hairline bg-surface-1 px-4 py-2 text-body-sm font-medium text-semantic-danger transition duration-200 hover:bg-surface-2 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2 focus:ring-offset-surface-1"
+			>
+				<Trash2 size="15" aria-hidden="true" />
+				Remove Photo
+			</button>
+		</div>
+	</div>
+</section>
+
+<script>
+	import { wizardStore } from '../../lib/portfolio';
+	import type { PortfolioData } from '../../lib/portfolio';
+
+	const root = document.querySelector<HTMLElement>('[data-profile-upload]');
+
+	if (!root) {
+		throw new Error('Profile photo upload root not found');
+	}
+
+	const stepId = root.dataset.step as keyof PortfolioData;
+	const field = root.dataset.field ?? 'profilePhoto';
+	const maxSize = Number(root.dataset.maxSize || 0);
+	const accept = root.dataset.accept ?? '';
+	const input = root.querySelector<HTMLInputElement>('[data-upload-input]');
+	const image = root.querySelector<HTMLImageElement>('[data-upload-image]');
+	const dropzone = root.querySelector<HTMLElement>('[data-upload-dropzone]');
+	const preview = root.querySelector<HTMLElement>('[data-upload-preview]');
+	const errorEl = root.querySelector<HTMLElement>('[data-upload-error]');
+	const fileNameEl = root.querySelector<HTMLElement>('[data-upload-file-name]');
+	const fileSizeEl = root.querySelector<HTMLElement>('[data-upload-size]');
+	const replaceBtn = root.querySelector<HTMLButtonElement>('[data-upload-replace]');
+	const removeBtn = root.querySelector<HTMLButtonElement>('[data-upload-remove]');
+
+	interface StoredPhoto {
+		name: string;
+		type: string;
+		size: number;
+		dataUrl?: string;
+	}
+
+	let objectUrl: string | null = null;
+
+	const acceptedMimes = accept.split(',').map((m) => m.trim()).filter(Boolean);
+	const acceptedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
+
+	function hasValidExtension(fileName: string): boolean {
+		const lower = fileName.toLowerCase();
+		return acceptedExtensions.some((ext) => lower.endsWith(ext));
+	}
+
+	function formatSize(bytes: number): string {
+		if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+		if (bytes > 0) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+		return '';
+	}
+
+	function getSection(): Record<string, unknown> {
+		return (wizardStore.getState().data[stepId] ?? {}) as unknown as Record<string, unknown>;
+	}
+
+	function readPhoto(): StoredPhoto | null {
+		return (getSection()[field] as StoredPhoto | null) ?? null;
+	}
+
+	function commit(next: StoredPhoto | null): void {
+		wizardStore.setSectionData(stepId as never, {
+			...getSection(),
+			[field]: next,
+		} as never);
+	}
+
+	function setError(message: string): void {
+		if (!errorEl) return;
+		errorEl.textContent = message;
+		errorEl.hidden = !message;
+	}
+
+	function releaseUrl(): void {
+		if (objectUrl) {
+			try {
+				URL.revokeObjectURL(objectUrl);
+			} catch {
+				/* ignore */
+			}
+			objectUrl = null;
+		}
+	}
+
+	function render(photo: StoredPhoto | null | undefined): void {
+		const show = Boolean(photo?.name && photo?.dataUrl);
+		if (dropzone) dropzone.hidden = show;
+		if (preview) preview.hidden = !show;
+		setError('');
+
+		if (!show || !photo) {
+			return;
+		}
+
+		if (image) {
+			image.src = photo.dataUrl ?? '';
+			image.alt = photo.name ? `${photo.name} preview` : 'Profile photo preview';
+			image.onerror = () => {
+				// The stored blob URL can be stale after a page reload restored it; fall back to the placeholder.
+				releaseUrl();
+				commit(null);
+				render(readPhoto());
+			};
+		}
+		if (fileNameEl) fileNameEl.textContent = photo.name || '';
+		if (fileSizeEl) fileSizeEl.textContent = formatSize(photo.size);
+	}
+
+	function resetInput(): void {
+		if (input) input.value = '';
+	}
+
+	function process(file: File | undefined | null): void {
+		if (!file) return;
+
+		const typeOk = acceptedMimes.includes(file.type) || hasValidExtension(file.name);
+		if (!typeOk) {
+			setError('Unsupported format. Please use PNG, JPG, or WEBP.');
+			return;
+		}
+
+		if (file.size > maxSize) {
+			setError(`File is larger than the maximum allowed size of ${formatSize(maxSize)}.`);
+			return;
+		}
+
+		releaseUrl();
+		const url = URL.createObjectURL(file);
+		objectUrl = url;
+
+		const next = { name: file.name, type: file.type, size: file.size, dataUrl: url };
+		commit(next);
+		render(next);
+	}
+
+	if (input) {
+		input.addEventListener('change', () => {
+			process(input.files?.[0]);
+			resetInput();
+		});
+	}
+
+	if (dropzone) {
+		const highlight = () => dropzone.classList.add('border-primary-focus');
+		const unhighlight = () => dropzone.classList.remove('border-primary-focus');
+
+		for (const eventName of ['dragenter', 'dragover'] as const) {
+			dropzone.addEventListener(eventName, (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				highlight();
+			});
+		}
+		for (const eventName of ['dragleave', 'dragend'] as const) {
+			dropzone.addEventListener(eventName, (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				unhighlight();
+			});
+		}
+		dropzone.addEventListener('drop', (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			unhighlight();
+			process(event.dataTransfer?.files?.[0]);
+		});
+	}
+
+	if (replaceBtn) {
+		replaceBtn.addEventListener('click', () => input?.click());
+	}
+
+	if (removeBtn) {
+		removeBtn.addEventListener('click', () => {
+			releaseUrl();
+			commit(null);
+			render(null);
+		});
+	}
+
+	render(readPhoto());
+</script>

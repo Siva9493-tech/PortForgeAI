@@ -67,3 +67,40 @@
 	border-radius: var(--radius-md);
 	background-color: var(--color-surface-2);
 }
+
+/* ------------------------------------------------------------------ */
+/* Motion utilities — opacity/transform only, GPU friendly.           */
+/* Reduced-motion is handled globally in base.css (durations→0).      */
+/* ------------------------------------------------------------------ */
+
+@keyframes step-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes pop-in {
+	from {
+		opacity: 0;
+		transform: scale(0.6);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* Panel/step entrance: fade + small upward rise (8px), ~200ms. */
+@utility animate-step-in {
+	animation: step-in var(--duration-base) var(--ease-out-soft) both;
+}
+
+/* Micro entrance for compact glyphs (e.g. completed ✓). */
+@utility animate-pop-in {
+	animation: pop-in var(--duration-base) var(--ease-out-soft) backwards;
+}

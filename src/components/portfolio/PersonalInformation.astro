@@ -1,5 +1,5 @@
 ---
-import { Upload } from 'lucide-astro';
+import ProfilePhotoUpload from './ProfilePhotoUpload.astro';
 
 const inputClass =
 	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
@@ -11,9 +11,9 @@ const inputClass =
 	class="flex flex-col gap-md"
 >
 	<div class="flex flex-col gap-xs">
-		<h1 id="personal-information-heading" class="text-heading-md text-ink">
+		<h2 id="personal-information-heading" class="text-heading-md text-ink">
 			Personal Information
-		</h1>
+		</h2>
 		<p class="text-body-sm text-ink-subtle">
 			Provide your basic professional details.
 		</p>
@@ -105,18 +105,7 @@ const inputClass =
 			<p id="profile-photo-label" class="text-body-sm font-medium text-ink-muted">
 				Profile Photo
 			</p>
-			<div
-				class="flex flex-col items-center justify-center gap-xs rounded-md border border-dashed border-hairline-strong bg-surface-1 px-md py-lg text-center"
-			>
-				<span
-					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
-					aria-hidden="true"
-				>
-					<Upload size="18" />
-				</span>
-				<p class="text-body-sm font-medium text-ink">Upload Profile Photo</p>
-				<p class="text-caption text-ink-tertiary">PNG, JPG · Maximum 5 MB</p>
-			</div>
+			<ProfilePhotoUpload />
 		</div>
 	</form>
 </section>

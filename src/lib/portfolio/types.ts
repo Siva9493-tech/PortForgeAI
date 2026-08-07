@@ -97,7 +97,7 @@ export interface AchievementEntry {
 
 export type AchievementsData = AchievementEntry[];
 
-export interface SocialLinksData {
+export interface SocialLinksEntry {
 	linkedinProfile: string;
 	githubProfile: string;
 	portfolioWebsite: string;
@@ -106,6 +106,8 @@ export interface SocialLinksData {
 	youtubeChannel: string;
 	otherWebsite: string;
 }
+
+export type SocialLinksData = SocialLinksEntry[];
 
 export interface ResumeData {
 	fileName: string;
@@ -235,7 +237,7 @@ export function createEmptyAchievementEntry(): AchievementEntry {
 	};
 }
 
-export function createEmptySocialLinks(): SocialLinksData {
+export function createEmptySocialLinks(): SocialLinksEntry {
 	return {
 		linkedinProfile: '',
 		githubProfile: '',
@@ -277,7 +279,7 @@ export function createEmptyPortfolioData(): PortfolioData {
 		skills: createEmptySkills(),
 		certifications: [createEmptyCertificationEntry()],
 		achievements: [createEmptyAchievementEntry()],
-		socialLinks: createEmptySocialLinks(),
+		socialLinks: [createEmptySocialLinks()],
 		resume: createEmptyResume(),
 		githubImport: createEmptyGitHubImport(),
 		linkedinImport: createEmptyLinkedInImport(),

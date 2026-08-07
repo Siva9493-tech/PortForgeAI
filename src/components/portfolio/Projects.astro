@@ -1,8 +1,11 @@
 ---
 import { Plus } from 'lucide-astro';
+import { wizardStore } from '../../lib/portfolio';
 
 const inputClass =
 	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+
+const entries = wizardStore.getState().data.projects;
 ---
 
 <section
@@ -19,102 +22,135 @@ const inputClass =
 		</p>
 	</div>
 
-	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
-		<div class="flex flex-col gap-xs">
-			<label for="project-name" class="text-body-sm font-medium text-ink-muted">
-				Project Name
-			</label>
-			<input
-				id="project-name"
-				name="projectName"
-				type="text"
-				placeholder="PortForge AI"
-				class={inputClass}
-			/>
-		</div>
+	<div class="flex flex-col gap-md">
+		{
+			entries.map((_, index) => (
+				<div
+					role="group"
+					aria-label={`Project ${index + 1}`}
+					data-list-index={index}
+					class="grid grid-cols-1 gap-md md:grid-cols-2"
+				>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`project-name-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Project Name
+						</label>
+						<input
+							id={`project-name-${index}`}
+							name="projectName"
+							type="text"
+							placeholder="PortForge AI"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="project-role" class="text-body-sm font-medium text-ink-muted">
-				Project Role
-			</label>
-			<input
-				id="project-role"
-				name="projectRole"
-				type="text"
-				placeholder="Full Stack Developer"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`project-role-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Project Role
+						</label>
+						<input
+							id={`project-role-${index}`}
+							name="projectRole"
+							type="text"
+							placeholder="Full Stack Developer"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="technologies" class="text-body-sm font-medium text-ink-muted">
-				Technologies Used
-			</label>
-			<input
-				id="technologies"
-				name="technologies"
-				type="text"
-				placeholder="Astro, TypeScript, Tailwind CSS, Supabase"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs md:col-span-2">
+						<label
+							for={`project-technologies-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Technologies Used
+						</label>
+						<input
+							id={`project-technologies-${index}`}
+							name="technologies"
+							type="text"
+							placeholder="Astro, TypeScript, Tailwind CSS, Supabase"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="github-url" class="text-body-sm font-medium text-ink-muted">
-				GitHub Repository
-			</label>
-			<input
-				id="github-url"
-				name="githubUrl"
-				type="url"
-				placeholder="https://github.com/username/project"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`project-github-url-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							GitHub Repository
+						</label>
+						<input
+							id={`project-github-url-${index}`}
+							name="githubUrl"
+							type="url"
+							placeholder="https://github.com/username/project"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="demo-url" class="text-body-sm font-medium text-ink-muted">
-				Live Demo URL
-			</label>
-			<input
-				id="demo-url"
-				name="demoUrl"
-				type="url"
-				placeholder="https://project.vercel.app"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`project-demo-url-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Live Demo URL
+						</label>
+						<input
+							id={`project-demo-url-${index}`}
+							name="demoUrl"
+							type="url"
+							placeholder="https://project.vercel.app"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="project-description" class="text-body-sm font-medium text-ink-muted">
-				Project Description
-			</label>
-			<textarea
-				id="project-description"
-				name="description"
-				rows="6"
-				placeholder="Describe the project, your contributions, features, and impact..."
-				class={inputClass}
-			></textarea>
-		</div>
+					<div class="flex flex-col gap-xs md:col-span-2">
+						<label
+							for={`project-description-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Project Description
+						</label>
+						<textarea
+							id={`project-description-${index}`}
+							name="description"
+							rows="6"
+							placeholder="Describe the project, your contributions, features, and impact..."
+							class={inputClass}
+						></textarea>
+					</div>
 
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="key-highlights" class="text-body-sm font-medium text-ink-muted">
-				Key Highlights
-			</label>
-			<textarea
-				id="key-highlights"
-				name="highlights"
-				rows="4"
-				placeholder="Mention important achievements or results..."
-				class={inputClass}
-			></textarea>
-		</div>
-	</form>
+					<div class="flex flex-col gap-xs md:col-span-2">
+						<label
+							for={`project-key-highlights-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Key Highlights
+						</label>
+						<textarea
+							id={`project-key-highlights-${index}`}
+							name="highlights"
+							rows="4"
+							placeholder="Mention important achievements or results..."
+							class={inputClass}
+						></textarea>
+					</div>
+				</div>
+			))
+		}
+	</div>
 
 	<button
 		type="button"
-		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+		data-add-entry
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
 	>
 		<Plus size="16" aria-hidden="true" />
 		Add Another Project

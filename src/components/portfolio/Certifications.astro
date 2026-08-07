@@ -1,8 +1,11 @@
 ---
 import { Plus } from 'lucide-astro';
+import { wizardStore } from '../../lib/portfolio';
 
 const inputClass =
 	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+
+const entries = wizardStore.getState().data.certifications;
 ---
 
 <section
@@ -19,88 +22,118 @@ const inputClass =
 		</p>
 	</div>
 
-	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
-		<div class="flex flex-col gap-xs">
-			<label for="certification-name" class="text-body-sm font-medium text-ink-muted">
-				Certification Name
-			</label>
-			<input
-				id="certification-name"
-				name="certificationName"
-				type="text"
-				placeholder="Machine Learning Internship"
-				class={inputClass}
-			/>
-		</div>
+	<div class="flex flex-col gap-md">
+		{
+			entries.map((_, index) => (
+				<div
+					role="group"
+					aria-label={`Certification ${index + 1}`}
+					data-list-index={index}
+					class="grid grid-cols-1 gap-md md:grid-cols-2"
+				>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`certification-name-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Certification Name
+						</label>
+						<input
+							id={`certification-name-${index}`}
+							name="certificationName"
+							type="text"
+							placeholder="Machine Learning Internship"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="issuing-organization" class="text-body-sm font-medium text-ink-muted">
-				Issuing Organization
-			</label>
-			<input
-				id="issuing-organization"
-				name="issuingOrganization"
-				type="text"
-				placeholder="APSSDC"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`certification-issuing-organization-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Issuing Organization
+						</label>
+						<input
+							id={`certification-issuing-organization-${index}`}
+							name="issuingOrganization"
+							type="text"
+							placeholder="APSSDC"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="issue-date" class="text-body-sm font-medium text-ink-muted">
-				Issue Date
-			</label>
-			<input
-				id="issue-date"
-				name="issueDate"
-				type="month"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`certification-issue-date-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Issue Date
+						</label>
+						<input
+							id={`certification-issue-date-${index}`}
+							name="issueDate"
+							type="month"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="credential-id" class="text-body-sm font-medium text-ink-muted">
-				Credential ID
-			</label>
-			<input
-				id="credential-id"
-				name="credentialId"
-				type="text"
-				placeholder="ABC123XYZ"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`certification-credential-id-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Credential ID
+						</label>
+						<input
+							id={`certification-credential-id-${index}`}
+							name="credentialId"
+							type="text"
+							placeholder="ABC123XYZ"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="credential-url" class="text-body-sm font-medium text-ink-muted">
-				Credential URL
-			</label>
-			<input
-				id="credential-url"
-				name="credentialUrl"
-				type="url"
-				placeholder="https://..."
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs md:col-span-2">
+						<label
+							for={`certification-credential-url-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Credential URL
+						</label>
+						<input
+							id={`certification-credential-url-${index}`}
+							name="credentialUrl"
+							type="url"
+							placeholder="https://..."
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="certification-description" class="text-body-sm font-medium text-ink-muted">
-				Description
-			</label>
-			<textarea
-				id="certification-description"
-				name="description"
-				rows="4"
-				placeholder="Describe what you learned or achieved..."
-				class={inputClass}
-			></textarea>
-		</div>
-	</form>
+					<div class="flex flex-col gap-xs md:col-span-2">
+						<label
+							for={`certification-description-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Description
+						</label>
+						<textarea
+							id={`certification-description-${index}`}
+							name="description"
+							rows="4"
+							placeholder="Describe what you learned or achieved..."
+							class={inputClass}
+						></textarea>
+					</div>
+				</div>
+			))
+		}
+	</div>
 
 	<button
 		type="button"
-		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+		data-add-entry
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
 	>
 		<Plus size="16" aria-hidden="true" />
 		Add Another Certification

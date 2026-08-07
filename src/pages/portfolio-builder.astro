@@ -47,7 +47,6 @@ const sectionsByStep = {
 						return (
 							<div
 								data-step-section-id={step.id}
-								tabindex="-1"
 								hidden={step.id !== activeStepId}
 							>
 								<SectionComponent />
@@ -64,7 +63,8 @@ const sectionsByStep = {
 
 <script>
 	import { wizardStore } from '../lib/portfolio';
-	import { applySectionValues, collectSectionData } from '../lib/portfolio';
+	import { addRepeatEntry, applySectionValues, collectSectionData } from '../lib/portfolio';
+	import { scrollToActiveStep } from '../lib/portfolio';
 	import type { PortfolioData } from '../lib/portfolio';
 
 	const container = document.getElementById('wizard-step-container');
@@ -81,29 +81,41 @@ const sectionsByStep = {
 
 		const persistTarget = (event: Event) => {
 			const target = event.target as Element | null;
-			const wrapper = target?.closest<HTMLElement>('[data-step-section-id]');
-			const stepId = wrapper?.dataset.stepSectionId as keyof PortfolioData | undefined;
-			if (wrapper && stepId) collectSectionData(wrapper, stepId);
+			const section = target?.closest<HTMLElement>('[data-step-section-id]');
+			const stepId = section?.dataset.stepSectionId as keyof PortfolioData | undefined;
+			if (!section || !stepId) return;
+
+			const group = target?.closest<HTMLElement>('[data-list-index]');
+			const index = group ? Number(group.dataset.listIndex) : 0;
+			collectSectionData(group ?? section, stepId, index);
 		};
 
 		container.addEventListener('input', persistTarget);
 		container.addEventListener('change', persistTarget);
 
+		container.addEventListener('click', (event) => {
+			const target = event.target as Element | null;
+			const button = target?.closest<HTMLButtonElement>('[data-add-entry]');
+			if (!button) return;
+			const section = button.closest<HTMLElement>('[data-step-section-id]');
+			const stepId = section?.dataset.stepSectionId as keyof PortfolioData | undefined;
+			if (section && stepId) addRepeatEntry(section, stepId);
+		});
+
 		let lastStep = wizardStore.getState().currentStep;
 
 		const applyState = () => {
 			const { currentStep } = wizardStore.getState();
-			let active: HTMLElement | null = null;
+			const changed = currentStep !== lastStep;
 
 			for (const section of sections) {
-				const isVisible = section.dataset.stepSectionId === currentStep;
-				section.hidden = !isVisible;
-				if (isVisible) active = section;
+				section.hidden = section.dataset.stepSectionId !== currentStep;
+				section.classList.toggle('animate-step-in', changed && !section.hidden);
 			}
 
-			if (currentStep !== lastStep) {
+			if (changed) {
 				lastStep = currentStep;
-				active?.focus({ preventScroll: true });
+				scrollToActiveStep(container);
 			}
 		};
 

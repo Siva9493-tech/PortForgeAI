@@ -114,7 +114,9 @@ const inputClass =
 
 	<button
 		type="button"
-		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+		disabled
+		aria-disabled="true"
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
 	>
 		<Plus size="16" aria-hidden="true" />
 		Add More Skills

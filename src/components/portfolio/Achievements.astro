@@ -1,5 +1,6 @@
 ---
 import { Plus } from 'lucide-astro';
+import { wizardStore } from '../../lib/portfolio';
 
 const inputClass =
 	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
@@ -13,6 +14,8 @@ const categories = [
 	'Open Source',
 	'Other',
 ];
+
+const entries = wizardStore.getState().data.achievements;
 ---
 
 <section
@@ -29,89 +32,121 @@ const categories = [
 		</p>
 	</div>
 
-	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
-		<div class="flex flex-col gap-xs">
-			<label for="achievement-title" class="text-body-sm font-medium text-ink-muted">
-				Achievement Title
-			</label>
-			<input
-				id="achievement-title"
-				name="achievementTitle"
-				type="text"
-				placeholder="Winner — Smart India Hackathon"
-				class={inputClass}
-			/>
-		</div>
+	<div class="flex flex-col gap-md">
+		{
+			entries.map((_, index) => (
+				<div
+					role="group"
+					aria-label={`Achievement ${index + 1}`}
+					data-list-index={index}
+					class="grid grid-cols-1 gap-md md:grid-cols-2"
+				>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`achievement-title-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Achievement Title
+						</label>
+						<input
+							id={`achievement-title-${index}`}
+							name="achievementTitle"
+							type="text"
+							placeholder="Winner — Smart India Hackathon"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="organization" class="text-body-sm font-medium text-ink-muted">
-				Organization
-			</label>
-			<input
-				id="organization"
-				name="organization"
-				type="text"
-				placeholder="Government of India"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`achievement-organization-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Organization
+						</label>
+						<input
+							id={`achievement-organization-${index}`}
+							name="organization"
+							type="text"
+							placeholder="Government of India"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="achievement-date" class="text-body-sm font-medium text-ink-muted">
-				Achievement Date
-			</label>
-			<input
-				id="achievement-date"
-				name="achievementDate"
-				type="month"
-				class={inputClass}
-			/>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`achievement-date-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Achievement Date
+						</label>
+						<input
+							id={`achievement-date-${index}`}
+							name="achievementDate"
+							type="month"
+							class={inputClass}
+						/>
+					</div>
 
-		<div class="flex flex-col gap-xs">
-			<label for="achievement-category" class="text-body-sm font-medium text-ink-muted">
-				Achievement Category
-			</label>
-			<select id="achievement-category" name="category" class={inputClass}>
-				<option value="" disabled selected>
-					Select a category
-				</option>
-				{
-					categories.map((category) => <option value={category}>{category}</option>)
-				}
-			</select>
-		</div>
+					<div class="flex flex-col gap-xs">
+						<label
+							for={`achievement-category-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Achievement Category
+						</label>
+						<select
+							id={`achievement-category-${index}`}
+							name="category"
+							class={inputClass}
+						>
+							<option value="" disabled selected>
+								Select a category
+							</option>
+							{categories.map((category) => <option value={category}>{category}</option>)}
+						</select>
+					</div>
 
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="achievement-description" class="text-body-sm font-medium text-ink-muted">
-				Description
-			</label>
-			<textarea
-				id="achievement-description"
-				name="description"
-				rows="5"
-				placeholder="Describe your achievement and its impact..."
-				class={inputClass}
-			></textarea>
-		</div>
+					<div class="flex flex-col gap-xs md:col-span-2">
+						<label
+							for={`achievement-description-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Description
+						</label>
+						<textarea
+							id={`achievement-description-${index}`}
+							name="description"
+							rows="5"
+							placeholder="Describe your achievement and its impact..."
+							class={inputClass}
+						></textarea>
+					</div>
 
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="supporting-link" class="text-body-sm font-medium text-ink-muted">
-				Supporting Link
-			</label>
-			<input
-				id="supporting-link"
-				name="supportingLink"
-				type="url"
-				placeholder="https://..."
-				class={inputClass}
-			/>
-		</div>
-	</form>
+					<div class="flex flex-col gap-xs md:col-span-2">
+						<label
+							for={`achievement-supporting-link-${index}`}
+							class="text-body-sm font-medium text-ink-muted"
+						>
+							Supporting Link
+						</label>
+						<input
+							id={`achievement-supporting-link-${index}`}
+							name="supportingLink"
+							type="url"
+							placeholder="https://..."
+							class={inputClass}
+						/>
+					</div>
+				</div>
+			))
+		}
+	</div>
 
 	<button
 		type="button"
-		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+		data-add-entry
+		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
 	>
 		<Plus size="16" aria-hidden="true" />
 		Add Another Achievement

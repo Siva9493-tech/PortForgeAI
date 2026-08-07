@@ -31,14 +31,16 @@ const stepsWithState: StepDisplay[] = WIZARD_STEPS.map((step) => {
 });
 
 function itemClasses({ isActive, isCompleted, isVisited }: StepDisplay): string {
-	const base = 'flex w-full items-center gap-sm rounded-md px-sm py-sm text-left';
+	const base =
+		'flex w-full items-center gap-sm rounded-md px-sm py-sm text-left transition-colors duration-200';
 	if (isActive) return `${base} bg-surface-2 text-ink`;
 	if (isCompleted || isVisited) return `${base} text-ink-muted`;
 	return `${base} text-ink-subtle`;
 }
 
 function badgeClasses(isActive: boolean, isCompleted: boolean): string {
-	const base = 'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-caption font-medium';
+	const base =
+		'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-caption font-medium transition-colors duration-200';
 	if (isActive) return `${base} bg-primary text-on-primary`;
 	if (isCompleted) return `${base} bg-surface-2 text-semantic-success`;
 	return `${base} bg-surface-1 text-ink-tertiary`;
@@ -126,6 +128,7 @@ function badgeClasses(isActive: boolean, isCompleted: boolean): string {
 			svg.setAttribute('stroke-linecap', 'round');
 			svg.setAttribute('stroke-linejoin', 'round');
 			svg.setAttribute('aria-hidden', 'true');
+			svg.classList.add('animate-pop-in');
 			svg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
 			return svg;
 		};
