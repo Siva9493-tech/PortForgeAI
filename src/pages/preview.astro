@@ -1,0 +1,146 @@
+---
+import '../styles/globals.css';
+import { generatePortfolio } from '../lib/portfolio';
+import { previewSwatchClass, themeStore, type PortfolioTheme } from '../lib/themes';
+import { PortfolioRenderer } from '../components/portfolio-renderer';
+import PortfolioExport from '../components/portfolio/PortfolioExport.astro';
+
+const generated = generatePortfolio();
+const ssrPortfolio = generated.portfolio;
+const currentTheme: PortfolioTheme = generated.theme;
+const availableThemes: readonly PortfolioTheme[] = themeStore.getAvailableThemes();
+
+const themeButtonBase =
+	'inline-flex items-center gap-xs rounded-md border px-md py-sm text-button font-medium transition duration-200';
+const themeButtonActive = 'bg-primary text-on-primary border-primary';
+const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#010102" />
+		<meta name="color-scheme" content="dark" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Portfolio Preview</title>
+		<meta name="description" content={ssrPortfolio.seo?.description} />
+	</head>
+	<body>
+		<a
+			href="#live-preview-root"
+			class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface-2 focus:px-sm focus:py-xs focus:text-body-sm focus:text-ink"
+		>
+			Skip to content
+		</a>
+
+		<header class="border-b border-hairline" aria-label="Preview controls">
+			<div class="mx-auto flex w-full max-w-page flex-wrap items-center gap-md px-md py-md md:px-xl">
+				<label id="theme-selector-label" class="text-body-sm font-medium text-ink-muted">
+					Theme
+				</label>
+				<div
+					id="theme-selector"
+					role="group"
+					aria-labelledby="theme-selector-label"
+					class="flex flex-wrap gap-xs"
+				>
+					{
+						availableThemes.map((theme) => (
+							<button
+								type="button"
+								data-theme-id={theme.id}
+								aria-pressed={theme.id === currentTheme.id ? 'true' : 'false'}
+								class={`${themeButtonBase} ${theme.id === currentTheme.id ? themeButtonActive : themeButtonIdle}`}
+							>
+								<span
+									class={`block size-2 rounded-full ${previewSwatchClass(theme.id)}`}
+									aria-hidden="true"
+								></span>
+								{theme.name}
+							</button>
+						))
+					}
+				</div>
+			</div>
+		</header>
+
+		<div id="live-preview-root">
+			<PortfolioRenderer portfolio={ssrPortfolio} theme={currentTheme} />
+		</div>
+
+		<div class="mx-auto w-full max-w-page px-md md:px-xl">
+			<PortfolioExport />
+		</div>
+
+		<script>
+			import { initLivePreview, startManagedPortfolioPreview } from '../lib/portfolio/live-preview';
+			import { themeStore, isThemeId, type PortfolioTheme } from '../lib/themes';
+			import { portfolioManagerStore } from '../lib/portfolio-manager';
+
+			const params = new URLSearchParams(window.location.search);
+			const portfolioId = params.get('portfolio');
+
+			if (portfolioId) {
+				const record = portfolioManagerStore.getPortfolio(portfolioId);
+				if (record) {
+					const output = record.data;
+					const templateId = output.theme?.templateId ?? output.metadata?.templateId;
+					if (templateId && isThemeId(templateId)) {
+						themeStore.setTheme(templateId);
+					}
+					startManagedPortfolioPreview(output);
+				} else {
+					const root = document.getElementById('live-preview-root');
+					if (root) {
+						root.innerHTML = `
+							<div class="card mx-auto mt-xl flex w-full max-w-md flex-col items-center gap-sm p-xl text-center">
+								<span class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-subtle" aria-hidden="true">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 2 2 4-4"/></svg>
+								</span>
+								<h1 class="text-heading-sm text-ink">Portfolio not found</h1>
+								<p class="text-body-sm text-ink-subtle">The portfolio you requested does not exist.</p>
+								<a href="/portfolios" class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover">Back to My Portfolios</a>
+							</div>`;
+					}
+				}
+			} else {
+				initLivePreview();
+			}
+
+			const selector = document.getElementById('theme-selector');
+			const buttons = selector
+				? Array.from(selector.querySelectorAll<HTMLButtonElement>('[data-theme-id]'))
+				: [];
+
+			const syncSelector = (theme: PortfolioTheme): void => {
+				for (const button of buttons) {
+					const active = button.dataset.themeId === theme.id;
+					button.setAttribute('aria-pressed', String(active));
+					button.classList.toggle('bg-primary', active);
+					button.classList.toggle('bg-surface-2', !active);
+					button.classList.toggle('text-on-primary', active);
+					button.classList.toggle('text-ink', !active);
+					button.classList.toggle('border-primary', active);
+					button.classList.toggle('border-hairline', !active);
+				}
+			};
+
+			selector?.addEventListener('click', (event) => {
+				const target = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-theme-id]');
+				if (!target) {
+					return;
+				}
+				const id = target.dataset.themeId;
+				if (id && isThemeId(id)) {
+					themeStore.setTheme(id);
+				}
+			});
+
+			syncSelector(themeStore.getTheme());
+			themeStore.subscribe(syncSelector);
+		</script>
+	</body>
+</html>

@@ -1,0 +1,60 @@
+---
+import { Mail, Download, Github, Linkedin } from 'lucide-astro';
+import type { PortfolioResume, PortfolioSocial } from '../../lib/ai';
+import type { PortfolioTheme } from '../../lib/themes';
+import SectionWrapper from './SectionWrapper.astro';
+
+interface Props {
+	social: PortfolioSocial | null;
+	resume: PortfolioResume | null;
+	theme: PortfolioTheme;
+}
+
+const { social, resume, theme } = Astro.props;
+const presentation = theme.presentation;
+
+interface ContactAction {
+	label: string;
+	href: string;
+	icon: typeof Mail;
+}
+
+const actions: ContactAction[] = [];
+
+if (social?.linkedin) {
+	actions.push({ label: 'LinkedIn', href: social.linkedin, icon: Linkedin });
+}
+if (social?.github) {
+	actions.push({ label: 'GitHub', href: social.github, icon: Github });
+}
+if (resume?.fileUrl) {
+	actions.push({ label: 'Download Resume', href: resume.fileUrl, icon: Download });
+}
+---
+
+{
+	(actions.length > 0 || resume) && (
+		<SectionWrapper id="contact" heading="Get in Touch" theme={theme} bodyClass="mt-lg flex flex-wrap gap-sm">
+			<Mail slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+			{
+				actions.map((action) => (
+					<a
+						class={presentation.button}
+						href={action.href}
+						{...(action.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+					>
+						<action.icon size="16" aria-hidden="true" />
+						{action.label}
+					</a>
+				))
+			}
+			{
+				resume && !resume.fileUrl && (
+					<p class="text-body-sm text-ink-muted">
+						Resume attached: {resume.fileName || 'resume'}
+					</p>
+				)
+			}
+		</SectionWrapper>
+	)
+}

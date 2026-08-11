@@ -1,0 +1,53 @@
+---
+import { Trophy, ExternalLink } from 'lucide-astro';
+import type { PortfolioAchievement } from '../../lib/ai';
+import type { PortfolioTheme } from '../../lib/themes';
+import SectionWrapper from './SectionWrapper.astro';
+
+interface Props {
+	achievements: PortfolioAchievement[];
+	theme: PortfolioTheme;
+}
+
+const { achievements, theme } = Astro.props;
+const presentation = theme.presentation;
+---
+
+{
+	achievements.length > 0 && (
+		<SectionWrapper
+			id="achievements"
+			heading="Achievements"
+			theme={theme}
+			bodyClass="mt-lg grid grid-cols-1 gap-md md:grid-cols-2"
+		>
+			<Trophy slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+			{
+				achievements.map((achievement) => (
+					<article class={`${presentation.card} flex flex-col gap-xs p-md`}>
+						<h3 class="text-card-title text-ink">{achievement.title}</h3>
+						<p class="text-caption text-ink-tertiary">
+							{achievement.organization}
+							{achievement.date && ` • ${achievement.date}`}
+							{achievement.category && ` • ${achievement.category}`}
+						</p>
+						{achievement.description && (
+							<p class="text-body-sm text-ink-muted">{achievement.description}</p>
+						)}
+						{achievement.link && (
+							<a
+								class="mt-xs inline-flex items-center gap-xs text-button text-primary hover:text-primary-hover"
+								href={achievement.link}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<ExternalLink size="16" aria-hidden="true" />
+								Learn more
+							</a>
+						)}
+					</article>
+				))
+			}
+		</SectionWrapper>
+	)
+}

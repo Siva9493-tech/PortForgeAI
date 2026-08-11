@@ -1,0 +1,49 @@
+---
+import { GraduationCap } from 'lucide-astro';
+import type { PortfolioEducation } from '../../lib/ai';
+import type { PortfolioTheme } from '../../lib/themes';
+import SectionWrapper from './SectionWrapper.astro';
+
+interface Props {
+	education: PortfolioEducation[];
+	theme: PortfolioTheme;
+}
+
+const { education, theme } = Astro.props;
+const presentation = theme.presentation;
+
+function formatYears(entry: PortfolioEducation): string {
+	const parts: string[] = [];
+	if (entry.startYear) {
+		parts.push(entry.startYear);
+	}
+	if (entry.endYear) {
+		parts.push(entry.endYear);
+	}
+	return parts.length ? parts.join(' — ') : '';
+}
+---
+
+{
+	education.length > 0 && (
+		<SectionWrapper id="education" heading="Education" theme={theme} bodyClass="mt-lg flex flex-col gap-md">
+			<GraduationCap slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+			{
+				education.map((entry) => (
+					<article class={`${presentation.card} flex flex-col gap-xs p-md`}>
+						<h3 class="text-card-title text-ink">{entry.degree}</h3>
+						<p class="text-caption text-ink-tertiary">
+							{entry.institution}
+							{entry.fieldOfStudy && ` • ${entry.fieldOfStudy}`}
+						</p>
+						<div class="flex flex-wrap gap-sm text-caption text-ink-subtle">
+							{formatYears(entry) && <span>{formatYears(entry)}</span>}
+							{entry.cgpa && <span>CGPA: {entry.cgpa}</span>}
+						</div>
+						{entry.description && <p class="text-body-sm text-ink-muted">{entry.description}</p>}
+					</article>
+				))
+			}
+		</SectionWrapper>
+	)
+}

@@ -1,0 +1,73 @@
+---
+import { Braces, FileCode2, FileText } from 'lucide-astro';
+
+const secondaryButtonClass =
+	'inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50';
+
+const primaryButtonClass =
+	'inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50';
+
+const options = [
+	{
+		title: 'Static HTML Export',
+		description: 'Generate a standalone HTML portfolio.',
+		icon: FileCode2,
+	},
+	{
+		title: 'PDF Resume Export',
+		description: 'Create a printable PDF version.',
+		icon: FileText,
+	},
+	{
+		title: 'JSON Portfolio Data',
+		description: 'Export your structured portfolio information.',
+		icon: Braces,
+	},
+];
+---
+
+<section
+	id="portfolio-export"
+	aria-labelledby="portfolio-export-heading"
+	class="mt-md flex flex-col gap-md"
+>
+	<div class="flex flex-col gap-xs">
+		<h2 id="portfolio-export-heading" class="text-heading-md text-ink">
+			Export Portfolio
+		</h2>
+		<p class="text-body-sm text-ink-subtle">
+			Prepare your portfolio for download or deployment.
+		</p>
+	</div>
+
+	<div class="card flex flex-col gap-md p-lg">
+		<ul class="flex flex-col gap-md">
+			{options.map((option) => (
+				<li class="flex flex-col gap-sm rounded-md border border-hairline bg-surface-2 p-md sm:flex-row sm:items-center sm:gap-md">
+					<span
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-surface-2 text-ink-subtle"
+						aria-hidden="true"
+					>
+						<option.icon size="20" />
+					</span>
+					<div class="flex min-w-0 flex-col gap-xxs">
+						<h3 class="text-heading-sm text-ink">{option.title}</h3>
+						<p class="text-body-sm text-ink-muted">{option.description}</p>
+					</div>
+					<button type="button" disabled class={secondaryButtonClass + ' sm:ml-auto'}>
+						Export
+					</button>
+				</li>
+			))}
+		</ul>
+
+		<div class="flex flex-col gap-xs">
+			<button type="button" disabled class={primaryButtonClass + ' w-full'}>
+				Prepare Export
+			</button>
+			<p class="text-body-sm text-ink-tertiary">
+				Export generation will be available after AI portfolio creation is completed.
+			</p>
+		</div>
+	</div>
+</section>

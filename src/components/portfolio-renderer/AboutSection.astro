@@ -1,0 +1,35 @@
+---
+import { User } from 'lucide-astro';
+import type { PortfolioTheme } from '../../lib/themes';
+
+interface Props {
+	about: string;
+	theme: PortfolioTheme;
+}
+
+const { about, theme } = Astro.props;
+const presentation = theme.presentation;
+
+const paragraphs: string[] = about
+	.split(/\n+/)
+	.map((paragraph) => paragraph.trim())
+	.filter(Boolean);
+---
+
+<section id="about" aria-labelledby="about-heading" class={presentation.sectionSpacing}>
+	<div class="flex items-center gap-sm">
+		<User size="20" class={presentation.accent} aria-hidden="true" />
+		<h2 id="about-heading" class={`${presentation.display} text-headline ${presentation.heading}`}>
+			About
+		</h2>
+	</div>
+	{
+		paragraphs.length > 0 && (
+			<div class="mt-lg flex flex-col gap-md">
+				{paragraphs.map((paragraph) => (
+					<p class="max-w-narrow text-body text-ink-muted">{paragraph}</p>
+				))}
+			</div>
+		)
+	}
+</section>

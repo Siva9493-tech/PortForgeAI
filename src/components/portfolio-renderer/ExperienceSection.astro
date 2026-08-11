@@ -1,0 +1,55 @@
+---
+import { Briefcase } from 'lucide-astro';
+import type { PortfolioExperience } from '../../lib/ai';
+import type { PortfolioTheme } from '../../lib/themes';
+import SectionWrapper from './SectionWrapper.astro';
+
+interface Props {
+	experience: PortfolioExperience[];
+	theme: PortfolioTheme;
+}
+
+const { experience, theme } = Astro.props;
+const presentation = theme.presentation;
+
+function formatPeriod(entry: PortfolioExperience): string {
+	if (entry.currentlyWorking) {
+		return entry.startDate ? `${entry.startDate} — Present` : 'Present';
+	}
+	if (entry.startDate && entry.endDate) {
+		return `${entry.startDate} — ${entry.endDate}`;
+	}
+	return entry.startDate || entry.endDate || '';
+}
+---
+
+{
+	experience.length > 0 && (
+		<SectionWrapper
+			id="experience"
+			heading="Experience"
+			theme={theme}
+			bodyClass="mt-lg flex flex-col gap-md"
+		>
+			<Briefcase slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+			{
+				experience.map((entry) => (
+					<article class={`${presentation.card} flex flex-col gap-xs p-md`}>
+						<div class="flex flex-col gap-xxs">
+							<h3 class="text-card-title text-ink">
+								{entry.role}
+								{entry.company && <span class="text-ink-subtle"> at {entry.company}</span>}
+							</h3>
+							<div class="flex flex-wrap gap-sm text-caption text-ink-tertiary">
+								{formatPeriod(entry) && <span>{formatPeriod(entry)}</span>}
+								{entry.employmentType && <span>{entry.employmentType}</span>}
+								{entry.location && <span>{entry.location}</span>}
+							</div>
+						</div>
+						{entry.description && <p class="text-body-sm text-ink-muted">{entry.description}</p>}
+					</article>
+				))
+			}
+		</SectionWrapper>
+	)
+}

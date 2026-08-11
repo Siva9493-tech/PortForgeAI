@@ -1,0 +1,55 @@
+---
+import { BadgeCheck, ExternalLink } from 'lucide-astro';
+import type { PortfolioCertification } from '../../lib/ai';
+import type { PortfolioTheme } from '../../lib/themes';
+import SectionWrapper from './SectionWrapper.astro';
+
+interface Props {
+	certifications: PortfolioCertification[];
+	theme: PortfolioTheme;
+}
+
+const { certifications, theme } = Astro.props;
+const presentation = theme.presentation;
+---
+
+{
+	certifications.length > 0 && (
+		<SectionWrapper
+			id="certifications"
+			heading="Certifications"
+			theme={theme}
+			bodyClass="mt-lg grid grid-cols-1 gap-md md:grid-cols-2"
+		>
+			<BadgeCheck slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+			{
+				certifications.map((certification) => (
+					<article class={`${presentation.card} flex flex-col gap-xs p-md`}>
+						<h3 class="text-card-title text-ink">{certification.name}</h3>
+						<p class="text-caption text-ink-tertiary">
+							{certification.issuingOrganization}
+							{certification.issueDate && ` • ${certification.issueDate}`}
+						</p>
+						{certification.credentialId && (
+							<p class="text-caption text-ink-subtle">ID: {certification.credentialId}</p>
+						)}
+						{certification.description && (
+							<p class="text-body-sm text-ink-muted">{certification.description}</p>
+						)}
+						{certification.credentialUrl && (
+							<a
+								class="mt-xs inline-flex items-center gap-xs text-button text-primary hover:text-primary-hover"
+								href={certification.credentialUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<ExternalLink size="16" aria-hidden="true" />
+								View Credential
+							</a>
+						)}
+					</article>
+				))
+			}
+		</SectionWrapper>
+	)
+}

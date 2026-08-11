@@ -49,6 +49,32 @@ function clearGroupValues(groupRoot: HTMLElement): void {
 	}
 }
 
+export function syncRepeatableRows(sectionRoot: HTMLElement, stepId: keyof PortfolioData): void {
+	const binding = SECTION_BINDINGS[stepId];
+	if (binding.mode !== 'list') return;
+
+	const data = wizardStore.getState().data[stepId] as unknown;
+	const list = Array.isArray(data) ? data : [];
+	const targetCount = list.length;
+	if (targetCount === 0) return;
+
+	const groups = Array.from(sectionRoot.querySelectorAll<HTMLElement>('[data-list-index]'));
+	while (groups.length > targetCount) {
+		groups.pop()?.remove();
+	}
+
+	const template = groups[groups.length - 1];
+	if (!template) return;
+
+	while (groups.length < targetCount) {
+		const entryClone = template.cloneNode(true) as HTMLElement;
+		clearGroupValues(entryClone);
+		entryClone.dataset.listIndex = String(groups.length);
+		template.after(entryClone);
+		groups.push(entryClone);
+	}
+}
+
 export function applySectionValues(root: ParentNode, stepId: keyof PortfolioData): void {
 	const binding = SECTION_BINDINGS[stepId];
 	const data = wizardStore.getState().data[stepId] as unknown;

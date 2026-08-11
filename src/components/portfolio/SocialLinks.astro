@@ -1,5 +1,10 @@
 ---
-import { Plus } from 'lucide-astro';
+import { Plus, Trash2 } from 'lucide-astro';
+import {
+	createEmptySocialLinks,
+	type SocialCustomLink,
+	type SocialLinksEntry,
+} from '../../lib/portfolio';
 import { wizardStore } from '../../lib/portfolio';
 
 const inputClass =
@@ -45,6 +50,12 @@ const linkDefinitions = [
 ];
 
 const entries = wizardStore.getState().data.socialLinks;
+const current: SocialLinksEntry = Array.isArray(entries) && entries.length > 0
+	? entries[0]
+	: createEmptySocialLinks();
+const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
+	? current.customLinks
+	: [];
 ---
 
 <section
@@ -61,61 +72,213 @@ const entries = wizardStore.getState().data.socialLinks;
 		</p>
 	</div>
 
-	<div class="flex flex-col gap-md">
-		{
-			entries.map((_, index) => (
-				<div
-					role="group"
-					aria-label={`Social Links ${index + 1}`}
-					data-list-index={index}
-					class="grid grid-cols-1 gap-md md:grid-cols-2"
+	<div
+		role="group"
+		aria-label="Predefined social links"
+		data-list-index="0"
+		class="grid grid-cols-1 gap-md md:grid-cols-2"
+	>
+		{linkDefinitions.map((link) => (
+			<div class="flex flex-col gap-xs">
+				<label
+					for={`social-link-${link.id}`}
+					class="text-body-sm font-medium text-ink-muted"
 				>
-					{
-						linkDefinitions.map((link) => (
+					{link.label}
+				</label>
+				<input
+					id={`social-link-${link.id}`}
+					name={link.field}
+					type="url"
+					placeholder={link.placeholder}
+					class={inputClass}
+				/>
+			</div>
+		))}
+
+		<div class="flex flex-col gap-xs">
+			<label
+				for="social-link-other"
+				class="text-body-sm font-medium text-ink-muted"
+			>
+				Other Website
+			</label>
+			<input
+				id="social-link-other"
+				name="otherWebsite"
+				type="url"
+				placeholder="https://..."
+				class={inputClass}
+			/>
+		</div>
+	</div>
+
+	<div class="flex flex-col gap-md">
+		<h3 class="text-heading-sm text-ink">Custom Links</h3>
+
+		<div data-custom-links class="flex flex-col gap-md">
+			{
+				customLinks.map((link, index) => (
+					<div
+						data-custom-link-row
+						data-row-index={index}
+						role="group"
+						aria-labelledby={`custom-link-heading-${index}`}
+						class="card flex flex-col gap-sm p-md"
+					>
+						<p id={`custom-link-heading-${index}`} class="text-body-sm font-medium text-ink">
+							Custom Link {index + 1}
+						</p>
+						<div class="grid grid-cols-1 gap-md md:grid-cols-2">
 							<div class="flex flex-col gap-xs">
 								<label
-									for={`social-link-${link.id}-${index}`}
+									for={`custom-link-label-${index}`}
 									class="text-body-sm font-medium text-ink-muted"
 								>
-									{link.label}
+									Label
 								</label>
 								<input
-									id={`social-link-${link.id}-${index}`}
-									name={link.field}
-									type="url"
-									placeholder={link.placeholder}
+									id={`custom-link-label-${index}`}
+									data-custom-label
+									type="text"
+									placeholder="e.g. Personal Blog"
+									value={link.label}
 									class={inputClass}
 								/>
 							</div>
-						))
-					}
-
-					<div class="flex flex-col gap-xs md:col-span-2">
-						<label
-							for={`social-link-other-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
+							<div class="flex flex-col gap-xs">
+								<label
+									for={`custom-link-url-${index}`}
+									class="text-body-sm font-medium text-ink-muted"
+								>
+									URL
+								</label>
+								<input
+									id={`custom-link-url-${index}`}
+									data-custom-url
+									type="url"
+									placeholder="https://example.com"
+									value={link.url}
+									class={inputClass}
+								/>
+							</div>
+						</div>
+						<button
+							type="button"
+							data-remove-custom-link
+							aria-label={`Remove custom link ${index + 1}`}
+							class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
 						>
-							Other Website
-						</label>
-						<input
-							id={`social-link-other-${index}`}
-							name="otherWebsite"
-							type="url"
-							placeholder="https://..."
-							class={inputClass}
-						/>
+							<Trash2 size="16" aria-hidden="true" />
+							Remove
+						</button>
 					</div>
-				</div>
-			))
-		}
-	</div>
+				))
+			}
+		</div>
 
-	<button
-		type="button"
-		data-add-entry
-		class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
-	>
-		<Plus size="16" aria-hidden="true" />
-		Add Another Link
-	</button>
+		<button
+			type="button"
+			data-add-custom-link
+			class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
+		>
+			<Plus size="16" aria-hidden="true" />
+			Add Another Link
+		</button>
+	</div>
 </section>
+
+<script>
+	import {
+		createEmptySocialLinks,
+		createEmptySocialCustomLink,
+		type SocialCustomLink,
+	} from '../../lib/portfolio';
+	import { wizardStore } from '../../lib/portfolio';
+
+	const inputClass =
+		'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+
+	const escapeAttr = (value: string): string =>
+		value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+	const section = document.getElementById('social-links');
+	const addButton = section?.querySelector<HTMLButtonElement>('[data-add-custom-link]');
+	const customContainer = section?.querySelector<HTMLElement>('[data-custom-links]');
+
+	const getCustomLinks = (): SocialCustomLink[] => {
+		const list = wizardStore.getState().data.socialLinks;
+		const first = Array.isArray(list) && list.length > 0 ? list[0] : undefined;
+		return Array.isArray(first?.customLinks) ? first.customLinks : [];
+	};
+
+	const setCustomLinks = (rows: SocialCustomLink[]): void => {
+		const list = wizardStore.getState().data.socialLinks;
+		const current = Array.isArray(list) && list.length > 0 ? list[0] : createEmptySocialLinks();
+		wizardStore.setSectionData('socialLinks', [{ ...current, customLinks: rows }]);
+	};
+
+	const renderRows = (rows: SocialCustomLink[]): void => {
+		if (!customContainer) return;
+		customContainer.innerHTML = rows
+			.map((link, index) =>
+				`<div data-custom-link-row data-row-index="${index}" role="group" aria-labelledby="custom-link-heading-${index}" class="card flex flex-col gap-sm p-md">
+					<p id="custom-link-heading-${index}" class="text-body-sm font-medium text-ink">Custom Link ${index + 1}</p>
+					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
+						<div class="flex flex-col gap-xs">
+							<label for="custom-link-label-${index}" class="text-body-sm font-medium text-ink-muted">Label</label>
+							<input id="custom-link-label-${index}" data-custom-label type="text" placeholder="e.g. Personal Blog" value="${escapeAttr(link.label)}" class="${inputClass}" />
+						</div>
+						<div class="flex flex-col gap-xs">
+							<label for="custom-link-url-${index}" class="text-body-sm font-medium text-ink-muted">URL</label>
+							<input id="custom-link-url-${index}" data-custom-url type="url" placeholder="https://example.com" value="${escapeAttr(link.url)}" class="${inputClass}" />
+						</div>
+					</div>
+					<button type="button" data-remove-custom-link aria-label="Remove custom link ${index + 1}" class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]">Remove</button>
+				</div>`
+			)
+			.join('');
+	};
+
+	if (section && addButton && customContainer) {
+		addButton.addEventListener('click', () => {
+			const rows = getCustomLinks();
+			rows.push(createEmptySocialCustomLink());
+			setCustomLinks(rows);
+			renderRows(rows);
+			const lastRow = customContainer.lastElementChild;
+			lastRow?.querySelector<HTMLInputElement>('[data-custom-label]')?.focus();
+		});
+
+		customContainer.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement;
+			const removeButton = target.closest<HTMLButtonElement>('[data-remove-custom-link]');
+			if (!removeButton) return;
+			const rows = getCustomLinks();
+			const row = removeButton.closest<HTMLElement>('[data-custom-link-row]');
+			const index = row ? Number(row.dataset.rowIndex) : -1;
+			if (index < 0 || index >= rows.length) return;
+			rows.splice(index, 1);
+			setCustomLinks(rows);
+			renderRows(rows);
+			addButton.focus();
+		});
+
+		customContainer.addEventListener('input', (event) => {
+			const target = event.target as HTMLInputElement;
+			const row = target.closest<HTMLElement>('[data-custom-link-row]');
+			if (!row) return;
+			const index = Number(row.dataset.rowIndex);
+			if (!Number.isInteger(index) || index < 0) return;
+			const rows = getCustomLinks();
+			const current = rows[index] ?? createEmptySocialCustomLink();
+			const labelInput = row.querySelector<HTMLInputElement>('[data-custom-label]');
+			const urlInput = row.querySelector<HTMLInputElement>('[data-custom-url]');
+			rows[index] = {
+				label: labelInput?.value ?? current.label,
+				url: urlInput?.value ?? current.url,
+			};
+			setCustomLinks(rows);
+		});
+	}
+</script>

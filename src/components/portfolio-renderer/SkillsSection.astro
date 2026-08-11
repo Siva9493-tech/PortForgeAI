@@ -1,0 +1,35 @@
+---
+import { Wrench } from 'lucide-astro';
+import type { PortfolioSkill } from '../../lib/ai';
+import type { PortfolioTheme } from '../../lib/themes';
+import SectionWrapper from './SectionWrapper.astro';
+
+interface Props {
+	skills: PortfolioSkill[];
+	theme: PortfolioTheme;
+}
+
+const { skills, theme } = Astro.props;
+const presentation = theme.presentation;
+---
+
+{
+	skills.length > 0 && (
+		<SectionWrapper
+			id="skills"
+			heading="Skills"
+			theme={theme}
+			bodyClass="mt-lg grid grid-cols-1 gap-sm md:grid-cols-2"
+		>
+			<Wrench slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+			{
+				skills.map((skill) => (
+					<div class={`${presentation.card} flex flex-col gap-xs p-sm`}>
+						<h3 class="text-eyebrow text-primary">{skill.category}</h3>
+						<p class="text-body-sm text-ink-muted">{skill.value}</p>
+					</div>
+				))
+			}
+		</SectionWrapper>
+	)
+}

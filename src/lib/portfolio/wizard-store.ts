@@ -171,12 +171,18 @@ export class WizardStore {
 	}
 
 	markCompleted(stepId: StepId): void {
+		if (this.state.completedSteps.includes(stepId)) {
+			return;
+		}
 		this.addCompleted(stepId);
 		this.addVisited(stepId);
 		this.notify();
 	}
 
 	markVisited(stepId: StepId): void {
+		if (this.state.visitedSteps.includes(stepId)) {
+			return;
+		}
 		this.addVisited(stepId);
 		this.notify();
 	}
@@ -196,6 +202,9 @@ export class WizardStore {
 	// --- Form data ---
 
 	setSectionData<S extends keyof PortfolioData>(section: S, value: PortfolioData[S]): void {
+		if (this.state.data[section] === value) {
+			return;
+		}
 		this.state.data[section] = value;
 		this.notify();
 	}
@@ -273,4 +282,4 @@ export class WizardStore {
 	}
 }
 
-export const wizardStore = new WizardStore();
+export const wizardStore = new WizardStore({ persistKey: 'portforge:wizard:v1' });

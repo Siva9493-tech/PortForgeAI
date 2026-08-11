@@ -2,12 +2,14 @@
 import { ArrowLeft, ArrowRight } from 'lucide-astro';
 import { TOTAL_STEPS, WIZARD_STEPS, wizardStore } from '../../lib/portfolio';
 
+const isEdit = Boolean(new URL(Astro.url).searchParams.get('portfolio'));
 const state = wizardStore.getState();
 const currentIndex = WIZARD_STEPS.findIndex((step) => step.id === state.currentStep);
 const currentStep = WIZARD_STEPS[Math.max(0, currentIndex)];
 const isFirst = currentIndex === 0;
 const isLast = currentIndex === WIZARD_STEPS.length - 1;
 const percent = Math.round(((currentIndex + 1) / TOTAL_STEPS) * 100);
+const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 ---
 
 <nav
@@ -41,6 +43,22 @@ const percent = Math.round(((currentIndex + 1) / TOTAL_STEPS) * 100);
 		</div>
 	</div>
 
+	<p
+		id="wizard-save-status"
+		data-save-status
+		role="status"
+		class="text-caption font-medium text-semantic-success"
+		hidden
+	></p>
+	<p
+		id="wizard-save-error"
+		data-save-error
+		role="alert"
+		tabindex="-1"
+		class="text-caption font-medium text-semantic-danger"
+		hidden
+	></p>
+
 	<div class="grid grid-cols-1 items-center gap-sm sm:grid-cols-[auto_1fr_auto]">
 		<button
 			type="button"
@@ -63,11 +81,11 @@ const percent = Math.round(((currentIndex + 1) / TOTAL_STEPS) * 100);
 
 		<button
 			type="button"
-			data-nav="next"
-			disabled={isLast}
-			class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition duration-200 hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+			data-nav={isLast ? 'save' : 'next'}
+			disabled={false}
+			class="inline-flex items-center justify-center gap-xs whitespace-nowrap rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition duration-200 hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
 		>
-			Next
+			<span data-nav-label>{finalLabel}</span>
 			<ArrowRight size="16" aria-hidden="true" />
 		</button>
 	</div>
@@ -75,17 +93,60 @@ const percent = Math.round(((currentIndex + 1) / TOTAL_STEPS) * 100);
 
 <script>
 	import { TOTAL_STEPS, WIZARD_STEPS, wizardStore } from '../../lib/portfolio';
+	import {
+		createPortfolioFromBuilder,
+		portfolioManagerStore,
+		savePortfolioFromBuilder,
+	} from '../../lib/portfolio-manager';
 
 	const nav = document.getElementById('wizard-navigation');
+	const editParamId = new URLSearchParams(window.location.search).get('portfolio');
+	const editRecord = editParamId ? portfolioManagerStore.getPortfolio(editParamId) : undefined;
+	const isEditMode = Boolean(editRecord);
+	const finalLabel = isEditMode ? 'Save Changes' : 'Save Portfolio';
+	let targetId = editParamId ?? '';
 
 	if (nav) {
 		const prev = nav.querySelector<HTMLButtonElement>('[data-nav="previous"]');
-		const next = nav.querySelector<HTMLButtonElement>('[data-nav="next"]');
+		const next = nav.querySelector<HTMLButtonElement>('[data-nav="next"], [data-nav="save"]');
+		const navLabel = nav.querySelector<HTMLElement>('[data-nav-label]');
 		const stepNumber = nav.querySelector<HTMLElement>('[data-step-number]');
 		const stepTitle = nav.querySelector<HTMLElement>('[data-step-title]');
 		const percentText = nav.querySelector<HTMLElement>('[data-progress-percent]');
 		const progressbar = nav.querySelector<HTMLElement>('[role="progressbar"]');
 		const fill = nav.querySelector<HTMLElement>('[data-progress-fill]');
+		const saveStatus = nav.querySelector<HTMLElement>('[data-save-status]');
+		const saveError = nav.querySelector<HTMLElement>('[data-save-error]');
+		let saving = false;
+
+		const showStatus = (message: string): void => {
+			if (saveError) {
+				saveError.hidden = true;
+				saveError.textContent = '';
+			}
+			if (saveStatus) {
+				saveStatus.textContent = message;
+				saveStatus.hidden = false;
+			}
+		};
+
+		const showError = (message: string): void => {
+			if (saveStatus) {
+				saveStatus.hidden = true;
+				saveStatus.textContent = '';
+			}
+			if (saveError) {
+				saveError.textContent = message;
+				saveError.hidden = false;
+				saveError.focus();
+			}
+		};
+
+		const navigateToSavedPortfolio = (): void => {
+			window.setTimeout(() => {
+				window.location.assign(`/preview?portfolio=${encodeURIComponent(targetId)}`);
+			}, 400);
+		};
 
 		const applyState = () => {
 			const state = wizardStore.getState();
@@ -93,9 +154,16 @@ const percent = Math.round(((currentIndex + 1) / TOTAL_STEPS) * 100);
 			const step = WIZARD_STEPS[Math.max(0, index)];
 
 			const percent = Math.round(((index + 1) / TOTAL_STEPS) * 100);
+			const isLast = index === WIZARD_STEPS.length - 1;
 
 			if (prev) prev.disabled = index === 0;
-			if (next) next.disabled = index === WIZARD_STEPS.length - 1;
+			if (next) {
+				next.dataset.nav = isLast ? 'save' : 'next';
+				next.disabled = saving;
+			}
+			if (navLabel) {
+				navLabel.textContent = isLast ? (saving ? 'Saving…' : finalLabel) : 'Next';
+			}
 			if (stepNumber) stepNumber.textContent = `Step ${index + 1} of ${TOTAL_STEPS}`;
 			if (stepTitle) stepTitle.textContent = step.title;
 			if (percentText) percentText.textContent = `${percent}%`;
@@ -103,8 +171,43 @@ const percent = Math.round(((currentIndex + 1) / TOTAL_STEPS) * 100);
 			if (fill) fill.style.width = `${percent}%`;
 		};
 
+		const performSave = (): void => {
+			if (saving) return;
+			saving = true;
+			applyState();
+
+			const fail = (message: string): void => {
+				saving = false;
+				applyState();
+				showError(message);
+			};
+
+			try {
+				if (isEditMode) {
+					const saved = savePortfolioFromBuilder(targetId, wizardStore.getState().data);
+					if (!saved) {
+						fail('Could not save changes. This portfolio may no longer exist.');
+						return;
+					}
+				} else {
+					const created = createPortfolioFromBuilder(wizardStore.getState().data);
+					targetId = created.id;
+				}
+				showStatus('Portfolio saved.');
+				navigateToSavedPortfolio();
+			} catch {
+				fail('Could not save the portfolio. Please try again.');
+			}
+		};
+
 		prev?.addEventListener('click', () => wizardStore.previous());
-		next?.addEventListener('click', () => wizardStore.next());
+		next?.addEventListener('click', () => {
+			if (next.dataset.nav === 'save') {
+				performSave();
+				return;
+			}
+			wizardStore.next();
+		});
 
 		wizardStore.subscribe(applyState);
 		applyState();

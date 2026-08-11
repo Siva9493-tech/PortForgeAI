@@ -13,6 +13,7 @@ import SocialLinks from '../components/portfolio/SocialLinks.astro';
 import Skills from '../components/portfolio/Skills.astro';
 import WizardNavigation from '../components/portfolio/WizardNavigation.astro';
 import WizardSidebar from '../components/portfolio/WizardSidebar.astro';
+import { PenLine } from 'lucide-astro';
 import { WIZARD_STEPS, wizardStore } from '../lib/portfolio';
 
 const title = 'Portfolio Builder — PortForge AI';
@@ -40,6 +41,17 @@ const sectionsByStep = {
 		<WizardSidebar />
 
 		<div class="flex min-w-0 flex-col">
+			<div
+				id="builder-edit-indicator"
+				class="mb-md flex items-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm"
+				role="status"
+				hidden
+			>
+				<PenLine size="16" class="shrink-0 text-primary" aria-hidden="true" />
+				<span class="text-body-sm font-medium text-ink">Editing Portfolio:</span>
+				<span data-edit-title class="truncate text-body-sm text-ink-subtle"></span>
+			</div>
+
 			<div id="wizard-step-container">
 				{
 					WIZARD_STEPS.map((step) => {
@@ -63,11 +75,37 @@ const sectionsByStep = {
 
 <script>
 	import { wizardStore } from '../lib/portfolio';
-	import { addRepeatEntry, applySectionValues, collectSectionData } from '../lib/portfolio';
+	import { addRepeatEntry, applySectionValues, collectSectionData, syncRepeatableRows } from '../lib/portfolio';
 	import { scrollToActiveStep } from '../lib/portfolio';
 	import type { PortfolioData } from '../lib/portfolio';
+	import { portfolioManagerStore, portfolioOutputToData } from '../lib/portfolio-manager';
+	import { themeStore, isThemeId } from '../lib/themes';
 
 	const container = document.getElementById('wizard-step-container');
+
+	const editParams = new URLSearchParams(window.location.search);
+	const editPortfolioId = editParams.get('portfolio');
+	const editRecord = editPortfolioId
+		? portfolioManagerStore.getPortfolio(editPortfolioId)
+		: undefined;
+
+	if (editRecord) {
+		wizardStore.reset();
+		const editData = portfolioOutputToData(editRecord.data);
+		for (const stepId of Object.keys(editData) as (keyof PortfolioData)[]) {
+			wizardStore.setSectionData(stepId, editData[stepId]);
+		}
+		const templateId = editRecord.data.theme?.templateId ?? editRecord.data.metadata?.templateId;
+		if (templateId && isThemeId(templateId)) {
+			themeStore.setTheme(templateId);
+		}
+		const indicator = document.getElementById('builder-edit-indicator');
+		if (indicator) {
+			indicator.hidden = false;
+			const titleEl = indicator.querySelector<HTMLElement>('[data-edit-title]');
+			if (titleEl) titleEl.textContent = editRecord.title;
+		}
+	}
 
 	if (container) {
 		const sections = Array.from(
@@ -76,7 +114,10 @@ const sectionsByStep = {
 
 		for (const section of sections) {
 			const stepId = section.dataset.stepSectionId as keyof PortfolioData | undefined;
-			if (stepId) applySectionValues(section, stepId);
+			if (stepId) {
+				syncRepeatableRows(section, stepId);
+				applySectionValues(section, stepId);
+			}
 		}
 
 		const persistTarget = (event: Event) => {

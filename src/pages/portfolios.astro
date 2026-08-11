@@ -1,0 +1,924 @@
+---
+import { Download, FolderPlus, History, Plus, Search, SearchX, Trash2, X } from 'lucide-astro';
+import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
+import PortfolioCard from '../components/portfolio/PortfolioCard.astro';
+import { PORTFOLIO_EXPORT_OPTIONS, portfolioManagerStore } from '../lib/portfolio-manager';
+
+const title = 'My Portfolios — PortForge AI';
+const description = 'Create, view and manage the portfolios you have generated with PortForge AI.';
+
+const records = portfolioManagerStore.getPortfolios();
+
+const primaryButtonClass =
+	'inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover';
+
+const secondaryButtonClass =
+	'inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-1';
+
+const primaryDeleteButtonClass =
+	'inline-flex items-center justify-center gap-xs rounded-md bg-surface-2 px-md py-sm text-button font-medium text-semantic-danger transition-colors duration-200 hover:bg-surface-1 border border-hairline';
+
+const fieldClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body-sm text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus';
+---
+
+<DashboardLayout
+	title={title}
+	description={description}
+	pageLabel="My Portfolios"
+>
+	<header class="flex flex-col gap-md sm:flex-row sm:items-center sm:justify-between">
+		<div>
+			<h1 id="portfolios-heading" tabindex="-1" class="text-heading-md text-ink">My Portfolios</h1>
+			<p class="mt-1 max-w-narrow text-body-sm text-ink-muted">
+				View and manage the portfolios you have generated with PortForge AI.
+			</p>
+		</div>
+
+		<a href="/portfolio-builder" class={primaryButtonClass}>
+			<Plus size="16" aria-hidden="true" />
+			Create New Portfolio
+		</a>
+	</header>
+
+	<div class="mt-lg flex flex-col gap-sm lg:flex-row lg:items-end lg:gap-md">
+		<div class="flex min-w-0 flex-1 flex-col gap-xs">
+			<label
+				for="portfolio-search"
+				class="text-caption font-medium text-ink-subtle"
+			>
+				Search portfolios
+			</label>
+			<div
+				class="flex items-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm transition-colors duration-200 focus-within:border-primary-focus"
+			>
+				<Search size="16" class="shrink-0 text-ink-tertiary" aria-hidden="true" />
+				<input
+					id="portfolio-search"
+					type="search"
+					name="portfolio-search"
+					placeholder="Search by title…"
+					autocomplete="off"
+					spellcheck="false"
+					class="w-full min-w-0 bg-transparent text-body-sm text-ink placeholder:text-ink-tertiary"
+				/>
+			</div>
+		</div>
+
+		<div class="flex flex-col gap-xs">
+			<label
+				for="portfolio-status-filter"
+				class="text-caption font-medium text-ink-subtle"
+			>
+				Status
+			</label>
+			<select
+				id="portfolio-status-filter"
+				name="portfolio-status-filter"
+				class={fieldClass}
+			>
+				<option value="all">All</option>
+				<option value="draft">Draft</option>
+				<option value="published">Published</option>
+			</select>
+		</div>
+	</div>
+
+	<section aria-labelledby="portfolio-content-heading" class="mt-xl">
+		<h2 id="portfolio-content-heading" class="sr-only">Your portfolios</h2>
+
+		<p
+			id="portfolios-count"
+			aria-live="polite"
+			class="text-body-sm text-ink-subtle"
+		></p>
+
+		<p
+			id="portfolios-publish-status"
+			role="status"
+			class="text-body-sm font-medium text-semantic-success"
+			hidden
+		></p>
+		<p
+			id="portfolios-publish-error"
+			role="alert"
+			class="text-body-sm font-medium text-semantic-danger"
+			hidden
+		></p>
+
+		<div
+			id="portfolios-empty"
+			class="card mt-md flex w-full flex-col items-center gap-sm p-xl text-center"
+			hidden={records.length > 0}
+		>
+			<span
+				class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-primary"
+				aria-hidden="true"
+			>
+				<FolderPlus size="24" />
+			</span>
+			<h3 class="text-heading-sm text-ink">No portfolios yet</h3>
+			<p class="max-w-narrow text-body-sm text-ink-subtle">
+				Create your first portfolio to get started.
+			</p>
+			<div class="mt-sm">
+				<a href="/portfolio-builder" class={primaryButtonClass}>
+					<Plus size="16" aria-hidden="true" />
+					Create Portfolio
+				</a>
+			</div>
+		</div>
+
+		<div
+			id="portfolios-none"
+			class="card mt-md flex w-full flex-col items-center gap-sm p-xl text-center"
+			hidden
+		>
+			<span
+				class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
+				aria-hidden="true"
+			>
+				<SearchX size="24" />
+			</span>
+			<h3 class="text-heading-sm text-ink">No portfolios found</h3>
+			<p class="max-w-narrow text-body-sm text-ink-subtle">
+				Try changing your search or filter.
+			</p>
+			<div class="mt-sm">
+				<button type="button" id="portfolios-reset" class={secondaryButtonClass}>
+					Clear search and filters
+				</button>
+			</div>
+		</div>
+
+		<div
+			id="portfolios-list"
+			class="mt-md grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+			hidden={records.length === 0}
+		>
+			{records.map((portfolio) => <PortfolioCard portfolio={portfolio} />)}
+		</div>
+	</section>
+
+	<dialog
+		id="delete-portfolio-dialog"
+		aria-labelledby="delete-portfolio-dialog-title"
+		aria-describedby="delete-portfolio-dialog-description"
+		class="card m-auto w-full max-w-sm p-lg"
+	>
+		<h2 id="delete-portfolio-dialog-title" class="text-heading-sm text-ink">
+			Delete this portfolio?
+		</h2>
+		<p id="delete-portfolio-dialog-description" class="mt-sm text-body-sm text-ink-muted">
+			This permanently removes the portfolio. This action cannot be undone through the
+			current UI, and the portfolio's contents will no longer be available.
+		</p>
+		<div class="mt-lg flex flex-col-reverse gap-sm sm:flex-row sm:justify-end">
+			<button type="button" id="delete-portfolio-cancel" class={secondaryButtonClass}>
+				Cancel
+			</button>
+			<button type="button" id="delete-portfolio-confirm" class={primaryDeleteButtonClass}>
+				<Trash2 size="14" aria-hidden="true" />
+				Delete portfolio
+			</button>
+		</div>
+	</dialog>
+
+	<dialog
+		id="portfolio-history-dialog"
+		aria-labelledby="portfolio-history-dialog-title"
+		class="card m-auto w-full max-w-lg p-lg"
+	>
+		<div class="flex items-start justify-between gap-sm">
+			<div class="flex flex-col gap-xs">
+				<h2 id="portfolio-history-dialog-title" class="text-heading-sm text-ink">
+					Version History
+				</h2>
+				<p id="portfolio-history-dialog-subtitle" class="text-body-sm text-ink-muted"></p>
+			</div>
+			<button
+				type="button"
+				id="portfolio-history-close"
+				class="inline-flex items-center justify-center rounded-md border border-hairline bg-surface-2 p-xs text-ink transition-colors duration-200 hover:bg-surface-1"
+				aria-label="Close version history"
+			>
+				<X size="16" aria-hidden="true" />
+			</button>
+		</div>
+		<ul id="portfolio-history-list" class="mt-lg flex flex-col gap-xs"></ul>
+	</dialog>
+
+	<dialog
+		id="restore-portfolio-dialog"
+		aria-labelledby="restore-portfolio-dialog-title"
+		aria-describedby="restore-portfolio-dialog-description"
+		class="card m-auto w-full max-w-sm p-lg"
+	>
+		<h2 id="restore-portfolio-dialog-title" class="text-heading-sm text-ink">Restore version?</h2>
+		<p id="restore-portfolio-dialog-description" class="mt-sm text-body-sm text-ink-muted">
+			Restoring creates a new current version from an older snapshot. Your existing
+			version history is preserved and the portfolio's current contents are replaced
+			with the restored data.
+		</p>
+		<div class="mt-lg flex flex-col-reverse gap-sm sm:flex-row sm:justify-end">
+			<button type="button" id="restore-portfolio-cancel" class={secondaryButtonClass}>
+				Cancel
+			</button>
+			<button type="button" id="restore-portfolio-confirm" class={primaryButtonClass}>
+				<History size="14" aria-hidden="true" />
+				Restore
+			</button>
+		</div>
+	</dialog>
+
+	<dialog
+		id="portfolio-export-dialog"
+		aria-labelledby="portfolio-export-dialog-title"
+		aria-describedby="portfolio-export-dialog-description"
+		class="card m-auto w-full max-w-lg p-lg"
+	>
+		<div class="flex items-start justify-between gap-sm">
+			<div class="flex flex-col gap-xs">
+				<h2 id="portfolio-export-dialog-title" class="text-heading-sm text-ink">
+					Export Portfolio
+				</h2>
+				<p id="portfolio-export-dialog-subtitle" class="text-body-sm text-ink-muted"></p>
+			</div>
+			<button
+				type="button"
+				id="portfolio-export-close"
+				class="inline-flex items-center justify-center rounded-md border border-hairline bg-surface-2 p-xs text-ink transition-colors duration-200 hover:bg-surface-1"
+				aria-label="Close export dialog"
+			>
+				<X size="16" aria-hidden="true" />
+			</button>
+		</div>
+
+		<p id="portfolio-export-dialog-description" class="mt-sm text-body-sm text-ink-muted">
+			Exporting uses the current version's data and does not change the portfolio's
+			status or version history.
+		</p>
+
+		<fieldset class="mt-lg flex flex-col gap-xs border-0 p-0">
+			<legend class="text-body-sm font-medium text-ink">Choose export format</legend>
+			{
+				PORTFOLIO_EXPORT_OPTIONS.map((option) => (
+					<label
+						class={[
+							'flex flex-col gap-xs rounded-md border bg-surface-2 p-md',
+							option.supported
+								? 'border-hairline'
+								: 'border-hairline opacity-60',
+							'focus-within:border-primary-focus',
+						].join(' ')}
+					>
+						<span class="flex items-start gap-sm">
+							<input
+								type="radio"
+								name="portfolio-export-format"
+								value={option.format}
+								disabled={!option.supported}
+								checked={option.supported}
+								class="mt-0.5 size-4 accent-[var(--color-primary)]"
+							/>
+							<span class="flex min-w-0 flex-col gap-xxs">
+								<span class="text-body-sm font-medium text-ink">{option.title}</span>
+								<span class="text-body-sm text-ink-muted">{option.description}</span>
+								{!option.supported && (
+									<span class="text-caption font-medium text-semantic-danger">
+										{option.unavailableNote}
+									</span>
+								)}
+							</span>
+						</span>
+					</label>
+				))
+			}
+		</fieldset>
+
+		<div class="mt-lg flex flex-col-reverse gap-sm sm:flex-row sm:justify-end">
+			<button type="button" id="portfolio-export-cancel" class={secondaryButtonClass}>
+				Cancel
+			</button>
+			<button type="button" id="portfolio-export-confirm" class={primaryButtonClass}>
+				<Download size="14" aria-hidden="true" />
+				Export
+			</button>
+		</div>
+	</dialog>
+</DashboardLayout>
+
+<script>
+	import {
+		createPortfolioCardElement,
+		downloadPortfolioExport,
+		filterPortfolios,
+		formatPortfolioDateTime,
+		isPortfolioExportFormat,
+		isPortfolioFilterStatus,
+		portfolioCountLabel,
+		portfolioManagerStore,
+		publishPortfolio,
+		restorePortfolio,
+		type PortfolioFilterStatus,
+		type PortfolioRecord,
+	} from '../lib/portfolio-manager';
+
+	const list = document.querySelector<HTMLElement>('#portfolios-list');
+	const empty = document.querySelector<HTMLElement>('#portfolios-empty');
+	const none = document.querySelector<HTMLElement>('#portfolios-none');
+	const count = document.querySelector<HTMLElement>('#portfolios-count');
+	const publishStatus = document.querySelector<HTMLElement>('#portfolios-publish-status');
+	const publishError = document.querySelector<HTMLElement>('#portfolios-publish-error');
+	const search = document.querySelector<HTMLInputElement>('#portfolio-search');
+	const filter = document.querySelector<HTMLSelectElement>('#portfolio-status-filter');
+	const reset = document.querySelector<HTMLButtonElement>('#portfolios-reset');
+	const deleteDialog = document.querySelector<HTMLDialogElement>('#delete-portfolio-dialog');
+	const deleteCancel = document.querySelector<HTMLButtonElement>('#delete-portfolio-cancel');
+	const deleteConfirm = document.querySelector<HTMLButtonElement>('#delete-portfolio-confirm');
+
+	let pendingDeleteId: string | null = null;
+	let deleteTrigger: HTMLButtonElement | null = null;
+
+	const showStatus = (message: string): void => {
+		if (publishError) {
+			publishError.hidden = true;
+			publishError.textContent = '';
+		}
+		if (publishStatus) {
+			publishStatus.textContent = message;
+			publishStatus.hidden = false;
+		}
+	};
+
+	const showError = (message: string): void => {
+		if (publishStatus) {
+			publishStatus.hidden = true;
+			publishStatus.textContent = '';
+		}
+		if (publishError) {
+			publishError.textContent = message;
+			publishError.hidden = false;
+		}
+	};
+
+	const closeDeleteDialog = (): void => {
+		if (deleteDialog?.open) {
+			deleteDialog.close();
+		}
+		pendingDeleteId = null;
+		deleteTrigger = null;
+	};
+
+	const openDeleteDialog = (button: HTMLButtonElement): void => {
+		const id = button.dataset.deletePortfolio;
+		if (!id || !deleteDialog) {
+			return;
+		}
+		pendingDeleteId = id;
+		deleteTrigger = button;
+		if (typeof deleteDialog.showModal === 'function') {
+			deleteDialog.showModal();
+			deleteCancel?.focus();
+		}
+	};
+
+	deleteCancel?.addEventListener('click', closeDeleteDialog);
+
+	deleteConfirm?.addEventListener('click', () => {
+		const id = pendingDeleteId;
+		closeDeleteDialog();
+		if (!id) {
+			showError('Could not delete the portfolio. The portfolio may have been removed.');
+			return;
+		}
+		const removed = portfolioManagerStore.removePortfolio(id);
+		if (!removed) {
+			showError('Could not delete the portfolio. The portfolio may have been removed.');
+			return;
+		}
+		hideFeedback();
+		showStatus('Portfolio deleted.');
+		const heading = document.querySelector<HTMLElement>('#portfolios-heading');
+		if (heading) {
+			heading.focus();
+		}
+	});
+
+	deleteDialog?.addEventListener('cancel', (event) => {
+		event.preventDefault();
+		const trigger = deleteTrigger;
+		closeDeleteDialog();
+		if (trigger?.isConnected) {
+			trigger.focus();
+		}
+	});
+
+	const historyDialog = document.querySelector<HTMLDialogElement>('#portfolio-history-dialog');
+	const historyClose = document.querySelector<HTMLButtonElement>('#portfolio-history-close');
+	const historyTitle = document.querySelector<HTMLElement>('#portfolio-history-dialog-title');
+	const historySubtitle = document.querySelector<HTMLElement>('#portfolio-history-dialog-subtitle');
+	const historyList = document.querySelector<HTMLUListElement>('#portfolio-history-list');
+
+	let historyTrigger: HTMLButtonElement | null = null;
+
+	const closeHistoryDialog = (): void => {
+		if (historyDialog?.open) {
+			historyDialog.close();
+		}
+		historyTrigger = null;
+	};
+
+	const renderHistoryList = (record: PortfolioRecord): void => {
+		if (!historyList || !historyTitle || !historySubtitle) {
+			return;
+		}
+		historyTitle.textContent = `Version history for "${record.title}"`;
+		historySubtitle.textContent = `${record.currentVersion} version${record.currentVersion === 1 ? '' : 's'}`;
+		historyList.replaceChildren();
+		for (const version of [...record.versions].reverse()) {
+			const isCurrent = version.version === record.currentVersion;
+			const item = document.createElement('li');
+			item.className = 'flex flex-col gap-xs rounded-md border border-hairline bg-surface-2 p-sm';
+			item.setAttribute('aria-current', isCurrent ? 'true' : 'false');
+
+			const row = document.createElement('div');
+			row.className = 'flex items-center justify-between gap-sm';
+
+			const label = document.createElement('span');
+			label.className = 'text-body-sm font-medium text-ink';
+			label.textContent = `Version ${version.version}`;
+
+			const meta = document.createElement('div');
+			meta.className = 'flex shrink-0 items-center gap-xs';
+
+			const time = document.createElement('time');
+			time.dateTime = version.createdAt;
+			time.className = 'text-caption text-ink-subtle';
+			time.textContent = formatPortfolioDateTime(version.createdAt);
+
+			if (isCurrent) {
+				const current = document.createElement('span');
+				current.className = 'inline-flex items-center rounded-pill bg-surface-1 px-xs py-xxs text-caption font-medium text-semantic-success';
+				current.textContent = 'Current';
+				meta.append(current, time);
+			} else {
+				const restoreButton = document.createElement('button');
+				restoreButton.type = 'button';
+				restoreButton.dataset.restorePortfolio = record.id;
+				restoreButton.dataset.restoreVersion = String(version.version);
+				restoreButton.setAttribute('aria-label', `Restore Version ${version.version} for ${record.title}`);
+				restoreButton.className =
+					'inline-flex items-center gap-xs rounded-md border border-hairline bg-surface-1 px-xs py-xxs text-caption font-medium text-ink transition-colors duration-200 hover:bg-surface-2';
+				restoreButton.textContent = 'Restore';
+				meta.append(restoreButton, time);
+			}
+
+			row.append(label, meta);
+			item.append(row);
+			historyList.append(item);
+		}
+	};
+
+	const openHistoryDialog = (button: HTMLButtonElement): void => {
+		const id = button.dataset.historyPortfolio;
+		if (!id || !historyDialog) {
+			return;
+		}
+		const record = portfolioManagerStore.getPortfolio(id);
+		if (historyList && historyTitle && historySubtitle) {
+			historySubtitle.textContent = '';
+			historyList.replaceChildren();
+			if (!record) {
+				historyTitle.textContent = 'Version history unavailable';
+				historySubtitle.textContent = 'The portfolio may have been removed.';
+			} else {
+				renderHistoryList(record);
+			}
+		}
+		historyTrigger = button;
+		if (typeof historyDialog.showModal === 'function') {
+			historyDialog.showModal();
+			historyClose?.focus();
+		}
+	};
+
+	historyClose?.addEventListener('click', () => {
+		closeHistoryDialog();
+		if (historyTrigger?.isConnected) {
+			historyTrigger.focus();
+		}
+	});
+
+	historyList?.addEventListener('click', (event) => {
+		const target = (event.target as HTMLElement).closest<HTMLButtonElement>(
+			'[data-restore-portfolio]'
+		);
+		if (target) {
+			openRestoreDialog(target);
+		}
+	});
+
+	historyDialog?.addEventListener('cancel', (event) => {
+		event.preventDefault();
+		const trigger = historyTrigger;
+		closeHistoryDialog();
+		if (trigger?.isConnected) {
+			trigger.focus();
+		}
+	});
+
+	const restoreDialog = document.querySelector<HTMLDialogElement>('#restore-portfolio-dialog');
+	const restoreCancel = document.querySelector<HTMLButtonElement>('#restore-portfolio-cancel');
+	const restoreConfirm = document.querySelector<HTMLButtonElement>('#restore-portfolio-confirm');
+	const restoreDialogTitle = document.querySelector<HTMLElement>('#restore-portfolio-dialog-title');
+
+	let pendingRestore: { id: string; version: number; trigger: HTMLButtonElement } | null = null;
+
+	const closeRestoreDialog = (): void => {
+		if (restoreDialog?.open) {
+			restoreDialog.close();
+		}
+		pendingRestore = null;
+	};
+
+	const openRestoreDialog = (button: HTMLButtonElement): void => {
+		const id = button.dataset.restorePortfolio;
+		const rawVersion = button.dataset.restoreVersion;
+		if (!id || !rawVersion || !restoreDialog) {
+			return;
+		}
+		const version = Number(rawVersion);
+		if (!Number.isInteger(version) || version < 1) {
+			return;
+		}
+		const record = portfolioManagerStore.getPortfolio(id);
+		if (!record) {
+			showError('Could not restore the version. The portfolio may have been removed.');
+			return;
+		}
+		pendingRestore = { id, version, trigger: button };
+		if (restoreDialogTitle) {
+			restoreDialogTitle.textContent = `Restore Version ${version}?`;
+		}
+		if (typeof restoreDialog.showModal === 'function') {
+			restoreDialog.showModal();
+			restoreCancel?.focus();
+		}
+	};
+
+	restoreCancel?.addEventListener('click', closeRestoreDialog);
+
+	restoreConfirm?.addEventListener('click', () => {
+		const pending = pendingRestore;
+		closeRestoreDialog();
+		if (!pending) {
+			return;
+		}
+		const result = restorePortfolio(pending.id, pending.version);
+		if (!result.ok) {
+			showError(result.message);
+			return;
+		}
+		const record = result.record;
+		if (record) {
+			renderHistoryList(record);
+		}
+		hideFeedback();
+		showStatus(result.message);
+		if (historyDialog?.open) {
+			historyClose?.focus();
+		}
+	});
+
+	restoreDialog?.addEventListener('cancel', (event) => {
+		event.preventDefault();
+		const trigger = pendingRestore?.trigger;
+		closeRestoreDialog();
+		if (trigger?.isConnected) {
+			trigger.focus();
+			return;
+		}
+		if (historyTrigger?.isConnected) {
+			historyTrigger.focus();
+		}
+	});
+
+	const exportDialog = document.querySelector<HTMLDialogElement>('#portfolio-export-dialog');
+	const exportClose = document.querySelector<HTMLButtonElement>('#portfolio-export-close');
+	const exportCancel = document.querySelector<HTMLButtonElement>('#portfolio-export-cancel');
+	const exportConfirm = document.querySelector<HTMLButtonElement>('#portfolio-export-confirm');
+	const exportSubtitle = document.querySelector<HTMLElement>('#portfolio-export-dialog-subtitle');
+
+	let pendingExport: { id: string; trigger: HTMLButtonElement } | null = null;
+
+	const closeExportDialog = (): void => {
+		if (exportDialog?.open) {
+			exportDialog.close();
+		}
+		pendingExport = null;
+	};
+
+	const openExportDialog = (button: HTMLButtonElement): void => {
+		const id = button.dataset.exportPortfolio;
+		if (!id || !exportDialog) {
+			return;
+		}
+		const record = portfolioManagerStore.getPortfolio(id);
+		if (!record) {
+			showError('Could not export the portfolio. The portfolio may have been removed.');
+			return;
+		}
+		const radios = Array.from(
+			exportDialog.querySelectorAll<HTMLInputElement>('input[name="portfolio-export-format"]')
+		);
+		const defaultChecked = radios.find((radio) => !radio.disabled) ?? radios[0];
+		for (const radio of radios) {
+			radio.checked = radio === defaultChecked;
+		}
+		if (exportSubtitle) {
+			exportSubtitle.textContent = `"${record.title}" — Version ${record.currentVersion} (${record.status})`;
+		}
+		pendingExport = { id, trigger: button };
+		if (typeof exportDialog.showModal === 'function') {
+			exportDialog.showModal();
+			exportCancel?.focus();
+		}
+	};
+
+	exportClose?.addEventListener('click', () => {
+		const trigger = pendingExport?.trigger;
+		closeExportDialog();
+		if (trigger?.isConnected) {
+			trigger.focus();
+		}
+	});
+
+	exportCancel?.addEventListener('click', () => {
+		const trigger = pendingExport?.trigger;
+		closeExportDialog();
+		if (trigger?.isConnected) {
+			trigger.focus();
+		}
+	});
+
+	exportConfirm?.addEventListener('click', () => {
+		const pending = pendingExport;
+		if (!pending) {
+			return;
+		}
+		const selected =
+			exportDialog?.querySelector<HTMLInputElement>(
+				'input[name="portfolio-export-format"]:checked'
+			)?.value ?? 'json';
+		const format = isPortfolioExportFormat(selected) ? selected : 'json';
+		closeExportDialog();
+		const result = downloadPortfolioExport(pending.id, format);
+		if (!result.ok) {
+			showError(result.message);
+		} else {
+			hideFeedback();
+			showStatus(result.message);
+		}
+		const trigger = pending.trigger;
+		if (trigger.isConnected) {
+			trigger.focus();
+		}
+	});
+
+	exportDialog?.addEventListener('cancel', (event) => {
+		event.preventDefault();
+		const trigger = pendingExport?.trigger;
+		closeExportDialog();
+		if (trigger?.isConnected) {
+			trigger.focus();
+		}
+	});
+
+	let query = '';
+	let status: PortfolioFilterStatus = 'all';
+
+	const hideFeedback = (): void => {
+		if (publishStatus) {
+			publishStatus.hidden = true;
+			publishStatus.textContent = '';
+		}
+		if (publishError) {
+			publishError.hidden = true;
+			publishError.textContent = '';
+		}
+	};
+
+	const publish = (button: HTMLButtonElement): void => {
+		const id = button.dataset.publishPortfolio;
+		if (!id) {
+			return;
+		}
+		button.disabled = true;
+		const result = publishPortfolio(id);
+		if (!result.ok) {
+			button.disabled = false;
+			if (publishStatus) {
+				publishStatus.hidden = true;
+				publishStatus.textContent = '';
+			}
+			if (publishError) {
+				publishError.textContent = result.message;
+				publishError.hidden = false;
+			}
+			return;
+		}
+		hideFeedback();
+		if (publishStatus) {
+			publishStatus.textContent = result.alreadyPublished
+				? result.record?.title
+					? `"${result.record.title}" is already published.`
+					: 'Portfolio is already published.'
+				: result.record?.title
+					? `"${result.record.title}" was published.`
+					: 'Portfolio published.';
+			publishStatus.hidden = false;
+		}
+		if (publishError) {
+			publishError.hidden = true;
+			publishError.textContent = '';
+		}
+	};
+
+	const duplicate = (button: HTMLButtonElement): void => {
+		const id = button.dataset.duplicatePortfolio;
+		if (!id) {
+			return;
+		}
+		button.disabled = true;
+		const record = portfolioManagerStore.duplicatePortfolio(id);
+		if (!record) {
+			button.disabled = false;
+			if (publishStatus) {
+				publishStatus.hidden = true;
+				publishStatus.textContent = '';
+			}
+			if (publishError) {
+				publishError.textContent =
+					'Could not duplicate the portfolio. The original may have been removed.';
+				publishError.hidden = false;
+			}
+			return;
+		}
+		hideFeedback();
+		if (publishStatus) {
+			publishStatus.textContent = `"${record.title}" was created as a duplicate.`;
+			publishStatus.hidden = false;
+		}
+		if (publishError) {
+			publishError.hidden = true;
+			publishError.textContent = '';
+		}
+	};
+
+	list?.addEventListener('click', (event) => {
+		const target = (event.target as HTMLElement).closest<HTMLButtonElement>(
+			'[data-publish-portfolio]'
+		);
+		if (target) {
+			publish(target);
+			return;
+		}
+		const duplicateTarget = (event.target as HTMLElement).closest<HTMLButtonElement>(
+			'[data-duplicate-portfolio]'
+		);
+		if (duplicateTarget) {
+			duplicate(duplicateTarget);
+			return;
+		}
+		const deleteTarget = (event.target as HTMLElement).closest<HTMLButtonElement>(
+			'[data-delete-portfolio]'
+		);
+		if (deleteTarget) {
+			openDeleteDialog(deleteTarget);
+			return;
+		}
+		const historyTarget = (event.target as HTMLElement).closest<HTMLButtonElement>(
+			'[data-history-portfolio]'
+		);
+		if (historyTarget) {
+			openHistoryDialog(historyTarget);
+			return;
+		}
+		const exportTarget = (event.target as HTMLElement).closest<HTMLButtonElement>(
+			'[data-export-portfolio]'
+		);
+		if (exportTarget) {
+			openExportDialog(exportTarget);
+		}
+	});
+
+	const render = (): void => {
+		if (!list || !empty || !none || !count) {
+			return;
+		}
+
+		const portfolios = portfolioManagerStore.getPortfolios();
+		const filtered = filterPortfolios(portfolios, query, status);
+
+		if (portfolios.length === 0) {
+			list.hidden = true;
+			none.hidden = true;
+			empty.hidden = false;
+			count.textContent = '';
+			return;
+		}
+
+		empty.hidden = true;
+
+		if (filtered.length === 0) {
+			list.hidden = true;
+			none.hidden = false;
+			count.textContent = portfolioCountLabel(0);
+			return;
+		}
+
+		none.hidden = true;
+		list.hidden = false;
+		list.replaceChildren(...filtered.map(createPortfolioCardElement));
+		count.textContent = portfolioCountLabel(filtered.length);
+	};
+
+	search?.addEventListener('input', () => {
+		query = search.value;
+		render();
+	});
+
+	filter?.addEventListener('change', () => {
+		if (isPortfolioFilterStatus(filter.value)) {
+			status = filter.value;
+		}
+		render();
+	});
+
+	reset?.addEventListener('click', () => {
+		query = '';
+		status = 'all';
+		if (search) {
+			search.value = '';
+		}
+		if (filter) {
+			filter.value = 'all';
+		}
+		render();
+	});
+
+	portfolioManagerStore.subscribe(render);
+	render();
+</script>
+
+<style>
+	#delete-portfolio-dialog {
+		max-width: min(100%, 28rem);
+		max-height: calc(100dvh - 2rem);
+		overflow-y: auto;
+	}
+	#delete-portfolio-dialog[open] {
+		display: flex;
+		flex-direction: column;
+	}
+	#delete-portfolio-dialog::backdrop {
+		background-color: var(--color-semantic-overlay);
+	}
+	#portfolio-history-dialog {
+		max-width: min(100%, 36rem);
+		max-height: calc(100dvh - 2rem);
+		overflow-y: auto;
+	}
+	#portfolio-history-dialog[open] {
+		display: flex;
+		flex-direction: column;
+	}
+	#portfolio-history-dialog::backdrop {
+		background-color: var(--color-semantic-overlay);
+	}
+	#restore-portfolio-dialog {
+		max-width: min(100%, 28rem);
+		max-height: calc(100dvh - 2rem);
+		overflow-y: auto;
+	}
+	#restore-portfolio-dialog[open] {
+		display: flex;
+		flex-direction: column;
+	}
+	#restore-portfolio-dialog::backdrop {
+		background-color: var(--color-semantic-overlay);
+	}
+	#portfolio-export-dialog {
+		max-width: min(100%, 36rem);
+		max-height: calc(100dvh - 2rem);
+		overflow-y: auto;
+	}
+	#portfolio-export-dialog[open] {
+		display: flex;
+		flex-direction: column;
+	}
+	#portfolio-export-dialog::backdrop {
+		background-color: var(--color-semantic-overlay);
+	}
+</style>

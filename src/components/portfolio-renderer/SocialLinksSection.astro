@@ -1,0 +1,69 @@
+---
+import { Share2, Github, Linkedin, Globe, Twitter, Instagram, Youtube, Link2 } from 'lucide-astro';
+import type { PortfolioSocial } from '../../lib/ai';
+import type { PortfolioTheme } from '../../lib/themes';
+import SectionWrapper from './SectionWrapper.astro';
+
+interface Props {
+	social: PortfolioSocial | null;
+	theme: PortfolioTheme;
+}
+
+const { social, theme } = Astro.props;
+const presentation = theme.presentation;
+
+interface ProfileLink {
+	label: string;
+	url: string;
+	icon: typeof Github;
+}
+
+function buildLinks(social: PortfolioSocial): ProfileLink[] {
+	const links: ProfileLink[] = [];
+	if (social.linkedin) {
+		links.push({ label: 'LinkedIn', url: social.linkedin, icon: Linkedin });
+	}
+	if (social.github) {
+		links.push({ label: 'GitHub', url: social.github, icon: Github });
+	}
+	if (social.website) {
+		links.push({ label: 'Website', url: social.website, icon: Globe });
+	}
+	if (social.twitter) {
+		links.push({ label: 'Twitter', url: social.twitter, icon: Twitter });
+	}
+	if (social.instagram) {
+		links.push({ label: 'Instagram', url: social.instagram, icon: Instagram });
+	}
+	if (social.youtube) {
+		links.push({ label: 'YouTube', url: social.youtube, icon: Youtube });
+	}
+	if (social.other) {
+		links.push({ label: 'Other', url: social.other, icon: Link2 });
+	}
+	return links;
+}
+
+const links: ProfileLink[] = social ? buildLinks(social) : [];
+---
+
+{
+	links.length > 0 && (
+		<SectionWrapper id="social" heading="Find Me Online" theme={theme} bodyClass="mt-lg flex flex-wrap gap-sm">
+			<Share2 slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+			{
+				links.map((link) => (
+					<a
+						class={presentation.ghostButton}
+						href={link.url}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<link.icon size="16" aria-hidden="true" />
+						{link.label}
+					</a>
+				))
+			}
+		</SectionWrapper>
+	)
+}

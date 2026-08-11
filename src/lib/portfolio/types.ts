@@ -97,6 +97,11 @@ export interface AchievementEntry {
 
 export type AchievementsData = AchievementEntry[];
 
+export interface SocialCustomLink {
+	label: string;
+	url: string;
+}
+
 export interface SocialLinksEntry {
 	linkedinProfile: string;
 	githubProfile: string;
@@ -105,6 +110,7 @@ export interface SocialLinksEntry {
 	instagram: string;
 	youtubeChannel: string;
 	otherWebsite: string;
+	customLinks: SocialCustomLink[];
 }
 
 export type SocialLinksData = SocialLinksEntry[];
@@ -237,6 +243,10 @@ export function createEmptyAchievementEntry(): AchievementEntry {
 	};
 }
 
+export function createEmptySocialCustomLink(): SocialCustomLink {
+	return { label: '', url: '' };
+}
+
 export function createEmptySocialLinks(): SocialLinksEntry {
 	return {
 		linkedinProfile: '',
@@ -246,6 +256,7 @@ export function createEmptySocialLinks(): SocialLinksEntry {
 		instagram: '',
 		youtubeChannel: '',
 		otherWebsite: '',
+		customLinks: [],
 	};
 }
 

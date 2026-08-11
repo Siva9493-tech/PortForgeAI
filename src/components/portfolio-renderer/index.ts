@@ -1,0 +1,12 @@
+export { default as PortfolioRenderer } from './PortfolioRenderer.astro';
+export { default as SectionWrapper } from './SectionWrapper.astro';
+export { default as HeroSection } from './HeroSection.astro';
+export { default as AboutSection } from './AboutSection.astro';
+export { default as EducationSection } from './EducationSection.astro';
+export { default as ExperienceSection } from './ExperienceSection.astro';
+export { default as ProjectsSection } from './ProjectsSection.astro';
+export { default as SkillsSection } from './SkillsSection.astro';
+export { default as CertificationsSection } from './CertificationsSection.astro';
+export { default as AchievementsSection } from './AchievementsSection.astro';
+export { default as SocialLinksSection } from './SocialLinksSection.astro';
+export { default as ContactSection } from './ContactSection.astro';

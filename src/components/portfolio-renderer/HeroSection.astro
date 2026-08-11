@@ -1,0 +1,44 @@
+---
+import { Sparkles } from 'lucide-astro';
+import type { PortfolioTheme } from '../../lib/themes';
+
+interface Props {
+	title: string;
+	tagline: string;
+	keywords: string[];
+	theme: PortfolioTheme;
+}
+
+const { title, tagline, keywords, theme } = Astro.props;
+const presentation = theme.presentation;
+---
+
+<section id="hero" aria-labelledby="hero-heading" class={`flex flex-col gap-lg ${presentation.sectionSpacing}`}>
+	<div class="flex items-center gap-sm">
+		<Sparkles size="18" class={presentation.accent} aria-hidden="true" />
+		<p class={`text-eyebrow ${presentation.accent}`}>Portfolio</p>
+	</div>
+	<h1 id="hero-heading" class={`${presentation.display} text-display-lg ${presentation.heading}`}>
+		{title}
+	</h1>
+	{
+		tagline && (
+			<p class="max-w-narrow text-body-lg text-ink-muted">
+				{tagline}
+			</p>
+		)
+	}
+	{
+		keywords.length > 0 && (
+			<ul class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">
+				{keywords.map((keyword) => (
+					<li
+						class="rounded-md border border-hairline bg-surface-2 px-sm py-xxs text-caption text-ink-muted"
+					>
+						{keyword}
+					</li>
+				))}
+			</ul>
+		)
+	}
+</section>
