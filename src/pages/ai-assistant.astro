@@ -1,0 +1,1056 @@
+---
+import { Bot, FolderPlus, Sparkles } from 'lucide-astro';
+import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
+import { ASSISTANT_FEATURES } from '../lib/ai-assistant';
+import { portfolioManagerStore } from '../lib/portfolio-manager';
+
+const title = 'AI Assistant — PortForge AI';
+const description =
+	'Use AI to improve your portfolio: headlines, bios, project descriptions and more.';
+
+const records = portfolioManagerStore.getPortfolios();
+
+const comingSoonFeatures = ASSISTANT_FEATURES.filter(
+	(feature) =>
+		feature.id !== 'headline' &&
+		feature.id !== 'bio' &&
+		feature.id !== 'project-description' &&
+		feature.id !== 'skills' &&
+		feature.id !== 'portfolio-review' &&
+		feature.id !== 'recommendations'
+);
+
+const primaryButtonClass =
+	'inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover';
+
+const fieldClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body-sm text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus';
+---
+
+<DashboardLayout
+	title={title}
+	description={description}
+	pageLabel="AI Assistant"
+>
+	<header class="flex flex-col gap-md">
+		<div class="flex items-start gap-sm">
+			<span
+				class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-surface-2 text-primary"
+				aria-hidden="true"
+			>
+				<Bot size="20" />
+			</span>
+			<div class="flex min-w-0 flex-col gap-xxs">
+				<h1 id="assistant-heading" tabindex="-1" class="text-heading-md text-ink">
+					AI Assistant
+				</h1>
+				<p class="max-w-narrow text-body-sm text-ink-muted">
+					Generate and improve portfolio content from your saved portfolio.
+					The assistant works with the portfolio shown below — it never
+					changes your portfolio automatically.
+				</p>
+			</div>
+		</div>
+	</header>
+
+	<p
+		id="assistant-status"
+		role="status"
+		class="sr-only"
+	></p>
+
+	<section aria-labelledby="assistant-context-heading" class="mt-xl">
+		<h2 id="assistant-context-heading" class="sr-only">Portfolio context</h2>
+
+		<div
+			id="assistant-context"
+			class="card flex flex-col gap-md p-lg"
+			hidden={records.length === 0}
+		>
+			<div class="flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between">
+				<div class="flex min-w-0 flex-col gap-xxs">
+					<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+						Working with portfolio
+					</span>
+					<h3 id="assistant-context-title" class="truncate text-heading-sm text-ink"></h3>
+				</div>
+				<div class="flex shrink-0 items-center gap-xs">
+					<span
+						id="assistant-context-status"
+						class="inline-flex items-center gap-xs rounded-pill border border-hairline bg-surface-2 px-xs py-xs text-caption font-medium text-ink-subtle"
+					></span>
+					<span
+						id="assistant-context-version"
+						class="inline-flex items-center rounded-pill border border-hairline bg-surface-2 px-xs py-xs text-caption font-medium text-ink-subtle"
+					></span>
+				</div>
+			</div>
+
+			<dl class="grid grid-cols-2 gap-xs sm:grid-cols-4">
+				<div class="flex flex-col gap-xxs rounded-md border border-hairline bg-surface-2 p-sm">
+					<dt class="text-caption text-ink-subtle">Last updated</dt>
+					<dd id="assistant-context-updated" class="text-body-sm font-medium text-ink"></dd>
+				</div>
+				<div class="flex flex-col gap-xxs rounded-md border border-hairline bg-surface-2 p-sm">
+					<dt class="text-caption text-ink-subtle">Theme</dt>
+					<dd id="assistant-context-theme" class="text-body-sm font-medium text-ink"></dd>
+				</div>
+				<div class="flex flex-col gap-xxs rounded-md border border-hairline bg-surface-2 p-sm">
+					<dt class="text-caption text-ink-subtle">Content</dt>
+					<dd id="assistant-context-content" class="text-body-sm font-medium text-ink"></dd>
+				</div>
+				<div class="flex flex-col gap-xxs rounded-md border border-hairline bg-surface-2 p-sm">
+					<dt class="text-caption text-ink-subtle">Summary</dt>
+					<dd id="assistant-context-summary" class="truncate text-body-sm font-medium text-ink"></dd>
+				</div>
+			</dl>
+
+			<div class="flex flex-col gap-xs border-t border-hairline pt-md sm:flex-row sm:items-end sm:justify-between">
+				<div class="flex min-w-0 flex-1 flex-col gap-xs">
+					<label
+						for="assistant-portfolio-select"
+						class="text-caption font-medium text-ink-subtle"
+					>
+						Switch portfolio
+					</label>
+					<select
+						id="assistant-portfolio-select"
+						name="assistant-portfolio"
+						class={fieldClass}
+					></select>
+				</div>
+				<a
+					href="/portfolios"
+					class="inline-flex shrink-0 items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 sm:self-end"
+				>
+					Manage portfolios
+				</a>
+			</div>
+		</div>
+
+		<div
+			id="assistant-empty"
+			class="card mt-md flex w-full flex-col items-center gap-sm p-xl text-center"
+			hidden={records.length > 0}
+		>
+			<span
+				class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-primary"
+				aria-hidden="true"
+			>
+				<FolderPlus size="24" />
+			</span>
+			<h3 class="text-heading-sm text-ink">No portfolio available yet</h3>
+			<p class="max-w-narrow text-body-sm text-ink-subtle">
+				Create a portfolio first to use AI Assistant.
+			</p>
+			<div class="mt-sm">
+				<a href="/portfolio-builder" class={primaryButtonClass}>
+					<Sparkles size="16" aria-hidden="true" />
+					Create a portfolio
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<section aria-labelledby="headline-generator-heading" class="mt-xl">
+		<div class="mb-md flex flex-col gap-xs">
+			<h2 id="headline-generator-heading" class="text-heading-md text-ink">Headline Generator</h2>
+			<p class="text-body-sm text-ink-muted">
+				Generate a few professional headline options from the portfolio shown
+				above, then copy the one you like. Nothing is saved automatically.
+			</p>
+		</div>
+
+		<div id="headline-panel" class="card flex flex-col gap-md p-lg" hidden={records.length === 0}>
+			<div class="flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between">
+				<div class="flex min-w-0 flex-col gap-xxs">
+					<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+						Current headline
+					</span>
+					<p id="headline-current" class="truncate text-body-sm text-ink"></p>
+				</div>
+				<button
+					id="headline-generate"
+					type="button"
+					class={primaryButtonClass}
+				>
+					<Sparkles size="16" aria-hidden="true" />
+					<span>Generate headlines</span>
+				</button>
+			</div>
+
+			<p id="headline-status" role="status" class="sr-only"></p>
+
+			<div
+				id="headline-error"
+				class="rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-ink-muted"
+				role="alert"
+				hidden
+			></div>
+
+			<ol id="headline-results" class="flex flex-col gap-xs"></ol>
+		</div>
+
+		<p id="headline-note" class="mt-sm text-caption text-ink-tertiary" hidden={records.length > 0}>
+			Create a portfolio to generate headline options.
+		</p>
+	</section>
+
+	<section aria-labelledby="bio-generator-heading" class="mt-xl">
+		<div class="mb-md flex flex-col gap-xs">
+			<h2 id="bio-generator-heading" class="text-heading-md text-ink">Bio Generator</h2>
+			<p class="text-body-sm text-ink-muted">
+				Generate a few professional bio / about-section options from the
+				portfolio shown above, then copy the one you like. Nothing is saved
+				automatically.
+			</p>
+		</div>
+
+		<div id="bio-panel" class="card flex flex-col gap-md p-lg" hidden={records.length === 0}>
+			<div class="flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between">
+				<div class="flex min-w-0 flex-col gap-xxs">
+					<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+						Current summary
+					</span>
+					<p id="bio-current" class="truncate text-body-sm text-ink"></p>
+				</div>
+				<button
+					id="bio-generate"
+					type="button"
+					class={primaryButtonClass}
+				>
+					<Sparkles size="16" aria-hidden="true" />
+					<span>Generate bios</span>
+				</button>
+			</div>
+
+			<p id="bio-status" role="status" class="sr-only"></p>
+
+			<div
+				id="bio-error"
+				class="rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-ink-muted"
+				role="alert"
+				hidden
+			></div>
+
+			<ol id="bio-results" class="flex flex-col gap-xs"></ol>
+		</div>
+
+		<p id="bio-note" class="mt-sm text-caption text-ink-tertiary" hidden={records.length > 0}>
+			Create a portfolio to generate bio options.
+		</p>
+	</section>
+
+	<section aria-labelledby="project-description-heading" class="mt-xl">
+		<div class="mb-md flex flex-col gap-xs">
+			<h2 id="project-description-heading" class="text-heading-md text-ink">Project Description Generator</h2>
+			<p class="text-body-sm text-ink-muted">
+				Generate a professional description for a project in the portfolio
+				shown above, then copy the one you like. Nothing is saved
+				automatically.
+			</p>
+		</div>
+
+		<div
+			id="project-description-panel"
+			class="card flex flex-col gap-md p-lg"
+			hidden={records.length === 0}
+		>
+			<div class="flex flex-col gap-sm sm:flex-row sm:items-end sm:justify-between">
+				<div class="flex min-w-0 flex-1 flex-col gap-xs">
+					<label
+						for="project-description-select"
+						class="text-caption font-medium text-ink-subtle"
+					>
+						Project
+					</label>
+					<select
+						id="project-description-select"
+						name="project-description"
+						class={fieldClass}
+					></select>
+				</div>
+				<button
+					id="project-description-generate"
+					type="button"
+					class={primaryButtonClass}
+				>
+					<Sparkles size="16" aria-hidden="true" />
+					<span>Generate description</span>
+				</button>
+			</div>
+
+			<p
+				id="project-description-no-projects"
+				class="rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-ink-subtle"
+				hidden
+			>
+				No projects available yet. Add a project to your portfolio to
+				generate a description.
+			</p>
+
+			<p id="project-description-status" role="status" class="sr-only"></p>
+
+			<div
+				id="project-description-error"
+				class="rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-ink-muted"
+				role="alert"
+				hidden
+			></div>
+
+			<ol id="project-description-results" class="flex flex-col gap-xs"></ol>
+		</div>
+
+		<p
+			id="project-description-note"
+			class="mt-sm text-caption text-ink-tertiary"
+			hidden={records.length > 0}
+		>
+			Create a portfolio to generate project descriptions.
+		</p>
+	</section>
+
+	<section aria-labelledby="skills-heading" class="mt-xl">
+		<div class="mb-md flex flex-col gap-xs">
+			<h2 id="skills-heading" class="text-heading-md text-ink">Skills Improvement Suggestions</h2>
+			<p class="text-body-sm text-ink-muted">
+				Analyze the portfolio's skills and get grounded suggestions for
+				improvement. Suggestions are recommendations only — nothing is
+				added or changed automatically.
+			</p>
+		</div>
+
+		<div id="skills-panel" class="card flex flex-col gap-md p-lg" hidden={records.length === 0}>
+			<div class="flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between">
+				<div class="flex min-w-0 flex-col gap-xxs">
+					<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+						Existing skills
+					</span>
+					<p id="skills-current" class="truncate text-body-sm text-ink"></p>
+				</div>
+				<button
+					id="skills-generate"
+					type="button"
+					class={primaryButtonClass}
+				>
+					<Sparkles size="16" aria-hidden="true" />
+					<span>Analyze skills</span>
+				</button>
+			</div>
+
+			<p id="skills-status" role="status" class="sr-only"></p>
+
+			<div
+				id="skills-error"
+				class="rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-ink-muted"
+				role="alert"
+				hidden
+			></div>
+
+			<ol id="skills-results" class="flex flex-col gap-xs"></ol>
+		</div>
+
+		<p id="skills-note" class="mt-sm text-caption text-ink-tertiary" hidden={records.length > 0}>
+			Create a portfolio to analyze skills.
+		</p>
+	</section>
+
+	<section aria-labelledby="portfolio-review-heading" class="mt-xl">
+		<div class="mb-md flex flex-col gap-xs">
+			<h2 id="portfolio-review-heading" class="text-heading-md text-ink">Portfolio Review</h2>
+			<p class="text-body-sm text-ink-muted">
+				Review the portfolio across its content areas and get grounded,
+				itemized feedback with priorities. The review is read-only — nothing
+				in the portfolio is changed automatically.
+			</p>
+		</div>
+
+		<div
+			id="portfolio-review-panel"
+			class="card flex flex-col gap-md p-lg"
+			hidden={records.length === 0}
+		>
+			<div class="flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between">
+				<div class="flex min-w-0 flex-col gap-xxs">
+					<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+						Portfolio completeness
+					</span>
+					<p id="portfolio-review-current" class="truncate text-body-sm text-ink"></p>
+				</div>
+				<button
+					id="portfolio-review-generate"
+					type="button"
+					class={primaryButtonClass}
+				>
+					<Sparkles size="16" aria-hidden="true" />
+					<span>Review portfolio</span>
+				</button>
+			</div>
+
+			<p id="portfolio-review-status" role="status" class="sr-only"></p>
+
+			<div
+				id="portfolio-review-error"
+				class="rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-ink-muted"
+				role="alert"
+				hidden
+			></div>
+
+			<ol id="portfolio-review-results" class="flex flex-col gap-xs"></ol>
+		</div>
+
+		<p
+			id="portfolio-review-note"
+			class="mt-sm text-caption text-ink-tertiary"
+			hidden={records.length > 0}
+		>
+			Create a portfolio to run a review.
+		</p>
+	</section>
+
+	<section aria-labelledby="recommendations-heading" class="mt-xl">
+		<div class="mb-md flex flex-col gap-xs">
+			<h2 id="recommendations-heading" class="text-heading-md text-ink">AI Recommendations</h2>
+			<p class="text-body-sm text-ink-muted">
+				Get prioritized, actionable recommendations for improving the
+				portfolio shown above. Recommendations are suggestions only —
+				nothing is applied or changed automatically.
+			</p>
+		</div>
+
+		<div
+			id="recommendations-panel"
+			class="card flex flex-col gap-md p-lg"
+			hidden={records.length === 0}
+		>
+			<div class="flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between">
+				<div class="flex min-w-0 flex-col gap-xxs">
+					<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+						Analyzed portfolio
+					</span>
+					<p id="recommendations-current" class="truncate text-body-sm text-ink"></p>
+				</div>
+				<button
+					id="recommendations-generate"
+					type="button"
+					class={primaryButtonClass}
+				>
+					<Sparkles size="16" aria-hidden="true" />
+					<span>Generate recommendations</span>
+				</button>
+			</div>
+
+			<p id="recommendations-status" role="status" class="sr-only"></p>
+
+			<div
+				id="recommendations-error"
+				class="rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-ink-muted"
+				role="alert"
+				hidden
+			></div>
+
+			<ol id="recommendations-results" class="flex flex-col gap-xs"></ol>
+		</div>
+
+		<p
+			id="recommendations-note"
+			class="mt-sm text-caption text-ink-tertiary"
+			hidden={records.length > 0}
+		>
+			Create a portfolio to get recommendations.
+		</p>
+	</section>
+
+	<section aria-labelledby="assistant-tools-heading" class="mt-xl">
+		<div class="mb-md flex flex-col gap-xs">
+			<h2 id="assistant-tools-heading" class="text-heading-md text-ink">More AI Tools</h2>
+			<p class="text-body-sm text-ink-muted">
+				All AI Assistant tools are live: headline, bio, project
+				description, skills suggestions, portfolio review, and AI
+				recommendations.
+			</p>
+		</div>
+
+		{comingSoonFeatures.length > 0 && (
+			<ul class="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3">
+				{comingSoonFeatures.map((feature) => (
+					<li class="card flex flex-col gap-sm p-md">
+						<div class="flex items-center justify-between gap-sm">
+							<h3 class="text-body font-semibold text-ink">{feature.title}</h3>
+							<span class="inline-flex shrink-0 items-center rounded-pill border border-hairline bg-surface-2 px-xs py-xxs text-caption font-medium text-ink-subtle">
+								Coming soon
+							</span>
+						</div>
+						<p class="text-body-sm text-ink-muted">{feature.description}</p>
+					</li>
+				))}
+			</ul>
+		)}
+	</section>
+</DashboardLayout>
+
+<script>
+	import { copyTextToClipboard } from '../lib/clipboard';
+	import {
+		createPortfolioContext,
+		defaultAssistantProvider,
+		portfolioContextLabel,
+		runAssistant,
+	} from '../lib/ai-assistant';
+	import {
+		formatPortfolioDate,
+		portfolioManagerStore,
+		portfolioStatusText,
+	} from '../lib/portfolio-manager';
+	import type { PortfolioRecord } from '../lib/portfolio-manager';
+	import type { PortfolioProject } from '../lib/ai';
+
+	const contextSection = document.querySelector<HTMLElement>('#assistant-context');
+	const emptySection = document.querySelector<HTMLElement>('#assistant-empty');
+	const statusRegion = document.querySelector<HTMLElement>('#assistant-status');
+	const contextTitle = document.querySelector<HTMLElement>('#assistant-context-title');
+	const contextStatus = document.querySelector<HTMLElement>('#assistant-context-status');
+	const contextVersion = document.querySelector<HTMLElement>('#assistant-context-version');
+	const contextUpdated = document.querySelector<HTMLElement>('#assistant-context-updated');
+	const contextTheme = document.querySelector<HTMLElement>('#assistant-context-theme');
+	const contextContent = document.querySelector<HTMLElement>('#assistant-context-content');
+	const contextSummary = document.querySelector<HTMLElement>('#assistant-context-summary');
+	const portfolioSelect = document.querySelector<HTMLSelectElement>('#assistant-portfolio-select');
+	const headlinePanel = document.querySelector<HTMLElement>('#headline-panel');
+	const headlineNote = document.querySelector<HTMLElement>('#headline-note');
+	const headlineGenerate = document.querySelector<HTMLButtonElement>('#headline-generate');
+	const headlineCurrent = document.querySelector<HTMLElement>('#headline-current');
+	const headlineStatus = document.querySelector<HTMLElement>('#headline-status');
+	const headlineError = document.querySelector<HTMLElement>('#headline-error');
+	const headlineResults = document.querySelector<HTMLElement>('#headline-results');
+	const bioPanel = document.querySelector<HTMLElement>('#bio-panel');
+	const bioNote = document.querySelector<HTMLElement>('#bio-note');
+	const bioGenerate = document.querySelector<HTMLButtonElement>('#bio-generate');
+	const bioCurrent = document.querySelector<HTMLElement>('#bio-current');
+	const bioStatus = document.querySelector<HTMLElement>('#bio-status');
+	const bioError = document.querySelector<HTMLElement>('#bio-error');
+	const bioResults = document.querySelector<HTMLElement>('#bio-results');
+	const projectDescriptionPanel = document.querySelector<HTMLElement>('#project-description-panel');
+	const projectDescriptionNote = document.querySelector<HTMLElement>('#project-description-note');
+	const projectDescriptionSelect = document.querySelector<HTMLSelectElement>('#project-description-select');
+	const projectDescriptionGenerate = document.querySelector<HTMLButtonElement>('#project-description-generate');
+	const projectDescriptionNoProjects = document.querySelector<HTMLElement>('#project-description-no-projects');
+	const projectDescriptionStatus = document.querySelector<HTMLElement>('#project-description-status');
+	const projectDescriptionError = document.querySelector<HTMLElement>('#project-description-error');
+	const projectDescriptionResults = document.querySelector<HTMLElement>('#project-description-results');
+	const skillsPanel = document.querySelector<HTMLElement>('#skills-panel');
+	const skillsNote = document.querySelector<HTMLElement>('#skills-note');
+	const skillsGenerate = document.querySelector<HTMLButtonElement>('#skills-generate');
+	const skillsCurrent = document.querySelector<HTMLElement>('#skills-current');
+	const skillsStatus = document.querySelector<HTMLElement>('#skills-status');
+	const skillsError = document.querySelector<HTMLElement>('#skills-error');
+	const skillsResults = document.querySelector<HTMLElement>('#skills-results');
+	const portfolioReviewPanel = document.querySelector<HTMLElement>('#portfolio-review-panel');
+	const portfolioReviewNote = document.querySelector<HTMLElement>('#portfolio-review-note');
+	const portfolioReviewGenerate = document.querySelector<HTMLButtonElement>('#portfolio-review-generate');
+	const portfolioReviewCurrent = document.querySelector<HTMLElement>('#portfolio-review-current');
+	const portfolioReviewStatus = document.querySelector<HTMLElement>('#portfolio-review-status');
+	const portfolioReviewError = document.querySelector<HTMLElement>('#portfolio-review-error');
+	const portfolioReviewResults = document.querySelector<HTMLElement>('#portfolio-review-results');
+	const recommendationsPanel = document.querySelector<HTMLElement>('#recommendations-panel');
+	const recommendationsNote = document.querySelector<HTMLElement>('#recommendations-note');
+	const recommendationsGenerate = document.querySelector<HTMLButtonElement>('#recommendations-generate');
+	const recommendationsCurrent = document.querySelector<HTMLElement>('#recommendations-current');
+	const recommendationsStatus = document.querySelector<HTMLElement>('#recommendations-status');
+	const recommendationsError = document.querySelector<HTMLElement>('#recommendations-error');
+	const recommendationsResults = document.querySelector<HTMLElement>('#recommendations-results');
+
+	let currentId: string | null = null;
+	let optionsSignature = '';
+	let headlinePortfolioId: string | null = null;
+	let bioPortfolioId: string | null = null;
+	let projectDescriptionPortfolioId: string | null = null;
+	let projectOptionsSignature = '';
+	let skillsPortfolioId: string | null = null;
+	let portfolioReviewPortfolioId: string | null = null;
+	let recommendationsPortfolioId: string | null = null;
+	const runningFeatures = new Set<'headline' | 'bio' | 'project-description' | 'skills' | 'portfolio-review' | 'recommendations'>();
+
+	const resolveCurrent = (portfolios: readonly PortfolioRecord[]): PortfolioRecord | undefined => {
+		if (portfolios.length === 0) {
+			return undefined;
+		}
+		const requested = new URLSearchParams(window.location.search).get('portfolio');
+		if (requested) {
+			const match = portfolios.find((portfolio) => portfolio.id === requested);
+			if (match) {
+				return match;
+			}
+		}
+		return portfolios.reduce((latest, portfolio) =>
+			portfolio.updatedAt >= latest.updatedAt ? portfolio : latest
+		);
+	};
+
+	const syncOptions = (portfolios: readonly PortfolioRecord[]): void => {
+		if (!portfolioSelect) {
+			return;
+		}
+		const signature = portfolios.map((portfolio) => portfolio.id).join(',');
+		if (signature === optionsSignature) {
+			return;
+		}
+		optionsSignature = signature;
+		const previous = currentId;
+		portfolioSelect.replaceChildren(
+			...portfolios.map((portfolio) => {
+				const option = document.createElement('option');
+				option.value = portfolio.id;
+				option.textContent = portfolio.title;
+				return option;
+			})
+		);
+		if (previous && portfolios.some((portfolio) => portfolio.id === previous)) {
+			portfolioSelect.value = previous;
+		}
+	};
+
+	const syncProjectOptions = (projects: readonly PortfolioProject[], portfolioId: string): void => {
+		if (!projectDescriptionSelect) {
+			return;
+		}
+		const signature = projects.map((project) => project.id ?? project.name).join('|');
+		if (
+			signature === projectOptionsSignature &&
+			projectDescriptionPortfolioId === portfolioId
+		) {
+			return;
+		}
+		projectOptionsSignature = signature;
+		projectDescriptionPortfolioId = portfolioId;
+		projectDescriptionSelect.replaceChildren(
+			...projects.map((project) => {
+				const option = document.createElement('option');
+				option.value = project.id ?? project.name;
+				option.textContent = project.name || 'Untitled project';
+				return option;
+			})
+		);
+		if (projects.length > 0) {
+			projectDescriptionSelect.value = projects[0].id ?? projects[0].name;
+		}
+		if (projectDescriptionResults) projectDescriptionResults.replaceChildren();
+		if (projectDescriptionError) projectDescriptionError.hidden = true;
+	};
+
+	const render = (): void => {
+		if (!contextSection || !emptySection) {
+			return;
+		}
+		const portfolios = portfolioManagerStore.getPortfolios();
+		if (portfolios.length === 0) {
+			currentId = null;
+			emptySection.hidden = false;
+			contextSection.hidden = true;
+			if (headlinePanel) headlinePanel.hidden = true;
+			if (headlineNote) headlineNote.hidden = false;
+			if (headlineGenerate) headlineGenerate.disabled = true;
+			if (bioPanel) bioPanel.hidden = true;
+			if (bioNote) bioNote.hidden = false;
+			if (bioGenerate) bioGenerate.disabled = true;
+			if (projectDescriptionPanel) projectDescriptionPanel.hidden = true;
+			if (projectDescriptionNote) projectDescriptionNote.hidden = false;
+			if (projectDescriptionGenerate) projectDescriptionGenerate.disabled = true;
+			if (skillsPanel) skillsPanel.hidden = true;
+			if (skillsNote) skillsNote.hidden = false;
+			if (skillsGenerate) skillsGenerate.disabled = true;
+			if (portfolioReviewPanel) portfolioReviewPanel.hidden = true;
+			if (portfolioReviewNote) portfolioReviewNote.hidden = false;
+			if (portfolioReviewGenerate) portfolioReviewGenerate.disabled = true;
+			if (recommendationsPanel) recommendationsPanel.hidden = true;
+			if (recommendationsNote) recommendationsNote.hidden = false;
+			if (recommendationsGenerate) recommendationsGenerate.disabled = true;
+			return;
+		}
+		emptySection.hidden = true;
+		contextSection.hidden = false;
+
+		syncOptions(portfolios);
+		const current = portfolios.find((portfolio) => portfolio.id === currentId) ?? resolveCurrent(portfolios);
+		if (!current) {
+			return;
+		}
+		currentId = current.id;
+		if (portfolioSelect) {
+			portfolioSelect.value = current.id;
+		}
+
+		const context = createPortfolioContext(current.data);
+		if (contextTitle) contextTitle.textContent = current.title;
+		if (contextStatus) contextStatus.textContent = portfolioStatusText(current.status);
+		if (contextVersion) contextVersion.textContent = `v${current.currentVersion}`;
+		if (contextUpdated) contextUpdated.textContent = formatPortfolioDate(current.updatedAt);
+		if (contextTheme) contextTheme.textContent = context.themeName || '—';
+		if (contextContent) contextContent.textContent = portfolioContextLabel(context);
+		if (contextSummary) contextSummary.textContent = context.summary || '—';
+
+		if (statusRegion) {
+			statusRegion.textContent = `AI Assistant loaded portfolio "${current.title}".`;
+		}
+
+		if (headlineCurrent) headlineCurrent.textContent = context.headline || '—';
+		if (headlineGenerate) headlineGenerate.disabled = portfolios.length === 0 || runningFeatures.has('headline');
+		if (headlinePanel) headlinePanel.hidden = portfolios.length === 0;
+		if (headlineNote) headlineNote.hidden = portfolios.length > 0;
+		if (headlinePortfolioId !== current.id) {
+			headlinePortfolioId = current.id;
+			if (headlineResults) headlineResults.replaceChildren();
+			if (headlineError) headlineError.hidden = true;
+		}
+
+		if (bioCurrent) bioCurrent.textContent = context.summary || '—';
+		if (bioGenerate) bioGenerate.disabled = portfolios.length === 0 || runningFeatures.has('bio');
+		if (bioPanel) bioPanel.hidden = portfolios.length === 0;
+		if (bioNote) bioNote.hidden = portfolios.length > 0;
+		if (bioPortfolioId !== current.id) {
+			bioPortfolioId = current.id;
+			if (bioResults) bioResults.replaceChildren();
+			if (bioError) bioError.hidden = true;
+		}
+
+		if (projectDescriptionPortfolioId !== current.id) {
+			projectDescriptionPortfolioId = current.id;
+			if (projectDescriptionResults) projectDescriptionResults.replaceChildren();
+			if (projectDescriptionError) {
+				projectDescriptionError.replaceChildren();
+				projectDescriptionError.hidden = true;
+			}
+		}
+		syncProjectOptions(context.projects, current.id);
+		if (projectDescriptionGenerate) {
+			projectDescriptionGenerate.disabled =
+				portfolios.length === 0 ||
+				runningFeatures.has('project-description') ||
+				context.projects.length === 0;
+		}
+		if (projectDescriptionPanel) projectDescriptionPanel.hidden = portfolios.length === 0;
+		if (projectDescriptionNote) projectDescriptionNote.hidden = portfolios.length > 0;
+		if (projectDescriptionNoProjects) {
+			projectDescriptionNoProjects.hidden = context.projects.length > 0;
+		}
+
+		const skillTokens = context.skills.flatMap((skill) =>
+			skill.value
+				.split(',')
+				.map((token) => token.trim())
+				.filter(Boolean)
+		);
+		if (skillsCurrent) {
+			skillsCurrent.textContent =
+				skillTokens.length > 0
+					? skillTokens.slice(0, 5).join(', ') + (skillTokens.length > 5 ? '…' : '')
+					: '—';
+		}
+		if (skillsGenerate) skillsGenerate.disabled = portfolios.length === 0 || runningFeatures.has('skills');
+		if (skillsPanel) skillsPanel.hidden = portfolios.length === 0;
+		if (skillsNote) skillsNote.hidden = portfolios.length > 0;
+		if (skillsPortfolioId !== current.id) {
+			skillsPortfolioId = current.id;
+			if (skillsResults) skillsResults.replaceChildren();
+			if (skillsError) skillsError.hidden = true;
+		}
+
+		if (portfolioReviewCurrent) {
+			const indicators: boolean[] = [
+				Boolean(context.name),
+				Boolean(context.headline),
+				Boolean(context.summary),
+				context.skills.some((skill) => skill.value.trim().split(',').some(Boolean)),
+				context.projects.length > 0,
+				context.experience.length > 0,
+				context.education.length > 0,
+				context.certifications.length > 0,
+				context.achievements.length > 0,
+				Boolean(context.social),
+			];
+			const present = indicators.filter(Boolean).length;
+			portfolioReviewCurrent.textContent = `${present} of ${indicators.length} major sections present`;
+		}
+		if (portfolioReviewGenerate) {
+			portfolioReviewGenerate.disabled =
+				portfolios.length === 0 || runningFeatures.has('portfolio-review');
+		}
+		if (portfolioReviewPanel) portfolioReviewPanel.hidden = portfolios.length === 0;
+		if (portfolioReviewNote) portfolioReviewNote.hidden = portfolios.length > 0;
+		if (portfolioReviewPortfolioId !== current.id) {
+			portfolioReviewPortfolioId = current.id;
+			if (portfolioReviewResults) portfolioReviewResults.replaceChildren();
+			if (portfolioReviewError) portfolioReviewError.hidden = true;
+		}
+
+		if (recommendationsCurrent) {
+			recommendationsCurrent.textContent = portfolioContextLabel(context);
+		}
+		if (recommendationsGenerate) {
+			recommendationsGenerate.disabled =
+				portfolios.length === 0 || runningFeatures.has('recommendations');
+		}
+		if (recommendationsPanel) recommendationsPanel.hidden = portfolios.length === 0;
+		if (recommendationsNote) recommendationsNote.hidden = portfolios.length > 0;
+		if (recommendationsPortfolioId !== current.id) {
+			recommendationsPortfolioId = current.id;
+			if (recommendationsResults) recommendationsResults.replaceChildren();
+			if (recommendationsError) recommendationsError.hidden = true;
+		}
+	};
+
+	const appendSuggestionItem = (
+		container: HTMLElement | null,
+		option: string,
+		block = false
+	): void => {
+		if (!container) {
+			return;
+		}
+		const item = document.createElement('li');
+		item.className =
+			'flex items-center justify-between gap-sm rounded-md border border-hairline bg-surface-2 p-sm';
+
+		const label = document.createElement('span');
+		label.className = block
+			? 'whitespace-pre-line min-w-0 text-body-sm text-ink'
+			: 'text-body-sm text-ink';
+		label.textContent = option;
+
+		const copy = document.createElement('button');
+		copy.type = 'button';
+		copy.className =
+			'shrink-0 rounded-md border border-hairline bg-surface-1 px-sm py-xs text-caption font-medium text-ink-muted transition-colors duration-200 hover:text-ink';
+		copy.textContent = 'Copy';
+		copy.addEventListener('click', () => {
+			void copyTextToClipboard(option).then((copied) => {
+				copy.textContent = copied ? 'Copied' : 'Copy failed';
+				window.setTimeout(() => {
+					copy.textContent = 'Copy';
+				}, 1500);
+			});
+		});
+
+		item.append(label, copy);
+		container.append(item);
+	};
+
+	interface AssistantFeatureControls {
+		feature:
+			| 'headline'
+			| 'bio'
+			| 'project-description'
+			| 'skills'
+			| 'portfolio-review'
+			| 'recommendations';
+		label: string;
+		buttonLabel: string;
+		button: HTMLButtonElement | null;
+		status: HTMLElement | null;
+		error: HTMLElement | null;
+		results: HTMLElement | null;
+		target?: () => string | null;
+		block?: boolean;
+	}
+
+	const generateAssistantFeature = async (
+		controls: AssistantFeatureControls
+	): Promise<void> => {
+		if (runningFeatures.has(controls.feature) || !currentId) {
+			return;
+		}
+		const portfolio = portfolioManagerStore
+			.getPortfolios()
+			.find((entry) => entry.id === currentId);
+		if (!portfolio) {
+			return;
+		}
+
+		// Capture the inputs this run started with so results are never shown
+		// for a different portfolio or project after an async completion.
+		const generationPortfolioId = currentId;
+		const generationTarget = controls.target ? controls.target() : undefined;
+
+		const context = createPortfolioContext(portfolio.data);
+		const target = controls.target ? controls.target() : undefined;
+		const labelSpan = controls.button?.querySelector('span');
+
+		runningFeatures.add(controls.feature);
+		if (controls.button) {
+			controls.button.disabled = true;
+			controls.button.setAttribute('aria-busy', 'true');
+		}
+		if (labelSpan) labelSpan.textContent = 'Generating…';
+		if (controls.status) controls.status.textContent = `Generating ${controls.label}…`;
+		if (controls.error) {
+			controls.error.replaceChildren();
+			controls.error.hidden = true;
+		}
+		if (controls.results) controls.results.replaceChildren();
+
+		const result = await runAssistant(
+			{
+				feature: controls.feature,
+				portfolioId: portfolio.id,
+				context,
+				...(target ? { target } : {}),
+			},
+			defaultAssistantProvider
+		);
+
+		runningFeatures.delete(controls.feature);
+		if (controls.button) {
+			controls.button.disabled = false;
+			controls.button.removeAttribute('aria-busy');
+		}
+		if (labelSpan) labelSpan.textContent = controls.buttonLabel;
+
+		// Stale-result protection: the portfolio or targeted project changed
+		// while generating, so render() (or the project-change handler) already
+		// cleared the previous output. Discard this run rather than surfacing
+		// results that no longer match the selection.
+		const completedTarget = controls.target ? controls.target() : undefined;
+		if (currentId !== generationPortfolioId || completedTarget !== generationTarget) {
+			if (controls.status) {
+				controls.status.textContent =
+					'Generation skipped because the selection changed. Run it again for the current selection.';
+			}
+			return;
+		}
+
+		if (!result.ok) {
+			if (controls.error) {
+				controls.error.replaceChildren();
+				const message = document.createElement('span');
+				message.textContent =
+					result.error ?? `Could not generate ${controls.label}s.`;
+				controls.error.append(message);
+				const retry = document.createElement('button');
+				retry.type = 'button';
+				retry.className =
+					'mt-xs inline-flex shrink-0 items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-sm py-xs text-caption font-medium text-ink transition-colors duration-200 hover:bg-surface-2';
+				retry.textContent = 'Try again';
+				retry.addEventListener('click', () => {
+					void generateAssistantFeature(controls);
+				});
+				controls.error.append(retry);
+				controls.error.hidden = false;
+			}
+			if (controls.status) {
+				controls.status.textContent = `Could not generate ${controls.label}s.`;
+			}
+			return;
+		}
+
+		const raw = result.content.trim();
+		const options = controls.block
+			? raw
+					.split(/\n\s*\n/)
+					.map((block) => block.trim())
+					.filter(Boolean)
+			: raw
+					.split('\n')
+					.map((line) => line.trim())
+					.filter(Boolean)
+					.map((line) => line.replace(/^\d+\.\s*/, ''));
+		for (const option of options) {
+			appendSuggestionItem(controls.results, option, controls.block);
+		}
+		if (controls.error) {
+			controls.error.replaceChildren();
+			controls.error.hidden = true;
+		}
+		if (controls.status) {
+			controls.status.textContent = `Generated ${options.length} ${controls.label}${options.length === 1 ? '' : 's'}.`;
+		}
+	};
+
+	portfolioSelect?.addEventListener('change', () => {
+		currentId = portfolioSelect.value;
+		render();
+	});
+
+	headlineGenerate?.addEventListener('click', () => {
+		void generateAssistantFeature({
+			feature: 'headline',
+			label: 'headline option',
+			buttonLabel: 'Generate headlines',
+			button: headlineGenerate,
+			status: headlineStatus,
+			error: headlineError,
+			results: headlineResults,
+		});
+	});
+
+	bioGenerate?.addEventListener('click', () => {
+		void generateAssistantFeature({
+			feature: 'bio',
+			label: 'bio option',
+			buttonLabel: 'Generate bios',
+			button: bioGenerate,
+			status: bioStatus,
+			error: bioError,
+			results: bioResults,
+		});
+	});
+
+	projectDescriptionSelect?.addEventListener('change', () => {
+		if (projectDescriptionResults) projectDescriptionResults.replaceChildren();
+		if (projectDescriptionError) projectDescriptionError.hidden = true;
+	});
+
+	projectDescriptionGenerate?.addEventListener('click', () => {
+		void generateAssistantFeature({
+			feature: 'project-description',
+			label: 'project description option',
+			buttonLabel: 'Generate description',
+			button: projectDescriptionGenerate,
+			status: projectDescriptionStatus,
+			error: projectDescriptionError,
+			results: projectDescriptionResults,
+			target: () => projectDescriptionSelect?.value ?? null,
+		});
+	});
+
+	skillsGenerate?.addEventListener('click', () => {
+		void generateAssistantFeature({
+			feature: 'skills',
+			label: 'skill suggestion',
+			buttonLabel: 'Analyze skills',
+			button: skillsGenerate,
+			status: skillsStatus,
+			error: skillsError,
+			results: skillsResults,
+			block: true,
+		});
+	});
+
+	portfolioReviewGenerate?.addEventListener('click', () => {
+		void generateAssistantFeature({
+			feature: 'portfolio-review',
+			label: 'review item',
+			buttonLabel: 'Review portfolio',
+			button: portfolioReviewGenerate,
+			status: portfolioReviewStatus,
+			error: portfolioReviewError,
+			results: portfolioReviewResults,
+			block: true,
+		});
+	});
+
+	recommendationsGenerate?.addEventListener('click', () => {
+		void generateAssistantFeature({
+			feature: 'recommendations',
+			label: 'recommendation',
+			buttonLabel: 'Generate recommendations',
+			button: recommendationsGenerate,
+			status: recommendationsStatus,
+			error: recommendationsError,
+			results: recommendationsResults,
+			block: true,
+		});
+	});
+
+	portfolioManagerStore.subscribe(render);
+	render();
+</script>
