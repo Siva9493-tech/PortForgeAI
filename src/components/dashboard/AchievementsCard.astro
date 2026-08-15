@@ -1,0 +1,380 @@
+---
+import { Plus, Trophy } from 'lucide-astro';
+import { portfolioManagerStore } from '../../lib/portfolio-manager';
+
+const records = portfolioManagerStore.getPortfolios();
+const hasPortfolios = records.length > 0;
+
+const primaryButtonClass =
+	'inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover';
+
+const fieldClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body-sm text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus';
+---
+
+<section id="achievements-section" aria-labelledby="achievements-list-heading" class="mt-xl">
+	<div class="mb-md flex flex-col gap-md lg:flex-row lg:items-end lg:justify-between">
+		<div class="flex min-w-0 flex-col gap-xxs">
+			<h2 id="achievements-list-heading" class="text-heading-sm text-ink">
+				Your achievements
+			</h2>
+			<p class="text-body-sm text-ink-muted">
+				Badges earned from your real portfolio content and analytics activity,
+				isolated by portfolio.
+			</p>
+		</div>
+
+		<div class="flex w-full min-w-0 flex-col gap-sm sm:w-64">
+			<label
+				for="achievements-portfolio-select"
+				class="text-caption font-medium text-ink-subtle"
+			>
+				Portfolio
+			</label>
+			<select
+				id="achievements-portfolio-select"
+				name="achievements-portfolio"
+				class={fieldClass}
+			></select>
+		</div>
+	</div>
+
+	<p id="achievements-summary" class="text-body-sm text-ink-subtle" aria-live="polite"></p>
+
+	<p id="achievements-status" role="status" class="sr-only"></p>
+
+	<div
+		id="achievements-empty"
+		class="card mt-md flex w-full flex-col items-center gap-sm p-xl text-center"
+		hidden={hasPortfolios}
+	>
+		<span
+			class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-primary"
+			aria-hidden="true"
+		>
+			<Trophy size="24" />
+		</span>
+		<h3 class="text-heading-sm text-ink">No portfolio to track yet</h3>
+		<p class="max-w-narrow text-body-sm text-ink-subtle">
+			Create a portfolio first to start earning achievements.
+		</p>
+		<div class="mt-sm">
+			<a href="/portfolio-builder" class={primaryButtonClass}>
+				<Plus size="16" aria-hidden="true" />
+				Create Portfolio
+			</a>
+		</div>
+	</div>
+
+	<div
+		id="achievements-zero"
+		class="card mt-md flex w-full flex-col items-center gap-sm p-lg text-center"
+		hidden
+	>
+		<span
+			class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-primary"
+			aria-hidden="true"
+		>
+			<Trophy size="24" />
+		</span>
+		<h3 class="text-heading-sm text-ink">Your first milestone is waiting</h3>
+		<p class="max-w-narrow text-body-sm text-ink-subtle">
+			Keep building and sharing this portfolio to earn achievements from real
+			activity.
+		</p>
+	</div>
+
+	<div
+		id="achievements-grid"
+		class="mt-md grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+		aria-busy="true"
+		hidden={!hasPortfolios}
+	></div>
+
+	<div
+		id="achievements-error"
+		role="alert"
+		class="mt-md rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-semantic-danger"
+		hidden
+	></div>
+</section>
+
+<script>
+	import {
+		buildAchievementContext,
+		evaluateAchievements,
+		type AchievementResult,
+	} from '../../lib/achievements';
+	import { analyticsStore } from '../../lib/analytics';
+	import { portfolioManagerStore } from '../../lib/portfolio-manager';
+	import type { PortfolioRecord } from '../../lib/portfolio-manager';
+
+	const select = document.querySelector<HTMLSelectElement>('#achievements-portfolio-select');
+	const empty = document.querySelector<HTMLElement>('#achievements-empty');
+	const zero = document.querySelector<HTMLElement>('#achievements-zero');
+	const grid = document.querySelector<HTMLElement>('#achievements-grid');
+	const summary = document.querySelector<HTMLElement>('#achievements-summary');
+	const status = document.querySelector<HTMLElement>('#achievements-status');
+	const error = document.querySelector<HTMLElement>('#achievements-error');
+
+	const ACHIEVEMENT_ICONS: Record<string, string> = {
+		rocket:
+			'<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+		'badge-check':
+			'<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+		sparkles:
+			'<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>',
+		eye:
+			'<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+		users:
+			'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+		'mouse-pointer-click':
+			'<path d="m9 9 5 12 1.8-5.2L21 14Z"/><path d="M7.2 2.2 8 5.1"/><path d="m5.1 8-2.9-.8"/><path d="M14 4.1 12 6"/><path d="m6 12-1.9 2"/>',
+		'trending-up':
+			'<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+		share:
+			'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>',
+	};
+
+	const iconMarkup = (key: string): string =>
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">${
+			ACHIEVEMENT_ICONS[key] ?? ACHIEVEMENT_ICONS['badge-check']
+		}</svg>`;
+
+	const timeFormatter = new Intl.DateTimeFormat(undefined, {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric',
+	});
+
+	const formatTimestamp = (iso: string | null): string | null => {
+		if (!iso) {
+			return null;
+		}
+		const date = new Date(iso);
+		if (Number.isNaN(date.getTime())) {
+			return iso;
+		}
+		return timeFormatter.format(date);
+	};
+
+	let currentId: string | null = null;
+	let optionsSignature = '';
+	let renderedSignature = '';
+
+	const resolveCurrent = (
+		portfolios: readonly PortfolioRecord[]
+	): PortfolioRecord | undefined => {
+		if (portfolios.length === 0) {
+			return undefined;
+		}
+		const requested = new URLSearchParams(window.location.search).get('portfolio');
+		if (requested) {
+			const match = portfolios.find((portfolio) => portfolio.id === requested);
+			if (match) {
+				return match;
+			}
+		}
+		return portfolios.reduce((latest, portfolio) =>
+			portfolio.updatedAt >= latest.updatedAt ? portfolio : latest
+		);
+	};
+
+	const syncOptions = (portfolios: readonly PortfolioRecord[]): void => {
+		if (!select) {
+			return;
+		}
+		const signature = portfolios.map((portfolio) => portfolio.id).join(',');
+		if (signature === optionsSignature) {
+			return;
+		}
+		optionsSignature = signature;
+		const previous = currentId;
+		select.replaceChildren(
+			...portfolios.map((portfolio) => {
+				const option = document.createElement('option');
+				option.value = portfolio.id;
+				option.textContent = portfolio.title;
+				return option;
+			})
+		);
+		if (previous && portfolios.some((portfolio) => portfolio.id === previous)) {
+			select.value = previous;
+		}
+	};
+
+	const hideError = (): void => {
+		if (error) {
+			error.textContent = '';
+			error.hidden = true;
+		}
+	};
+
+	const showError = (message: string): void => {
+		if (error) {
+			error.textContent = message;
+			error.hidden = false;
+		}
+	};
+
+	const buildCard = (result: AchievementResult): HTMLElement => {
+		const { definition, unlocked, unlockedAt, progress } = result;
+		const card = document.createElement('article');
+		card.className = 'card flex flex-col gap-sm p-md';
+
+		const nameId = `achievement-${definition.id}`;
+
+		const head = document.createElement('div');
+		head.className = 'flex items-start justify-between gap-sm';
+
+		const iconWrap = document.createElement('span');
+		iconWrap.className = `flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
+			unlocked ? 'bg-primary/10 text-primary' : 'bg-surface-2 text-ink-tertiary'
+		}`;
+		iconWrap.setAttribute('aria-hidden', 'true');
+		iconWrap.innerHTML = iconMarkup(definition.icon);
+
+		const badge = document.createElement('strong');
+		badge.className = unlocked
+			? 'inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xxs text-caption font-semibold text-primary'
+			: 'inline-flex items-center gap-xs rounded-full bg-surface-2 px-sm py-xxs text-caption font-semibold text-ink-subtle';
+		badge.textContent = unlocked ? 'Unlocked' : 'Locked';
+
+		head.append(iconWrap, badge);
+
+		const name = document.createElement('h3');
+		name.className = 'text-subhead text-ink';
+		name.id = `${nameId}-name`;
+		name.textContent = definition.name;
+
+		const text = document.createElement('p');
+		text.className = 'text-body-sm text-ink-muted';
+		text.textContent = unlocked ? definition.description : definition.requirement;
+
+		card.append(head, name, text);
+		card.setAttribute('aria-labelledby', `${nameId}-name`);
+
+		if (progress) {
+			const meter = document.createElement('div');
+			meter.className = 'flex flex-col gap-xs';
+
+			const track = document.createElement('div');
+			track.className = 'h-1.5 w-full overflow-hidden rounded-full bg-surface-2';
+			track.setAttribute('role', 'progressbar');
+			track.setAttribute('aria-valuemin', '0');
+			track.setAttribute('aria-valuemax', '100');
+			track.setAttribute('aria-valuenow', String(Math.round(progress.normalized * 100)));
+			track.setAttribute('aria-label', progress.label);
+
+			const fill = document.createElement('div');
+			fill.className = `h-full rounded-full ${unlocked ? 'bg-primary' : 'bg-ink-tertiary'}`;
+			fill.style.width = `${Math.round(progress.normalized * 100)}%`;
+
+			track.append(fill);
+
+			const meta = document.createElement('p');
+			meta.className = 'text-caption text-ink-subtle';
+			meta.textContent = progress.label;
+
+			meter.append(track, meta);
+			card.append(meter);
+		}
+
+		if (unlocked) {
+			const dateLabel = formatTimestamp(unlockedAt);
+			if (dateLabel) {
+				const footer = document.createElement('p');
+				footer.className = 'text-caption text-ink-tertiary';
+				footer.textContent = `Unlocked ${dateLabel}`;
+				card.append(footer);
+			}
+		}
+
+		return card;
+	};
+
+	const render = (): void => {
+		if (!grid || !empty || !zero || !summary) {
+			return;
+		}
+		const portfolios = portfolioManagerStore.getPortfolios();
+		if (portfolios.length === 0) {
+			currentId = null;
+			empty.hidden = false;
+			zero.hidden = true;
+			grid.hidden = true;
+			grid.replaceChildren();
+			summary.textContent = '';
+			hideError();
+			if (status) {
+				status.textContent = 'No portfolio to track achievements for yet.';
+			}
+			return;
+		}
+		empty.hidden = true;
+		grid.hidden = false;
+
+		syncOptions(portfolios);
+		const current =
+			portfolios.find((portfolio) => portfolio.id === currentId) ??
+			resolveCurrent(portfolios);
+		if (!current) {
+			return;
+		}
+		if (current.id !== currentId) {
+			currentId = current.id;
+			renderedSignature = '';
+		}
+		if (select) {
+			select.value = current.id;
+		}
+
+		const context = buildAchievementContext(current.id);
+		if (!context) {
+			showError('Achievements could not be loaded for this portfolio.');
+			return;
+		}
+		const evaluation = evaluateAchievements(context);
+		hideError();
+
+		const signature = [
+			current.id,
+			evaluation.unlockedCount,
+			evaluation.results
+				.map(
+					(result) =>
+						`${result.definition.id}:${result.unlocked}:${
+							result.progress?.current ?? ''
+						}`
+				)
+				.join(','),
+		].join('|');
+		if (signature === renderedSignature) {
+			return;
+		}
+		renderedSignature = signature;
+
+		grid.replaceChildren(...evaluation.results.map(buildCard));
+		grid.setAttribute('aria-busy', 'false');
+
+		zero.hidden = evaluation.unlockedCount > 0;
+		summary.textContent =
+			evaluation.unlockedCount > 0
+				? `${evaluation.unlockedCount} of ${evaluation.totalCount} achievements unlocked for ${current.title}.`
+				: `${current.title} has no unlocked achievements yet.`;
+
+		if (status) {
+			status.textContent = `${current.title}: ${evaluation.unlockedCount} of ${evaluation.totalCount} achievements unlocked.`;
+		}
+	};
+
+	select?.addEventListener('change', () => {
+		currentId = select.value;
+		renderedSignature = '';
+		render();
+	});
+
+	portfolioManagerStore.subscribe(render);
+	analyticsStore.subscribe(render);
+	render();
+</script>

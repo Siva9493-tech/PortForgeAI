@@ -1,0 +1,254 @@
+---
+import { Trophy } from 'lucide-astro';
+---
+
+<!--
+	Achievement SUMMARY for the Analytics dashboard (Day-11 Task 13).
+
+	Deliberately NOT the full Achievement System — it shows unlocked/total for the
+	selected portfolio plus a short "next up" list, and routes to the dedicated
+	/achievements page for the complete view. Reads the shared Analytics
+	portfolio selector (#analytics-portfolio-select) so it always reflects the
+	same portfolio as the metrics and activity sections.
+-->
+<section
+	id="achievements-summary-section"
+	aria-labelledby="achievements-summary-heading"
+	class="mt-xl"
+	data-reveal
+>
+	<div class="mb-md flex flex-col gap-md lg:flex-row lg:items-end lg:justify-between">
+		<div class="flex min-w-0 flex-col gap-xxs">
+			<h2 id="achievements-summary-heading" class="text-heading-sm text-ink">
+				Achievements
+			</h2>
+			<p class="text-body-sm text-ink-muted">
+				Progress and next milestones for the selected portfolio.
+			</p>
+		</div>
+		<a
+			href="/achievements"
+			class="inline-flex shrink-0 items-center justify-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+		>
+			<Trophy size="16" aria-hidden="true" />
+			View all achievements
+		</a>
+	</div>
+
+	<p id="achievements-summary" class="text-body-sm text-ink-subtle" aria-live="polite"></p>
+
+	<p id="achievements-summary-status" role="status" class="sr-only"></p>
+
+	<div
+		id="achievements-summary-empty"
+		class="card mt-md flex w-full flex-col items-center gap-sm p-lg text-center"
+		hidden
+	>
+		<span
+			class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-primary"
+			aria-hidden="true"
+		>
+			<Trophy size="24" />
+		</span>
+		<h3 class="text-heading-sm text-ink">Your first milestone is waiting</h3>
+		<p class="max-w-narrow text-body-sm text-ink-subtle">
+			Keep building and sharing this portfolio to earn achievements from real
+			activity. See the full breakdown on the Achievements page.
+		</p>
+	</div>
+
+	<ul
+		id="achievements-summary-list"
+		class="card mt-md divide-y divide-hairline"
+		aria-labelledby="achievements-summary-heading"
+	></ul>
+
+	<div
+		id="achievements-summary-error"
+		role="alert"
+		class="mt-md rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-semantic-danger"
+		hidden
+	></div>
+</section>
+
+<script>
+	import {
+		buildAchievementContext,
+		evaluateAchievements,
+		type AchievementResult,
+	} from '../../lib/achievements';
+	import { analyticsStore } from '../../lib/analytics';
+	import { portfolioManagerStore } from '../../lib/portfolio-manager';
+	import type { PortfolioRecord } from '../../lib/portfolio-manager';
+
+	/**
+	 * Shares the Analytics page's single portfolio selector with the metrics and
+	 * activity sections. Achievements reflect ALL of the selected portfolio's
+	 * analytics (the shared period toolbar only filters metrics/activity).
+	 */
+	const select = document.querySelector<HTMLSelectElement>('#analytics-portfolio-select');
+	const summary = document.querySelector<HTMLElement>('#achievements-summary');
+	const status = document.querySelector<HTMLElement>('#achievements-summary-status');
+	const empty = document.querySelector<HTMLElement>('#achievements-summary-empty');
+	const list = document.querySelector<HTMLElement>('#achievements-summary-list');
+	const error = document.querySelector<HTMLElement>('#achievements-summary-error');
+
+	/** Maximum "next up" locked achievements shown before linking to the full page. */
+	const NEXT_UP_LIMIT = 3;
+
+	let currentId: string | null = null;
+	let renderedSignature = '';
+
+	const resolveCurrent = (
+		portfolios: readonly PortfolioRecord[]
+	): PortfolioRecord | undefined => {
+		if (portfolios.length === 0) {
+			return undefined;
+		}
+		if (select && select.value) {
+			const selected = portfolios.find((portfolio) => portfolio.id === select.value);
+			if (selected) {
+				return selected;
+			}
+		}
+		const requested = new URLSearchParams(window.location.search).get('portfolio');
+		if (requested) {
+			const match = portfolios.find((portfolio) => portfolio.id === requested);
+			if (match) {
+				return match;
+			}
+		}
+		return portfolios.reduce((latest, portfolio) =>
+			portfolio.updatedAt >= latest.updatedAt ? portfolio : latest
+		);
+	};
+
+	const hideError = (): void => {
+		if (error) {
+			error.textContent = '';
+			error.hidden = true;
+		}
+	};
+
+	const showError = (message: string): void => {
+		if (error) {
+			error.textContent = message;
+			error.hidden = false;
+		}
+	};
+
+	const buildNextUpItem = (result: AchievementResult): HTMLLIElement => {
+		const { definition, progress } = result;
+		const li = document.createElement('li');
+		li.className = 'flex items-center justify-between gap-sm px-md py-sm';
+
+		const name = document.createElement('p');
+		name.className = 'min-w-0 flex-1 text-body-sm font-medium text-ink';
+		name.textContent = definition.name;
+
+		const progressText = document.createElement('p');
+		progressText.className = 'flex min-w-0 items-center gap-xs text-caption text-ink-subtle';
+		if (progress) {
+			const bar = document.createElement('span');
+			bar.className = 'block h-1.5 w-16 overflow-hidden rounded-full bg-surface-2';
+			bar.setAttribute('aria-hidden', 'true');
+			const fill = document.createElement('span');
+			fill.className = 'block h-full rounded-full bg-ink-tertiary';
+			fill.style.width = `${Math.round(progress.normalized * 100)}%`;
+			bar.append(fill);
+			progressText.append(bar);
+			const label = document.createElement('span');
+			label.textContent = progress.label;
+			progressText.append(label);
+		} else {
+			progressText.textContent = definition.requirement;
+		}
+
+		li.append(name, progressText);
+		return li;
+	};
+
+	const render = (): void => {
+		if (!summary || !empty || !list) {
+			return;
+		}
+		const portfolios = portfolioManagerStore.getPortfolios();
+		if (portfolios.length === 0) {
+			currentId = null;
+			summary.textContent = '';
+			empty.hidden = true;
+			list.replaceChildren();
+			list.hidden = true;
+			hideError();
+			if (status) {
+				status.textContent = 'No portfolio to track achievements for yet.';
+			}
+			return;
+		}
+
+		const current =
+			portfolios.find((portfolio) => portfolio.id === currentId) ??
+			resolveCurrent(portfolios);
+		if (!current) {
+			return;
+		}
+		if (current.id !== currentId) {
+			currentId = current.id;
+			renderedSignature = '';
+		}
+
+		const context = buildAchievementContext(current.id);
+		if (!context) {
+			showError('Achievements could not be loaded for this portfolio.');
+			return;
+		}
+		const evaluation = evaluateAchievements(context);
+		hideError();
+
+		const signature = [
+			current.id,
+			evaluation.unlockedCount,
+			evaluation.results
+				.filter((result) => !result.unlocked)
+				.slice(0, NEXT_UP_LIMIT)
+				.map((result) => `${result.definition.id}:${result.progress?.current ?? ''}`)
+				.join(','),
+		].join('|');
+		if (signature === renderedSignature) {
+			return;
+		}
+		renderedSignature = signature;
+
+		const nextUp = evaluation.results.filter((result) => !result.unlocked);
+
+		if (evaluation.unlockedCount === 0) {
+			empty.hidden = false;
+			list.replaceChildren();
+			list.hidden = true;
+		} else {
+			empty.hidden = true;
+			list.hidden = nextUp.length === 0;
+			list.replaceChildren(
+				...nextUp.slice(0, NEXT_UP_LIMIT).map(buildNextUpItem)
+			);
+		}
+
+		summary.textContent = nextUp.length === 0
+			? `All ${evaluation.totalCount} achievements unlocked for ${current.title}.`
+			: `${evaluation.unlockedCount} of ${evaluation.totalCount} achievements unlocked for ${current.title} — ${nextUp.length} still to earn.`;
+
+		if (status) {
+			status.textContent = `${current.title}: ${evaluation.unlockedCount} of ${evaluation.totalCount} achievements unlocked.`;
+		}
+	};
+
+	select?.addEventListener('change', () => {
+		currentId = select.value;
+		renderedSignature = '';
+		render();
+	});
+
+	portfolioManagerStore.subscribe(render);
+	analyticsStore.subscribe(render);
+	render();
+</script>

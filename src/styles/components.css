@@ -31,4 +31,32 @@
 		white-space: nowrap;
 		border-width: 0;
 	}
+
+	/*
+	 * Progressive reveal (Day-11 Task 14).
+	 * Opt-in via `html.js-reveal` (added only by JS). Without JS, reduced
+	 * motion, or IntersectionObserver, the html class is never applied so every
+	 * section is fully visible by default — content is never removed, only given
+	 * a subtle entrance while motion is allowed.
+	 */
+	html.js-reveal [data-reveal].is-hidden {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+
+	html.js-reveal [data-reveal].is-revealed {
+		opacity: 1;
+		transform: translateY(0);
+		transition:
+			opacity var(--duration-slow) var(--ease-out-soft),
+			transform var(--duration-slow) var(--ease-out-soft);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html.js-reveal [data-reveal] {
+			opacity: 1;
+			transform: none;
+			transition: none;
+		}
+	}
 }

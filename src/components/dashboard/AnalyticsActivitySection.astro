@@ -1,0 +1,334 @@
+---
+import { History } from 'lucide-astro';
+import { portfolioManagerStore } from '../../lib/portfolio-manager';
+
+const records = portfolioManagerStore.getPortfolios();
+const hasPortfolios = records.length > 0;
+---
+
+<!--
+	Analytics Activity section for the Analytics dashboard (Day-11 Task 13).
+
+	Recent analytics events for the portfolio selected in the shared
+	#analytics-portfolio-select control, honoring the same period group. It is a
+	separate section so the page hierarchy reads metrics → Creator Insights →
+	Activity → Achievements. Reads the EXISTING analytics event layer only; it
+	never records, invents, or synthesizes events.
+-->
+<section
+	id="analytics-activity"
+	class="mt-xl"
+	aria-labelledby="analytics-activity-heading"
+	data-reveal
+	hidden={!hasPortfolios}
+>
+	<div class="mb-sm flex flex-col gap-xxs">
+		<h2 id="analytics-activity-heading" class="text-subhead text-ink">
+			Activity
+		</h2>
+		<p class="text-body-sm text-ink-muted">
+			Recent interactions from visitors who opened this portfolio.
+		</p>
+	</div>
+
+	<div
+		id="analytics-activity-empty"
+		class="card mt-sm flex flex-col items-center gap-sm p-lg text-center"
+		hidden
+	>
+		<span
+			class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-primary"
+			aria-hidden="true"
+		>
+			<History size="24" />
+		</span>
+		<h3 id="analytics-activity-empty-title" class="text-heading-sm text-ink">
+			No activity yet
+		</h3>
+		<p id="analytics-activity-empty-body" class="max-w-narrow text-body-sm text-ink-subtle">
+			Activity will appear here when visitors interact with your portfolio.
+		</p>
+	</div>
+
+	<ol
+		id="analytics-activity-list"
+		class="card mt-sm divide-y divide-hairline"
+		aria-labelledby="analytics-activity-heading"
+	></ol>
+
+	<div id="analytics-activity-more-wrap" class="mt-sm flex justify-center" hidden>
+		<button
+			type="button"
+			id="analytics-activity-more"
+			class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+		>
+			Show more activity
+		</button>
+	</div>
+</section>
+
+<script>
+	import {
+		ACTIVITY_INITIAL_LIMIT,
+		ACTIVITY_LABELS,
+		ACTIVITY_PAGE_SIZE,
+		analyticsStore,
+		getPortfolioActivity,
+		isAnalyticsTimeRange,
+		type AnalyticsEventType,
+		type AnalyticsTimeRange,
+		type PortfolioActivityItem,
+	} from '../../lib/analytics';
+	import { portfolioManagerStore } from '../../lib/portfolio-manager';
+	import type { PortfolioRecord } from '../../lib/portfolio-manager';
+
+	/**
+	 * Reads the SAME shared controls as the metrics section — the portfolio
+	 * select and the period group — so every analytics section responds to one
+	 * selection. The visual pressed state of the range buttons is owned by the
+	 * metrics section; this component only mirrors the current range into its
+	 * own render, so the two never fight over classes.
+	 */
+	const select = document.querySelector<HTMLSelectElement>('#analytics-portfolio-select');
+	const root = document.querySelector<HTMLElement>('#analytics-activity');
+	const empty = document.querySelector<HTMLElement>('#analytics-activity-empty');
+	const emptyTitle = document.querySelector<HTMLElement>('#analytics-activity-empty-title');
+	const emptyBody = document.querySelector<HTMLElement>('#analytics-activity-empty-body');
+	const list = document.querySelector<HTMLElement>('#analytics-activity-list');
+	const moreWrap = document.querySelector<HTMLElement>('#analytics-activity-more-wrap');
+	const more = document.querySelector<HTMLButtonElement>('#analytics-activity-more');
+	const rangeButtons = Array.from(
+		document.querySelectorAll<HTMLButtonElement>('[data-analytics-range]')
+	);
+
+	let currentId: string | null = null;
+	let activityLimit = ACTIVITY_INITIAL_LIMIT;
+	let renderedSignature = '';
+	let timeRange: AnalyticsTimeRange = 'all_time';
+
+	const resolveCurrent = (
+		portfolios: readonly PortfolioRecord[]
+	): PortfolioRecord | undefined => {
+		if (portfolios.length === 0) {
+			return undefined;
+		}
+		if (select && select.value) {
+			const selected = portfolios.find((portfolio) => portfolio.id === select.value);
+			if (selected) {
+				return selected;
+			}
+		}
+		const requested = new URLSearchParams(window.location.search).get('portfolio');
+		if (requested) {
+			const match = portfolios.find((portfolio) => portfolio.id === requested);
+			if (match) {
+				return match;
+			}
+		}
+		return portfolios.reduce((latest, portfolio) =>
+			portfolio.updatedAt >= latest.updatedAt ? portfolio : latest
+		);
+	};
+
+	const timeFormatter = new Intl.DateTimeFormat(undefined, {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit',
+	});
+
+	const formatTimestamp = (iso: string): string => {
+		const date = new Date(iso);
+		if (Number.isNaN(date.getTime())) {
+			return iso;
+		}
+		return timeFormatter.format(date);
+	};
+
+	const ACTIVITY_ICONS: Record<AnalyticsEventType, string> = {
+		portfolio_view:
+			'<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+		github_click:
+			'<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
+		linkedin_click:
+			'<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>',
+		project_click:
+			'<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>',
+		contact_click:
+			'<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/>',
+		resume_click:
+			'<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+		export_click:
+			'<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
+	};
+
+	const activityIconMarkup = (eventType: AnalyticsEventType): string =>
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true">${ACTIVITY_ICONS[eventType]}</svg>`;
+
+	const buildActivityItem = (item: PortfolioActivityItem): HTMLLIElement => {
+		const li = document.createElement('li');
+		li.className = 'flex items-start gap-sm px-md py-sm';
+
+		const icon = document.createElement('span');
+		icon.className =
+			'flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-2 text-primary';
+		icon.setAttribute('aria-hidden', 'true');
+		icon.innerHTML = activityIconMarkup(item.eventType);
+
+		const body = document.createElement('div');
+		body.className = 'flex min-w-0 flex-1 flex-col gap-xxs';
+
+		const title = document.createElement('p');
+		title.className = 'break-words text-body-sm font-medium text-ink';
+		title.textContent = item.detail ? `${item.label} — ${item.detail}` : item.label;
+
+		const meta = document.createElement('p');
+		meta.className = 'text-caption text-ink-subtle';
+		const time = document.createElement('time');
+		time.dateTime = item.timestamp;
+		time.textContent = formatTimestamp(item.timestamp);
+		meta.appendChild(time);
+
+		body.append(title, meta);
+		li.append(icon, body);
+		return li;
+	};
+
+	/**
+	 * Groups related activity items by event type so the list is easy to scan.
+	 * Groups appear in the order their first event appears (newest first), each
+	 * with the existing event-type label and a count. No events are invented or
+	 * merged — this is purely a presentation grouping of already-rendered items.
+	 */
+	const buildActivityGroups = (items: PortfolioActivityItem[]): HTMLLIElement[] => {
+		const groups = new Map<AnalyticsEventType, PortfolioActivityItem[]>();
+		for (const item of items) {
+			const group = groups.get(item.eventType);
+			if (group) {
+				group.push(item);
+			} else {
+				groups.set(item.eventType, [item]);
+			}
+		}
+
+		return Array.from(groups.entries()).map(([eventType, groupItems]) => {
+			const li = document.createElement('li');
+			li.className = 'flex flex-col gap-xxs py-sm';
+			li.dataset.activityGroup = eventType;
+
+			const heading = document.createElement('h3');
+			heading.className = 'flex items-baseline gap-xs px-md pt-sm text-caption font-medium text-ink-subtle';
+			const label = document.createElement('span');
+			label.textContent = ACTIVITY_LABELS[eventType];
+			const count = document.createElement('span');
+			count.className = 'rounded-full bg-surface-2 px-xs py-px text-caption text-ink-subtle';
+			count.textContent = String(groupItems.length);
+			heading.append(label, count);
+
+			const inner = document.createElement('ol');
+			inner.className = 'flex flex-col gap-xxs';
+			inner.append(...groupItems.map(buildActivityItem));
+
+			li.append(heading, inner);
+			return li;
+		});
+	};
+
+	const renderActivity = (portfolioId: string): number => {
+		if (
+			!empty ||
+			!emptyTitle ||
+			!emptyBody ||
+			!list ||
+			!moreWrap
+		) {
+			return 0;
+		}
+		const { items, total } = getPortfolioActivity(portfolioId, {
+			limit: activityLimit,
+			range: timeRange,
+		});
+		const signature = `${portfolioId}|${timeRange}|${total}|${items.map((item) => item.id).join(',')}`;
+		if (signature === renderedSignature) {
+			return total;
+		}
+		renderedSignature = signature;
+
+		if (total === 0) {
+			const hasAnyEvents = analyticsStore.getPortfolioEvents(portfolioId).length > 0;
+			emptyTitle.textContent = hasAnyEvents
+				? 'No activity in this period'
+				: 'No activity yet';
+			emptyBody.textContent = hasAnyEvents
+				? 'Try a wider time range to see more activity for this portfolio.'
+				: 'Activity will appear here when visitors interact with your portfolio.';
+			empty.hidden = false;
+			list.replaceChildren();
+			moreWrap.hidden = true;
+			return total;
+		}
+
+		empty.hidden = true;
+		list.replaceChildren(...buildActivityGroups(items));
+		moreWrap.hidden = items.length >= total;
+		return total;
+	};
+
+	const render = (): void => {
+		if (!root) {
+			return;
+		}
+		const portfolios = portfolioManagerStore.getPortfolios();
+		if (portfolios.length === 0) {
+			currentId = null;
+			root.hidden = true;
+			return;
+		}
+		root.hidden = false;
+
+		const current =
+			portfolios.find((portfolio) => portfolio.id === currentId) ??
+			resolveCurrent(portfolios);
+		if (!current) {
+			return;
+		}
+		if (current.id !== currentId) {
+			currentId = current.id;
+			renderedSignature = '';
+			activityLimit = ACTIVITY_INITIAL_LIMIT;
+		}
+
+		renderActivity(current.id);
+	};
+
+	select?.addEventListener('change', () => {
+		currentId = select.value;
+		renderedSignature = '';
+		activityLimit = ACTIVITY_INITIAL_LIMIT;
+		render();
+	});
+
+	more?.addEventListener('click', () => {
+		activityLimit += ACTIVITY_PAGE_SIZE;
+		renderedSignature = '';
+		render();
+	});
+
+	for (const button of rangeButtons) {
+		button.addEventListener('click', () => {
+			const value = button.dataset.analyticsRange;
+			if (!isAnalyticsTimeRange(value) || value === timeRange) {
+				return;
+			}
+			timeRange = value;
+			renderedSignature = '';
+			activityLimit = ACTIVITY_INITIAL_LIMIT;
+			render();
+		});
+	}
+
+	portfolioManagerStore.subscribe(render);
+	analyticsStore.subscribe(render);
+	render();
+</script>

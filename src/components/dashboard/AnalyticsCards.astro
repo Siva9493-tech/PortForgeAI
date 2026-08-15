@@ -1,75 +1,321 @@
 ---
-import { CircleCheckBig, Eye, FolderOpen, Rocket } from 'lucide-astro';
+import { BarChart3, CircleCheckBig, Eye, MousePointerClick, Plus, Sparkles, Users } from 'lucide-astro';
+import SummaryCard from './SummaryCard.astro';
+import { portfolioManagerStore } from '../../lib/portfolio-manager';
 
-interface Card {
-	title: string;
-	value: string;
-	subtitle: string;
-	icon: typeof FolderOpen;
-}
+const records = portfolioManagerStore.getPortfolios();
+const hasPortfolios = records.length > 0;
 
-const cards: Card[] = [
-	{
-		title: 'Total Portfolios',
-		value: '0',
-		subtitle: 'Portfolios Created',
-		icon: FolderOpen,
-	},
-	{
-		title: 'Portfolio Views',
-		value: '0',
-		subtitle: 'Total Views',
-		icon: Eye,
-	},
-	{
-		title: 'Completion',
-		value: '0%',
-		subtitle: 'Profile Completion',
-		icon: CircleCheckBig,
-	},
-	{
-		title: 'Published',
-		value: '0',
-		subtitle: 'Live Portfolios',
-		icon: Rocket,
-	},
-];
+const primaryButtonClass =
+	'inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover';
 ---
 
-<section
-	id="analytics-cards"
-	aria-labelledby="analytics-heading"
-	class="mt-xl grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-4"
->
-	<h2 id="analytics-heading" class="sr-only">
-		Analytics
-	</h2>
+<section id="analytics-metrics" aria-labelledby="analytics-metrics-heading" class="mt-xl">
+	<div class="mb-md flex flex-col gap-xxs">
+		<h2 id="analytics-metrics-heading" class="text-heading-sm text-ink">
+			Portfolio metrics
+		</h2>
+		<p class="text-body-sm text-ink-muted">
+			Views, visitors, clicks and content scores for the selected portfolio and period.
+		</p>
+	</div>
 
-	{
-		cards.map((card) => (
-			<article
-				class="card flex flex-col gap-sm p-md shadow-xs"
-				aria-labelledby={`${card.title.replace(/\s+/g, '-').toLowerCase()}-title`}
-			>
-				<div class="flex items-center justify-between gap-sm">
-					<h3
-						id={`${card.title.replace(/\s+/g, '-').toLowerCase()}-title`}
-						class="text-body-sm font-medium text-ink-muted"
-					>
-						{card.title}
-					</h3>
-					<span
-						class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-2 text-primary"
-						aria-hidden="true"
-					>
-						<card.icon size="16" />
-					</span>
-				</div>
+	<p id="analytics-status" role="status" class="sr-only"></p>
 
-				<p class="text-display-md text-ink">{card.value}</p>
+	<div
+		id="analytics-empty"
+		class="card mt-md flex w-full flex-col items-center gap-sm p-xl text-center"
+		hidden={hasPortfolios}
+	>
+		<span
+			class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-primary"
+			aria-hidden="true"
+		>
+			<BarChart3 size="24" />
+		</span>
+		<h3 class="text-heading-sm text-ink">No portfolio to analyze yet</h3>
+		<p class="max-w-narrow text-body-sm text-ink-subtle">
+			Create a portfolio first to see its analytics.
+		</p>
+		<div class="mt-sm">
+			<a href="/portfolio-builder" class={primaryButtonClass}>
+				<Plus size="16" aria-hidden="true" />
+				Create Portfolio
+			</a>
+		</div>
+	</div>
 
-				<p class="text-caption text-ink-subtle">{card.subtitle}</p>
-			</article>
-		))
-	}
+	<div
+		id="analytics-grid"
+		class="mt-md grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+		aria-busy="true"
+		hidden={!hasPortfolios}
+	>
+		<SummaryCard
+			id="analytics-views"
+			title="Portfolio Views"
+			value="—"
+			description="Total portfolio views"
+			icon={Eye}
+			valueId="analytics-views-value"
+			help="Counts every portfolio_view event recorded for this portfolio in the selected period."
+		/>
+		<SummaryCard
+			id="analytics-visitors"
+			title="Unique Visitors"
+			value="—"
+			description="Distinct anonymous visitors"
+			icon={Users}
+			valueId="analytics-visitors-value"
+			help="Distinct anonymous visitor tokens detected in the selected period. Tokens are never linked to identity."
+		/>
+		<SummaryCard
+			id="analytics-clicks"
+			title="Clicks"
+			value="—"
+			description="Meaningful click interactions"
+			icon={MousePointerClick}
+			valueId="analytics-clicks-value"
+			help="Counts meaningful interactions such as opening a project or following a GitHub, LinkedIn, resume or contact link."
+		/>
+		<SummaryCard
+			id="analytics-completion"
+			title="Completion"
+			value="—"
+			description="Portfolio completion score"
+			icon={CircleCheckBig}
+			valueId="analytics-completion-value"
+			help="How fully your portfolio content is filled in, based on the sections the portfolio builder collects."
+		/>
+		<SummaryCard
+			id="analytics-quality"
+			title="AI Quality"
+			value="—"
+			description="PortForge content-quality indicator"
+			icon={Sparkles}
+			valueId="analytics-quality-value"
+			help="A PortForge content-quality indicator. It is not an ATS, hiring or employability score."
+		/>
+	</div>
+
+	<details id="analytics-metrics-about" class="mt-md" hidden={!hasPortfolios}>
+		<summary
+			class="inline-flex cursor-pointer items-center rounded-sm py-xs text-caption font-medium text-ink-subtle underline-offset-2 transition-colors duration-200 hover:text-ink"
+		>
+			How these metrics are measured
+		</summary>
+		<div class="card mt-xs p-md text-body-sm text-ink-subtle">
+			<p>
+				Metrics are computed locally from the analytics events recorded for
+				the selected portfolio only, and are isolated by portfolio. Visitor
+				identifiers are anonymous and are never linked to personal identity.
+				The selected period filters which events are counted; switching
+				periods re-evaluates every metric from the same recorded events.
+			</p>
+		</div>
+	</details>
+
+	<div id="analytics-error" role="alert" class="mt-md rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-semantic-danger" hidden></div>
 </section>
+
+<script>
+	import {
+		ANALYTICS_TIME_RANGE_LABELS,
+		analyticsStore,
+		getPortfolioAnalyticsMetrics,
+		isAnalyticsTimeRange,
+		type AnalyticsTimeRange,
+	} from '../../lib/analytics';
+	import { portfolioManagerStore } from '../../lib/portfolio-manager';
+	import type { PortfolioRecord } from '../../lib/portfolio-manager';
+
+	const select = document.querySelector<HTMLSelectElement>('#analytics-portfolio-select');
+	const empty = document.querySelector<HTMLElement>('#analytics-empty');
+	const grid = document.querySelector<HTMLElement>('#analytics-grid');
+	const status = document.querySelector<HTMLElement>('#analytics-status');
+	const error = document.querySelector<HTMLElement>('#analytics-error');
+	const rangeButtons = Array.from(
+		document.querySelectorAll<HTMLButtonElement>('[data-analytics-range]')
+	);
+
+	const valueTargets = {
+		views: document.querySelector<HTMLElement>('#analytics-views-value'),
+		visitors: document.querySelector<HTMLElement>('#analytics-visitors-value'),
+		clicks: document.querySelector<HTMLElement>('#analytics-clicks-value'),
+		completion: document.querySelector<HTMLElement>('#analytics-completion-value'),
+		quality: document.querySelector<HTMLElement>('#analytics-quality-value'),
+	};
+
+	let currentId: string | null = null;
+	let optionsSignature = '';
+	let renderedSignature = '';
+	let timeRange: AnalyticsTimeRange = 'all_time';
+
+	const resolveCurrent = (
+		portfolios: readonly PortfolioRecord[]
+	): PortfolioRecord | undefined => {
+		if (portfolios.length === 0) {
+			return undefined;
+		}
+		const requested = new URLSearchParams(window.location.search).get('portfolio');
+		if (requested) {
+			const match = portfolios.find((portfolio) => portfolio.id === requested);
+			if (match) {
+				return match;
+			}
+		}
+		return portfolios.reduce((latest, portfolio) =>
+			portfolio.updatedAt >= latest.updatedAt ? portfolio : latest
+		);
+	};
+
+	const syncOptions = (
+		portfolios: readonly PortfolioRecord[]
+	): void => {
+		if (!select) {
+			return;
+		}
+		const signature = portfolios.map((portfolio) => portfolio.id).join(',');
+		if (signature === optionsSignature) {
+			return;
+		}
+		optionsSignature = signature;
+		const previous = currentId;
+		select.replaceChildren(
+			...portfolios.map((portfolio) => {
+				const option = document.createElement('option');
+				option.value = portfolio.id;
+				option.textContent = portfolio.title;
+				return option;
+			})
+		);
+		if (previous && portfolios.some((portfolio) => portfolio.id === previous)) {
+			select.value = previous;
+		}
+	};
+
+	const setValue = (target: HTMLElement | null, text: string): void => {
+		if (target) {
+			target.textContent = text;
+		}
+	};
+
+	const hideError = (): void => {
+		if (error) {
+			error.textContent = '';
+			error.hidden = true;
+		}
+	};
+
+	const showError = (message: string): void => {
+		if (error) {
+			error.textContent = message;
+			error.hidden = false;
+		}
+	};
+
+	const syncRangeButtons = (): void => {
+		for (const button of rangeButtons) {
+			const active = button.dataset.analyticsRange === timeRange;
+			button.setAttribute('aria-pressed', String(active));
+			button.classList.toggle('border-primary', active);
+			button.classList.toggle('bg-primary', active);
+			button.classList.toggle('text-on-primary', active);
+			button.classList.toggle('border-hairline', !active);
+			button.classList.toggle('bg-surface-2', !active);
+			button.classList.toggle('text-ink', !active);
+		}
+	};
+
+	const render = (): void => {
+		if (!grid || !empty) {
+			return;
+		}
+		const portfolios = portfolioManagerStore.getPortfolios();
+		if (portfolios.length === 0) {
+			currentId = null;
+			empty.hidden = false;
+			grid.hidden = true;
+			hideError();
+			return;
+		}
+		empty.hidden = true;
+		grid.hidden = false;
+
+		syncOptions(portfolios);
+		const current =
+			portfolios.find((portfolio) => portfolio.id === currentId) ??
+			resolveCurrent(portfolios);
+		if (!current) {
+			return;
+		}
+		if (current.id !== currentId) {
+			currentId = current.id;
+			renderedSignature = '';
+		}
+		if (select) {
+			select.value = current.id;
+		}
+
+		let metrics;
+		try {
+			metrics = getPortfolioAnalyticsMetrics(current.id, timeRange);
+		} catch {
+			showError('Analytics are temporarily unavailable. Please try again.');
+			return;
+		}
+		if (!metrics) {
+			showError('Analytics could not be loaded for this portfolio.');
+			return;
+		}
+		hideError();
+
+		const { counts, scores } = metrics;
+		const signature = [
+			current.id,
+			timeRange,
+			counts.views,
+			counts.uniqueVisitors,
+			counts.clicks,
+			scores.completionScore,
+			scores.aiQualityScore,
+		].join('|');
+		if (signature !== renderedSignature) {
+			renderedSignature = signature;
+			setValue(valueTargets.views, String(counts.views));
+			setValue(valueTargets.visitors, String(counts.uniqueVisitors));
+			setValue(valueTargets.clicks, String(counts.clicks));
+			setValue(valueTargets.completion, `${scores.completionScore}%`);
+			setValue(valueTargets.quality, `${scores.aiQualityScore}%`);
+			grid.setAttribute('aria-busy', 'false');
+		}
+
+		if (status) {
+			const rangeLabel = ANALYTICS_TIME_RANGE_LABELS[timeRange];
+			status.textContent = `Analytics for ${current.title} (${rangeLabel}).`;
+		}
+	};
+
+	select?.addEventListener('change', () => {
+		currentId = select.value;
+		renderedSignature = '';
+		render();
+	});
+
+	for (const button of rangeButtons) {
+		button.addEventListener('click', () => {
+			const value = button.dataset.analyticsRange;
+			if (!isAnalyticsTimeRange(value) || value === timeRange) {
+				return;
+			}
+			timeRange = value;
+			renderedSignature = '';
+			syncRangeButtons();
+			render();
+		});
+	}
+
+	portfolioManagerStore.subscribe(render);
+	analyticsStore.subscribe(render);
+	render();
+</script>

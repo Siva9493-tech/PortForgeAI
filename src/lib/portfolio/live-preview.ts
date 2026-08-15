@@ -43,11 +43,12 @@ function link(
 	label: string,
 	className: string,
 	iconSvg: string | null,
-	themeKey?: keyof ThemePresentation
+	themeKey?: keyof ThemePresentation,
+	dataAttrs = ''
 ): string {
 	const external = href.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : '';
 	const themeAttr = themeKey ? ` data-theme="${themeKey}"` : '';
-	return `<a href="${escapeHtml(href)}"${external}${themeAttr} class="${className}">${iconSvg ? `${iconSvg}${escapeHtml(label)}` : escapeHtml(label)}</a>`;
+	return `<a href="${escapeHtml(href)}"${external}${themeAttr}${dataAttrs} class="${className}">${iconSvg ? `${iconSvg}${escapeHtml(label)}` : escapeHtml(label)}</a>`;
 }
 
 function section(
@@ -108,11 +109,13 @@ function projectsHtml(output: PortfolioOutput): string {
 			const techs = project.technologies.length
 				? `<ul class="flex flex-wrap gap-xs" aria-label="Technologies for ${escapeHtml(project.name)}">${project.technologies.map(chip).join('')}</ul>`
 				: '';
+			const projectToken = escapeHtml(project.id ?? project.name);
+			const projectAttr = ` data-analytics-click="project_click" data-analytics-project="${projectToken}"`;
 			const links =
 				project.repositoryUrl || project.liveUrl
 					? `<div class="mt-xs flex flex-wrap gap-sm">
-						${project.repositoryUrl ? link(project.repositoryUrl, 'Repository', 'inline-flex items-center gap-xs text-button text-primary hover:text-primary-hover', null) : ''}
-						${project.liveUrl ? link(project.liveUrl, 'Live Demo', 'inline-flex items-center gap-xs text-button text-primary hover:text-primary-hover', null) : ''}
+						${project.repositoryUrl ? link(project.repositoryUrl, 'Repository', 'inline-flex items-center gap-xs text-button text-primary hover:text-primary-hover', null, undefined, projectAttr) : ''}
+						${project.liveUrl ? link(project.liveUrl, 'Live Demo', 'inline-flex items-center gap-xs text-button text-primary hover:text-primary-hover', null, undefined, projectAttr) : ''}
 					</div>`
 					: '';
 			return `<article class="${currentPresentation.card} flex flex-col gap-xs p-md" data-theme="card">
@@ -235,21 +238,21 @@ function socialLinksHtml(output: PortfolioOutput): string {
 	if (!social) {
 		return '';
 	}
-	const profiles: Array<[string, string]> = [
-		['LinkedIn', social.linkedin],
-		['GitHub', social.github],
-		['Website', social.website],
-		['Twitter', social.twitter],
-		['Instagram', social.instagram],
-		['YouTube', social.youtube],
-		['Other', social.other],
+	const profiles: Array<[string, string, string | null]> = [
+		['LinkedIn', social.linkedin, 'linkedin_click'],
+		['GitHub', social.github, 'github_click'],
+		['Website', social.website, null],
+		['Twitter', social.twitter, null],
+		['Instagram', social.instagram, null],
+		['YouTube', social.youtube, null],
+		['Other', social.other, null],
 	];
 	const buttons = profiles
 		.filter(([, url]) => Boolean(url))
-		.map(
-			([label, url]) =>
-				`<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="${currentPresentation.ghostButton}" data-theme="ghostButton">${escapeHtml(label)}</a>`
-		)
+		.map(([label, url, clickType]) => {
+			const trackAttr = clickType ? ` data-analytics-click="${clickType}"` : '';
+			return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer"${trackAttr} class="${currentPresentation.ghostButton}" data-theme="ghostButton">${escapeHtml(label)}</a>`;
+		})
 		.join('');
 	return section('social', 'Find Me Online', 'flex flex-wrap gap-sm', buttons);
 }
@@ -259,13 +262,13 @@ function contactHtml(output: PortfolioOutput): string {
 	const resume = output.resume;
 	const actions: string[] = [];
 	if (social?.linkedin) {
-		actions.push(link(social.linkedin, 'LinkedIn', currentPresentation.button, null, 'button'));
+		actions.push(link(social.linkedin, 'LinkedIn', currentPresentation.button, null, 'button', ' data-analytics-click="contact_click"'));
 	}
 	if (social?.github) {
-		actions.push(link(social.github, 'GitHub', currentPresentation.button, null, 'button'));
+		actions.push(link(social.github, 'GitHub', currentPresentation.button, null, 'button', ' data-analytics-click="contact_click"'));
 	}
 	if (resume?.fileUrl) {
-		actions.push(link(resume.fileUrl, 'Download Resume', currentPresentation.button, null, 'button'));
+		actions.push(link(resume.fileUrl, 'Download Resume', currentPresentation.button, null, 'button', ' data-analytics-click="resume_click"'));
 	}
 	if (actions.length === 0 && !resume) {
 		return '';

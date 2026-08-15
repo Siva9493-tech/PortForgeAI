@@ -1,0 +1,22 @@
+---
+import AchievementsCard from '../components/dashboard/AchievementsCard.astro';
+import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
+
+const title = 'Achievements — PortForge AI';
+const description =
+	'Badges earned from your real portfolio content and analytics activity, isolated by portfolio.';
+---
+
+<DashboardLayout title={title} description={description} pageLabel="Achievements">
+	<section aria-labelledby="achievements-page-heading" class="mt-xl">
+		<h1 id="achievements-page-heading" tabindex="-1" class="text-heading-md text-ink">
+			Achievements
+		</h1>
+		<p class="mt-xxs text-body-sm text-ink-muted">
+			Unlocked and locked milestones for a single portfolio, earned only from
+			real portfolio content and analytics data.
+		</p>
+	</section>
+
+	<AchievementsCard />
+</DashboardLayout>

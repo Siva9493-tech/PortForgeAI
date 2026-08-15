@@ -1,0 +1,45 @@
+---
+import { Info } from 'lucide-astro';
+---
+
+<!--
+	Additional analytics information (Day-11 Task 14).
+
+	A progressively expandable <details> block that explains the data sources and
+	limits of the Analytics dashboard honestly: where metrics come from, how
+	privacy is handled, and what the indicators do and do not mean. No fabricated
+	analytics, no external APIs.
+-->
+<section
+	id="analytics-about"
+	aria-labelledby="analytics-about-summary"
+	class="mt-xl"
+	data-reveal
+>
+	<details class="card p-md">
+		<summary
+			id="analytics-about-summary"
+			class="flex cursor-pointer items-center gap-xs rounded-sm py-xs text-subhead text-ink"
+		>
+			<Info size="16" aria-hidden="true" class="shrink-0 text-primary" />
+			About this analytics data
+		</summary>
+		<div class="mt-sm flex flex-col gap-sm text-body-sm text-ink-subtle">
+			<p>
+				All metrics, activity and insights on this page are computed locally
+				from analytics events recorded while visitors interact with your
+				portfolio. Data is isolated by portfolio and shown for the portfolio
+				selected in the toolbar.
+			</p>
+			<p>
+				Completion and quality scores are PortForge indicators derived from
+				the content of your portfolio. They are not an ATS score, hiring or
+				employability rating, job guarantee, or acceptance probability.
+			</p>
+			<p>
+				No real analytics API or AI service is connected yet. Visitor
+				identifiers are anonymous and are never linked to personal identity.
+			</p>
+		</div>
+	</details>
+</section>

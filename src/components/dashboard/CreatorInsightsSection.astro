@@ -1,0 +1,295 @@
+---
+import { Lightbulb, Sparkles, TrendingUp } from 'lucide-astro';
+import { portfolioManagerStore } from '../../lib/portfolio-manager';
+
+const records = portfolioManagerStore.getPortfolios();
+const hasPortfolios = records.length > 0;
+---
+
+<!--
+	Creator Insights section (Day-11 Task 14).
+
+	Presents REAL, existing analytics output only: the deterministic quality
+	evaluator already used for the AI Quality metric. Each insight is a measured
+	quality signal (label + value) grouped under its dimension score, plus the
+	genuine strengths and improvements the evaluator derives from the selected
+	portfolio's content. No fabricated signals, no invented numbers, no external
+	API. Reads the SHARED #analytics-portfolio-select like every other section.
+-->
+<section
+	id="creator-insights"
+	aria-labelledby="creator-insights-heading"
+	class="mt-xl"
+	data-reveal
+	hidden={!hasPortfolios}
+>
+	<div class="mb-md flex flex-col gap-xxs">
+		<h2 id="creator-insights-heading" class="text-heading-sm text-ink">
+			Creator Insights
+		</h2>
+		<p class="text-body-sm text-ink-muted">
+			Measured content signals and dimension scores for the selected portfolio.
+		</p>
+	</div>
+
+	<p id="creator-insights-status" role="status" class="sr-only"></p>
+
+	<div
+		id="creator-insights-empty"
+		class="card mt-md flex w-full flex-col items-center gap-sm p-lg text-center"
+		hidden
+	>
+		<span
+			class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-primary"
+			aria-hidden="true"
+		>
+			<Lightbulb size="24" />
+		</span>
+		<h3 class="text-heading-sm text-ink">No insights yet</h3>
+		<p id="creator-insights-empty-body" class="max-w-narrow text-body-sm text-ink-subtle">
+			Add meaningful content to this portfolio to surface quality signals and
+			suggestions.
+		</p>
+	</div>
+
+	<div
+		id="creator-insights-summary"
+		class="card mt-md p-md"
+		hidden
+	>
+		<p id="creator-insights-summary-text" class="text-body-sm text-ink-subtle"></p>
+	</div>
+
+	<ul
+		id="creator-insights-list"
+		class="mt-md grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3"
+		aria-labelledby="creator-insights-heading"
+		aria-busy="true"
+	></ul>
+
+	<div id="creator-insights-findings" class="mt-md grid grid-cols-1 gap-md lg:grid-cols-2" hidden>
+		<div class="card p-md">
+			<h3 class="flex items-center gap-xs text-subhead text-ink">
+				<Sparkles size="16" aria-hidden="true" class="shrink-0 text-primary" />
+				Strengths
+			</h3>
+			<ul id="creator-insights-strengths" class="mt-sm flex flex-col gap-xs"></ul>
+		</div>
+		<div class="card p-md">
+			<h3 class="flex items-center gap-xs text-subhead text-ink">
+				<TrendingUp size="16" aria-hidden="true" class="shrink-0 text-primary" />
+				Worth improving
+			</h3>
+			<ul id="creator-insights-improvements" class="mt-sm flex flex-col gap-xs"></ul>
+		</div>
+	</div>
+
+	<div
+		id="creator-insights-error"
+		role="alert"
+		class="mt-md rounded-md border border-hairline bg-surface-2 p-sm text-body-sm text-semantic-danger"
+		hidden
+	></div>
+</section>
+
+<script>
+	import { getAIQualityScore } from '../../lib/analytics';
+	import type {
+		PortfolioQualityResult,
+		QualityDimensionScore,
+		QualitySignal,
+	} from '../../lib/analytics';
+	import { portfolioManagerStore } from '../../lib/portfolio-manager';
+	import type { PortfolioRecord } from '../../lib/portfolio-manager';
+
+	const select = document.querySelector<HTMLSelectElement>('#analytics-portfolio-select');
+	const root = document.querySelector<HTMLElement>('#creator-insights');
+	const status = document.querySelector<HTMLElement>('#creator-insights-status');
+	const empty = document.querySelector<HTMLElement>('#creator-insights-empty');
+	const emptyBody = document.querySelector<HTMLElement>('#creator-insights-empty-body');
+	const summaryWrap = document.querySelector<HTMLElement>('#creator-insights-summary');
+	const summaryText = document.querySelector<HTMLElement>('#creator-insights-summary-text');
+	const list = document.querySelector<HTMLElement>('#creator-insights-list');
+	const findings = document.querySelector<HTMLElement>('#creator-insights-findings');
+	const strengths = document.querySelector<HTMLElement>('#creator-insights-strengths');
+	const improvements = document.querySelector<HTMLElement>('#creator-insights-improvements');
+	const error = document.querySelector<HTMLElement>('#creator-insights-error');
+
+	let currentId: string | null = null;
+	let renderedSignature = '';
+
+	const resolveCurrent = (
+		portfolios: readonly PortfolioRecord[]
+	): PortfolioRecord | undefined => {
+		if (portfolios.length === 0) {
+			return undefined;
+		}
+		if (select && select.value) {
+			const selected = portfolios.find((portfolio) => portfolio.id === select.value);
+			if (selected) {
+				return selected;
+			}
+		}
+		const requested = new URLSearchParams(window.location.search).get('portfolio');
+		if (requested) {
+			const match = portfolios.find((portfolio) => portfolio.id === requested);
+			if (match) {
+				return match;
+			}
+		}
+		return portfolios.reduce((latest, portfolio) =>
+			portfolio.updatedAt >= latest.updatedAt ? portfolio : latest
+		);
+	};
+
+	const hideError = (): void => {
+		if (error) {
+			error.textContent = '';
+			error.hidden = true;
+		}
+	};
+
+	const showError = (message: string): void => {
+		if (error) {
+			error.textContent = message;
+			error.hidden = false;
+		}
+	};
+
+	const dimensionsByKey = (result: PortfolioQualityResult): Map<string, QualityDimensionScore> =>
+		new Map(result.dimensionScores.map((dimension) => [dimension.key, dimension]));
+
+	const buildSignalCard = (
+		signal: QualitySignal,
+		dimension: QualityDimensionScore | undefined
+	): HTMLLIElement => {
+		const li = document.createElement('li');
+		li.className = 'card flex flex-col gap-sm p-md';
+		li.dataset.insightCard = signal.dimension;
+
+		const heading = document.createElement('p');
+		heading.className = 'text-body-sm font-medium text-ink break-words';
+		heading.textContent = signal.label;
+
+		const metric = document.createElement('p');
+		metric.className = 'text-headline text-ink break-words';
+		metric.textContent = signal.value;
+
+		const context = document.createElement('p');
+		context.className = 'text-caption text-ink-subtle break-words';
+		context.textContent = dimension ? `${dimension.label} · ${dimension.score}%` : '';
+
+		li.append(heading, metric, context);
+		return li;
+	};
+
+	const buildFindingItem = (message: string): HTMLLIElement => {
+		const li = document.createElement('li');
+		li.className = 'flex items-start gap-xs text-body-sm text-ink-subtle';
+		const dot = document.createElement('span');
+		dot.className = 'mt-[7px] size-1.5 shrink-0 rounded-full bg-primary';
+		dot.setAttribute('aria-hidden', 'true');
+		const text = document.createElement('span');
+		text.textContent = message;
+		li.append(dot, text);
+		return li;
+	};
+
+	const render = (): void => {
+		if (!root || !empty || !emptyBody || !summaryWrap || !summaryText || !list || !findings || !strengths || !improvements) {
+			return;
+		}
+		const portfolios = portfolioManagerStore.getPortfolios();
+		if (portfolios.length === 0) {
+			currentId = null;
+			root.hidden = true;
+			return;
+		}
+		root.hidden = false;
+
+		const current =
+			portfolios.find((portfolio) => portfolio.id === currentId) ??
+			resolveCurrent(portfolios);
+		if (!current) {
+			return;
+		}
+		if (current.id !== currentId) {
+			currentId = current.id;
+			renderedSignature = '';
+		}
+
+		let result: PortfolioQualityResult | null;
+		try {
+			result = getAIQualityScore(current.id);
+		} catch {
+			showError('Creator Insights are temporarily unavailable. Please try again.');
+			return;
+		}
+		if (!result) {
+			showError('Creator Insights could not be loaded for this portfolio.');
+			return;
+		}
+		hideError();
+
+		const signature = [
+			current.id,
+			result.score,
+			result.dimensionScores.map((dimension) => `${dimension.key}:${dimension.score}`).join(','),
+			result.strengths.length,
+			result.improvements.length,
+		].join('|');
+		if (signature === renderedSignature) {
+			return;
+		}
+		renderedSignature = signature;
+
+		const hasMeaningfulContent =
+			result.score > 0 ||
+			result.strengths.length > 0 ||
+			result.improvements.length > 0;
+
+		if (!hasMeaningfulContent) {
+			empty.hidden = false;
+			emptyBody.textContent =
+				'Add meaningful content to this portfolio to surface quality signals and suggestions.';
+			summaryWrap.hidden = true;
+			list.replaceChildren();
+			list.hidden = true;
+			findings.hidden = true;
+			if (status) {
+				status.textContent = `No insights for ${current.title} yet.`;
+			}
+			return;
+		}
+
+		empty.hidden = true;
+		summaryWrap.hidden = false;
+		summaryText.textContent = result.summary;
+
+		const byKey = dimensionsByKey(result);
+		list.replaceChildren(
+			...result.qualitySignals.map((signal) =>
+				buildSignalCard(signal, byKey.get(signal.dimension))
+			)
+		);
+		list.hidden = false;
+		list.setAttribute('aria-busy', 'false');
+
+		strengths.replaceChildren(...result.strengths.map(buildFindingItem));
+		improvements.replaceChildren(...result.improvements.map(buildFindingItem));
+		findings.hidden = result.strengths.length === 0 && result.improvements.length === 0;
+
+		if (status) {
+			status.textContent = `Insights for ${current.title}: ${result.score}% quality, ${result.strengths.length} strengths, ${result.improvements.length} suggested improvements.`;
+		}
+	};
+
+	select?.addEventListener('change', () => {
+		currentId = select.value;
+		renderedSignature = '';
+		render();
+	});
+
+	portfolioManagerStore.subscribe(render);
+	render();
+</script>

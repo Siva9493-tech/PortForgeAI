@@ -1,0 +1,89 @@
+---
+import AchievementsSummary from '../components/dashboard/AchievementsSummary.astro';
+import AnalyticsAbout from '../components/dashboard/AnalyticsAbout.astro';
+import AnalyticsActivitySection from '../components/dashboard/AnalyticsActivitySection.astro';
+import AnalyticsCards from '../components/dashboard/AnalyticsCards.astro';
+import AnalyticsOverview from '../components/dashboard/AnalyticsOverview.astro';
+import AnalyticsToolbar from '../components/dashboard/AnalyticsToolbar.astro';
+import CreatorInsightsSection from '../components/dashboard/CreatorInsightsSection.astro';
+import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
+
+const title = 'Analytics — PortForge AI';
+const description =
+	'Inspect views, unique visitors, clicks, completion, quality, activity and achievements for each portfolio, isolated by portfolio.';
+---
+
+<DashboardLayout title={title} description={description} pageLabel="Analytics">
+	<AnalyticsOverview />
+
+	<AnalyticsToolbar />
+
+	<AnalyticsCards />
+
+	<CreatorInsightsSection />
+
+	<AnalyticsActivitySection />
+
+	<AchievementsSummary />
+
+	<AnalyticsAbout />
+</DashboardLayout>
+
+<script>
+	/**
+	 * Progressive reveal for secondary analytics sections.
+	 *
+	 * Accessibility contract: content is NEVER removed from the document, only
+	 * given a subtle entrance. The `js-reveal` class is added to <html> only by
+	 * JavaScript, so with scripting disabled, reduced motion, or no
+	 * IntersectionObserver support every section is fully visible immediately.
+	 * Primary metrics are NOT part of the reveal — they stay above the fold and
+	 * immediately understandable.
+	 */
+	const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const supportsIntersection = typeof IntersectionObserver !== 'undefined';
+
+	if (!reduceMotion && supportsIntersection) {
+		document.documentElement.classList.add('js-reveal');
+
+		const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('is-revealed');
+						observer.unobserve(entry.target);
+					}
+				}
+			},
+			{ threshold: 0.08, rootMargin: '0px 0px -6% 0px' }
+		);
+
+		const reveal = (element: HTMLElement): void => {
+			element.classList.add('is-revealed');
+			observer.unobserve(element);
+		};
+
+		/**
+		 * Keyboard safety: if focus moves into an as-yet-hidden section (via
+		 * Tab), reveal it immediately so no interactive element is ever focused
+		 * while invisible. Content remains in the document at all times.
+		 */
+		document.addEventListener(
+			'focusin',
+			(event) => {
+				const focusTarget = event.target as HTMLElement | null;
+				const section = focusTarget?.closest<HTMLElement>('[data-reveal]');
+				if (section) {
+					reveal(section);
+				}
+			},
+			true
+		);
+
+		for (const target of targets) {
+			target.classList.add('is-hidden');
+			observer.observe(target);
+		}
+	}
+</script>

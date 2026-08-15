@@ -1,0 +1,61 @@
+---
+import { Eye } from 'lucide-astro';
+
+interface Props {
+	/** Unique id; also used to derive the heading id: `${id}-title`. */
+	id: string;
+	/** Metric name, e.g. "Portfolio Views". */
+	title: string;
+	/** Initial value text; the live script replaces it via `valueId`. */
+	value: string;
+	/** Short supporting description. */
+	description: string;
+	/** Decorative icon for the metric. */
+	icon: typeof Eye;
+	/** Id of the value element so the client script can update it in place. */
+	valueId: string;
+	/** Optional explanation of how the metric is measured, shown in an expandable detail. */
+	help?: string;
+}
+
+const { id, title, value, description, icon: Icon, valueId, help } = Astro.props;
+---
+
+<article
+	class="group/analytics-card card flex flex-col gap-sm p-md transition-colors duration-200 hover:border-primary-focus hover:shadow-sm"
+	data-analytics-card
+	aria-labelledby={`${id}-title`}
+>
+	<div class="flex items-center justify-between gap-sm">
+		<h3 id={`${id}-title`} class="text-body-sm font-medium text-ink-muted">
+			{title}
+		</h3>
+		<span
+			class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-2 text-primary transition-transform duration-200 group-hover/analytics-card:scale-110"
+			aria-hidden="true"
+		>
+			<Icon size="16" />
+		</span>
+	</div>
+
+	<p id={valueId} class="text-headline text-ink">
+		{value}
+	</p>
+
+	<p class="text-caption text-ink-subtle">
+		{description}
+	</p>
+
+	{
+		help && (
+		<details class="mt-auto pt-xs">
+			<summary
+				class="inline-flex cursor-pointer items-center rounded-sm py-xs text-caption font-medium text-ink-subtle underline-offset-2 transition-colors duration-200 hover:text-ink"
+			>
+				How is this measured?
+			</summary>
+				<p class="mt-xs text-caption text-ink-subtle">{help}</p>
+			</details>
+		)
+	}
+</article>

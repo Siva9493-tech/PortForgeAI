@@ -9,6 +9,7 @@ import {
 	LayoutTemplate,
 	Settings,
 	Sparkles,
+	Trophy,
 } from 'lucide-astro';
 
 interface Props {
@@ -21,17 +22,19 @@ interface NavItem {
 	label: string;
 	href: string;
 	icon: typeof LayoutDashboard;
+	placeholder?: boolean;
 }
 
 const navItems: NavItem[] = [
 	{ label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
 	{ label: 'My Portfolios', href: '/portfolios', icon: FolderKanban },
-	{ label: 'Templates', href: '#', icon: LayoutTemplate },
-	{ label: 'Resume Import', href: '#', icon: FileUp },
-	{ label: 'GitHub Import', href: '#', icon: Github },
+	{ label: 'Templates', href: '#', icon: LayoutTemplate, placeholder: true },
+	{ label: 'Resume Import', href: '#', icon: FileUp, placeholder: true },
+	{ label: 'GitHub Import', href: '#', icon: Github, placeholder: true },
 	{ label: 'AI Assistant', href: '/ai-assistant', icon: Bot },
-	{ label: 'Analytics', href: '#', icon: BarChart3 },
-	{ label: 'Settings', href: '#', icon: Settings },
+	{ label: 'Analytics', href: '/analytics', icon: BarChart3 },
+	{ label: 'Achievements', href: '/achievements', icon: Trophy },
+	{ label: 'Settings', href: '#', icon: Settings, placeholder: true },
 ];
 ---
 
@@ -63,13 +66,16 @@ const navItems: NavItem[] = [
 						<li>
 							<a
 								href={item.href}
-								aria-label={item.label}
+								aria-label={item.placeholder ? `${item.label} (coming soon)` : item.label}
+								title={item.placeholder ? 'Coming soon' : undefined}
+								aria-disabled={item.placeholder ? 'true' : undefined}
 								aria-current={isActive ? 'page' : undefined}
 								class="group flex items-center justify-center gap-xs rounded-md px-sm py-sm text-body-sm transition-colors duration-200 md:justify-start md:gap-sm md:px-md"
 								class:list={[
 									isActive
 										? 'bg-surface-2 font-medium text-ink'
 										: 'text-ink-subtle hover:bg-surface-2 hover:text-ink',
+									item.placeholder ? 'cursor-not-allowed opacity-60' : '',
 								]}
 							>
 								<span
@@ -79,6 +85,14 @@ const navItems: NavItem[] = [
 									<item.icon size="18" />
 								</span>
 								<span class="hidden shrink-0 truncate md:inline">{item.label}</span>
+								{item.placeholder && (
+									<span
+										class="hidden shrink-0 rounded-pill border border-hairline bg-surface-2 px-xs py-px text-caption text-ink-tertiary md:inline"
+										aria-hidden="true"
+									>
+										Soon
+									</span>
+								)}
 							</a>
 						</li>
 					);

@@ -324,6 +324,8 @@ const fieldClass =
 		type PortfolioRecord,
 	} from '../lib/portfolio-manager';
 
+	import { analyticsStore } from '../lib/analytics';
+
 	const list = document.querySelector<HTMLElement>('#portfolios-list');
 	const empty = document.querySelector<HTMLElement>('#portfolios-empty');
 	const none = document.querySelector<HTMLElement>('#portfolios-none');
@@ -397,6 +399,7 @@ const fieldClass =
 			showError('Could not delete the portfolio. The portfolio may have been removed.');
 			return;
 		}
+		analyticsStore.clearEvents(id);
 		hideFeedback();
 		showStatus('Portfolio deleted.');
 		const heading = document.querySelector<HTMLElement>('#portfolios-heading');
@@ -679,8 +682,8 @@ const fieldClass =
 		} else {
 			hideFeedback();
 			showStatus(result.message);
-		}
-		const trigger = pending.trigger;
+			analyticsStore.recordPortfolioClick(pending.id, 'export_click', { format });
+		}		const trigger = pending.trigger;
 		if (trigger.isConnected) {
 			trigger.focus();
 		}

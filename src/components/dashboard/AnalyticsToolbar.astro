@@ -1,0 +1,65 @@
+---
+import { ANALYTICS_TIME_RANGES, ANALYTICS_TIME_RANGE_LABELS } from '../../lib/analytics';
+
+/**
+ * Shared analytics filters for the Analytics dashboard.
+ *
+ * The portfolio selector and period group live ONCE here so every analytics
+ * section (metrics, activity, achievements summary) responds to the same
+ * selection. Element ids/attributes match the previous AnalyticsCards markup so
+ * the existing client scripts keep working unchanged.
+ */
+const fieldClass =
+	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body-sm text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus';
+
+const rangeButtonClass =
+	'inline-flex items-center justify-center rounded-md border px-md py-sm text-button font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1';
+---
+
+<section id="analytics-toolbar" aria-label="Analytics filters" class="mt-xl">
+	<div class="flex w-full min-w-0 flex-wrap items-end gap-md">
+		<div class="flex min-w-0 flex-1 flex-col gap-xs sm:flex-none sm:w-64">
+			<label
+				for="analytics-portfolio-select"
+				class="text-caption font-medium text-ink-subtle"
+			>
+				Portfolio
+			</label>
+			<select
+				id="analytics-portfolio-select"
+				name="analytics-portfolio"
+				class={fieldClass}
+			></select>
+		</div>
+
+		<div class="flex min-w-0 flex-col gap-xs">
+			<span id="analytics-range-label" class="text-caption font-medium text-ink-subtle">
+				Period
+			</span>
+			<div
+				id="analytics-range-group"
+				role="group"
+				aria-labelledby="analytics-range-label"
+				class="flex flex-wrap gap-xs"
+			>
+				{
+					ANALYTICS_TIME_RANGES.map((range) => (
+						<button
+							type="button"
+							data-analytics-range={range}
+							aria-pressed={range === 'all_time' ? 'true' : 'false'}
+							class:list={[
+								rangeButtonClass,
+								range === 'all_time'
+									? 'border-primary bg-primary text-on-primary'
+									: 'border-hairline bg-surface-2 text-ink hover:bg-surface-3',
+							]}
+						>
+							{ANALYTICS_TIME_RANGE_LABELS[range]}
+						</button>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</section>

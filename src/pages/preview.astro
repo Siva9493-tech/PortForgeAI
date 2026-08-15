@@ -79,6 +79,7 @@ const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
 			import { initLivePreview, startManagedPortfolioPreview } from '../lib/portfolio/live-preview';
 			import { themeStore, isThemeId, type PortfolioTheme } from '../lib/themes';
 			import { portfolioManagerStore } from '../lib/portfolio-manager';
+import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 
 			const params = new URLSearchParams(window.location.search);
 			const portfolioId = params.get('portfolio');
@@ -92,6 +93,8 @@ const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
 						themeStore.setTheme(templateId);
 					}
 					startManagedPortfolioPreview(output);
+					analyticsStore.recordPortfolioView(record.id);
+					trackPortfolioClicks(record.id, document.getElementById('live-preview-root'));
 				} else {
 					const root = document.getElementById('live-preview-root');
 					if (root) {

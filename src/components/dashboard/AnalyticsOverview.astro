@@ -1,0 +1,157 @@
+---
+import { portfolioManagerStore } from '../../lib/portfolio-manager';
+
+/**
+ * Analytics overview — the page's leading section (Day-11 Task 14).
+ *
+ * Carries the semantic H1, a short description, and a live "now viewing"
+ * context line that mirrors the SHARED portfolio selector and period group
+ * (#analytics-portfolio-select, [data-analytics-range]). It never owns a
+ * selector or store of its own — it only reads the existing shared controls.
+ *
+ * Day-11 Task 15: a minimal, semantic "on this page" section nav is rendered
+ * so users can jump directly between the main sections. It links only to
+ * sections that are always present when a portfolio exists. Like every other
+ * analytics section it is SSR-hidden when the store is empty and toggled by
+ * the client script at runtime.
+ */
+const hasPortfolios = portfolioManagerStore.getPortfolios().length > 0;
+
+const sectionLinkClass =
+	'rounded-md px-sm py-sm text-body-sm text-ink-subtle transition-colors duration-200 hover:bg-surface-2 hover:text-ink';
+---
+
+<section
+	id="analytics-overview"
+	aria-labelledby="analytics-page-heading"
+	class="mt-xl"
+>
+	<div class="flex flex-col gap-md lg:flex-row lg:items-end lg:justify-between">
+		<div class="flex min-w-0 flex-col gap-xxs">
+			<h1 id="analytics-page-heading" tabindex="-1" class="text-heading-md text-ink">
+				Analytics
+			</h1>
+			<p class="text-body-sm text-ink-muted">
+				Portfolio performance, activity and achievement progress for a single
+				portfolio, isolated by portfolio.
+			</p>
+		</div>
+		<p
+			id="analytics-overview-context"
+			class="min-w-0 text-body-sm text-ink-subtle"
+			aria-live="polite"
+		></p>
+	</div>
+
+	<nav id="analytics-section-nav" aria-label="On this page" class="mt-md" hidden={!hasPortfolios}>
+		<ul class="flex flex-wrap items-center gap-xs">
+			<li>
+				<a href="#analytics-metrics" class={sectionLinkClass}>
+					Portfolio metrics
+				</a>
+			</li>
+			<li>
+				<a href="#creator-insights" class={sectionLinkClass}>
+					Creator insights
+				</a>
+			</li>
+			<li>
+				<a href="#analytics-activity" class={sectionLinkClass}>
+					Activity
+				</a>
+			</li>
+			<li>
+				<a href="#achievements-summary-section" class={sectionLinkClass}>
+					Achievements
+				</a>
+			</li>
+		</ul>
+	</nav>
+</section>
+
+<script>
+	import { ANALYTICS_TIME_RANGE_LABELS, isAnalyticsTimeRange } from '../../lib/analytics';
+	import { portfolioManagerStore } from '../../lib/portfolio-manager';
+	import type { PortfolioRecord } from '../../lib/portfolio-manager';
+
+	/**
+	 * Read-only mirror of the shared toolbar: resolves the same selected
+	 * portfolio and period, then updates the overview context line. Subscribes
+	 * to the shared stores and the shared controls; no second state is created.
+	 */
+	const select = document.querySelector<HTMLSelectElement>('#analytics-portfolio-select');
+	const context = document.querySelector<HTMLElement>('#analytics-overview-context');
+	const sectionNav = document.querySelector<HTMLElement>('#analytics-section-nav');
+	const rangeButtons = Array.from(
+		document.querySelectorAll<HTMLButtonElement>('[data-analytics-range]')
+	);
+
+	let currentId: string | null = null;
+	let timeRange: 'today' | 'last_7_days' | 'last_30_days' | 'all_time' = 'all_time';
+
+	const resolveCurrent = (
+		portfolios: readonly PortfolioRecord[]
+	): PortfolioRecord | undefined => {
+		if (portfolios.length === 0) {
+			return undefined;
+		}
+		if (select && select.value) {
+			const selected = portfolios.find((portfolio) => portfolio.id === select.value);
+			if (selected) {
+				return selected;
+			}
+		}
+		const requested = new URLSearchParams(window.location.search).get('portfolio');
+		if (requested) {
+			const match = portfolios.find((portfolio) => portfolio.id === requested);
+			if (match) {
+				return match;
+			}
+		}
+		return portfolios.reduce((latest, portfolio) =>
+			portfolio.updatedAt >= latest.updatedAt ? portfolio : latest
+		);
+	};
+
+	const render = (): void => {
+		if (!context) {
+			return;
+		}
+		const portfolios = portfolioManagerStore.getPortfolios();
+		if (sectionNav) {
+			sectionNav.hidden = portfolios.length === 0;
+		}
+		if (portfolios.length === 0) {
+			currentId = null;
+			context.textContent = 'No portfolio to analyze yet.';
+			return;
+		}
+		const current =
+			portfolios.find((portfolio) => portfolio.id === currentId) ??
+			resolveCurrent(portfolios);
+		if (!current) {
+			return;
+		}
+		currentId = current.id;
+		context.textContent = `Now viewing ${current.title} · ${ANALYTICS_TIME_RANGE_LABELS[timeRange]}.`;
+	};
+
+	select?.addEventListener('change', () => {
+		currentId = select.value;
+		render();
+	});
+
+	for (const button of rangeButtons) {
+		button.addEventListener('click', () => {
+			const value = button.dataset.analyticsRange;
+			if (!isAnalyticsTimeRange(value)) {
+				return;
+			}
+			timeRange = value;
+			render();
+		});
+	}
+
+	portfolioManagerStore.subscribe(render);
+	render();
+</script>
