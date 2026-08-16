@@ -6,9 +6,9 @@ import {
 	type SocialLinksEntry,
 } from '../../lib/portfolio';
 import { wizardStore } from '../../lib/portfolio';
-
-const inputClass =
-	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+import BuilderField from './BuilderField.astro';
+import BuilderSection from './BuilderSection.astro';
+import { builderButtonDanger, builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
 
 const linkDefinitions = [
 	{
@@ -58,20 +58,13 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 	: [];
 ---
 
-<section
+<BuilderSection
 	id="social-links"
-	aria-labelledby="social-links-heading"
-	class="mt-md flex flex-col gap-md"
+	headingId="social-links-heading"
+	title="Social Links"
+	description="Connect your professional online presence."
+	stepNumber={8}
 >
-	<div class="flex flex-col gap-xs">
-		<h2 id="social-links-heading" class="text-heading-md text-ink">
-			Social Links
-		</h2>
-		<p class="text-body-sm text-ink-subtle">
-			Connect your professional online presence.
-		</p>
-	</div>
-
 	<div
 		role="group"
 		aria-label="Predefined social links"
@@ -79,42 +72,30 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 		class="grid grid-cols-1 gap-md md:grid-cols-2"
 	>
 		{linkDefinitions.map((link) => (
-			<div class="flex flex-col gap-xs">
-				<label
-					for={`social-link-${link.id}`}
-					class="text-body-sm font-medium text-ink-muted"
-				>
-					{link.label}
-				</label>
+			<BuilderField id={`social-link-${link.id}`} label={link.label}>
 				<input
 					id={`social-link-${link.id}`}
 					name={link.field}
 					type="url"
 					placeholder={link.placeholder}
-					class={inputClass}
+					class={builderInputClass}
 				/>
-			</div>
+			</BuilderField>
 		))}
 
-		<div class="flex flex-col gap-xs">
-			<label
-				for="social-link-other"
-				class="text-body-sm font-medium text-ink-muted"
-			>
-				Other Website
-			</label>
+		<BuilderField id="social-link-other" label="Other Website">
 			<input
 				id="social-link-other"
 				name="otherWebsite"
 				type="url"
 				placeholder="https://..."
-				class={inputClass}
+				class={builderInputClass}
 			/>
-		</div>
+		</BuilderField>
 	</div>
 
-	<div class="flex flex-col gap-md">
-		<h3 class="text-heading-sm text-ink">Custom Links</h3>
+	<div class="flex flex-col gap-md border-t border-hairline pt-md">
+		<h3 class="text-card-title text-ink">Custom Links</h3>
 
 		<div data-custom-links class="flex flex-col gap-md">
 			{
@@ -124,50 +105,38 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 						data-row-index={index}
 						role="group"
 						aria-labelledby={`custom-link-heading-${index}`}
-						class="card flex flex-col gap-sm p-md"
+						class={builderPanelClass}
 					>
 						<p id={`custom-link-heading-${index}`} class="text-body-sm font-medium text-ink">
 							Custom Link {index + 1}
 						</p>
 						<div class="grid grid-cols-1 gap-md md:grid-cols-2">
-							<div class="flex flex-col gap-xs">
-								<label
-									for={`custom-link-label-${index}`}
-									class="text-body-sm font-medium text-ink-muted"
-								>
-									Label
-								</label>
+							<BuilderField id={`custom-link-label-${index}`} label="Label">
 								<input
 									id={`custom-link-label-${index}`}
 									data-custom-label
 									type="text"
 									placeholder="e.g. Personal Blog"
 									value={link.label}
-									class={inputClass}
+									class={builderInputClass}
 								/>
-							</div>
-							<div class="flex flex-col gap-xs">
-								<label
-									for={`custom-link-url-${index}`}
-									class="text-body-sm font-medium text-ink-muted"
-								>
-									URL
-								</label>
+							</BuilderField>
+							<BuilderField id={`custom-link-url-${index}`} label="URL">
 								<input
 									id={`custom-link-url-${index}`}
 									data-custom-url
 									type="url"
 									placeholder="https://example.com"
 									value={link.url}
-									class={inputClass}
+									class={builderInputClass}
 								/>
-							</div>
+							</BuilderField>
 						</div>
 						<button
 							type="button"
 							data-remove-custom-link
 							aria-label={`Remove custom link ${index + 1}`}
-							class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
+							class={`${builderButtonDanger} self-start`}
 						>
 							<Trash2 size="16" aria-hidden="true" />
 							Remove
@@ -177,16 +146,12 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 			}
 		</div>
 
-		<button
-			type="button"
-			data-add-custom-link
-			class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
-		>
+		<button type="button" data-add-custom-link class={`${builderButtonSecondary} self-start`}>
 			<Plus size="16" aria-hidden="true" />
 			Add Another Link
 		</button>
 	</div>
-</section>
+</BuilderSection>
 
 <script>
 	import {
@@ -195,9 +160,7 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 		type SocialCustomLink,
 	} from '../../lib/portfolio';
 	import { wizardStore } from '../../lib/portfolio';
-
-	const inputClass =
-		'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+	import { builderInputClass, builderPanelClass } from './builder-ui';
 
 	const escapeAttr = (value: string): string =>
 		value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -222,19 +185,19 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 		if (!customContainer) return;
 		customContainer.innerHTML = rows
 			.map((link, index) =>
-				`<div data-custom-link-row data-row-index="${index}" role="group" aria-labelledby="custom-link-heading-${index}" class="card flex flex-col gap-sm p-md">
+				`<div data-custom-link-row data-row-index="${index}" role="group" aria-labelledby="custom-link-heading-${index}" class="${builderPanelClass}">
 					<p id="custom-link-heading-${index}" class="text-body-sm font-medium text-ink">Custom Link ${index + 1}</p>
 					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
 						<div class="flex flex-col gap-xs">
 							<label for="custom-link-label-${index}" class="text-body-sm font-medium text-ink-muted">Label</label>
-							<input id="custom-link-label-${index}" data-custom-label type="text" placeholder="e.g. Personal Blog" value="${escapeAttr(link.label)}" class="${inputClass}" />
+							<input id="custom-link-label-${index}" data-custom-label type="text" placeholder="e.g. Personal Blog" value="${escapeAttr(link.label)}" class="${builderInputClass}" />
 						</div>
 						<div class="flex flex-col gap-xs">
 							<label for="custom-link-url-${index}" class="text-body-sm font-medium text-ink-muted">URL</label>
-							<input id="custom-link-url-${index}" data-custom-url type="url" placeholder="https://example.com" value="${escapeAttr(link.url)}" class="${inputClass}" />
+							<input id="custom-link-url-${index}" data-custom-url type="url" placeholder="https://example.com" value="${escapeAttr(link.url)}" class="${builderInputClass}" />
 						</div>
 					</div>
-					<button type="button" data-remove-custom-link aria-label="Remove custom link ${index + 1}" class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]">Remove</button>
+					<button type="button" data-remove-custom-link aria-label="Remove custom link ${index + 1}" class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-semantic-danger transition-colors duration-200 hover:bg-surface-2 active:scale-[0.98]">Remove</button>
 				</div>`
 			)
 			.join('');

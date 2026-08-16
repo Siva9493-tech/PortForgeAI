@@ -1,9 +1,9 @@
 ---
 import { Plus } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
-
-const inputClass =
-	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+import BuilderField from './BuilderField.astro';
+import BuilderSection from './BuilderSection.astro';
+import { builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
 
 const categories = [
 	'Award',
@@ -18,20 +18,13 @@ const categories = [
 const entries = wizardStore.getState().data.achievements;
 ---
 
-<section
+<BuilderSection
 	id="achievements"
-	aria-labelledby="achievements-heading"
-	class="mt-md flex flex-col gap-md"
+	headingId="achievements-heading"
+	title="Achievements"
+	description="Highlight your awards, accomplishments and recognitions."
+	stepNumber={7}
 >
-	<div class="flex flex-col gap-xs">
-		<h2 id="achievements-heading" class="text-heading-md text-ink">
-			Achievements
-		</h2>
-		<p class="text-body-sm text-ink-subtle">
-			Highlight your awards, accomplishments and recognitions.
-		</p>
-	</div>
-
 	<div class="flex flex-col gap-md">
 		{
 			entries.map((_, index) => (
@@ -39,116 +32,94 @@ const entries = wizardStore.getState().data.achievements;
 					role="group"
 					aria-label={`Achievement ${index + 1}`}
 					data-list-index={index}
-					class="grid grid-cols-1 gap-md md:grid-cols-2"
+					class={builderPanelClass}
 				>
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`achievement-title-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Achievement Title
-						</label>
-						<input
-							id={`achievement-title-${index}`}
-							name="achievementTitle"
-							type="text"
-							placeholder="Winner — Smart India Hackathon"
-							class={inputClass}
-						/>
-					</div>
+					<p
+						data-entry-label
+						data-entry-base="Achievement"
+						class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle"
+					>
+						Achievement {index + 1}
+					</p>
 
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`achievement-organization-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Organization
-						</label>
-						<input
-							id={`achievement-organization-${index}`}
-							name="organization"
-							type="text"
-							placeholder="Government of India"
-							class={inputClass}
-						/>
-					</div>
+					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
+						<BuilderField id={`achievement-title-${index}`} label="Achievement Title">
+							<input
+								id={`achievement-title-${index}`}
+								name="achievementTitle"
+								type="text"
+								placeholder="Winner — Smart India Hackathon"
+								class={builderInputClass}
+							/>
+						</BuilderField>
 
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`achievement-date-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Achievement Date
-						</label>
-						<input
-							id={`achievement-date-${index}`}
-							name="achievementDate"
-							type="month"
-							class={inputClass}
-						/>
-					</div>
+						<BuilderField id={`achievement-organization-${index}`} label="Organization">
+							<input
+								id={`achievement-organization-${index}`}
+								name="organization"
+								type="text"
+								placeholder="Government of India"
+								class={builderInputClass}
+							/>
+						</BuilderField>
 
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`achievement-category-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Achievement Category
-						</label>
-						<select
-							id={`achievement-category-${index}`}
-							name="category"
-							class={inputClass}
-						>
-							<option value="" disabled selected>
-								Select a category
-							</option>
-							{categories.map((category) => <option value={category}>{category}</option>)}
-						</select>
-					</div>
+						<BuilderField id={`achievement-date-${index}`} label="Achievement Date">
+							<input
+								id={`achievement-date-${index}`}
+								name="achievementDate"
+								type="month"
+								class={builderInputClass}
+							/>
+						</BuilderField>
 
-					<div class="flex flex-col gap-xs md:col-span-2">
-						<label
-							for={`achievement-description-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Description
-						</label>
-						<textarea
+						<BuilderField id={`achievement-category-${index}`} label="Achievement Category">
+							<select
+								id={`achievement-category-${index}`}
+								name="category"
+								class={builderInputClass}
+							>
+								<option value="" disabled selected>
+									Select a category
+								</option>
+								{categories.map((category) => <option value={category}>{category}</option>)}
+							</select>
+						</BuilderField>
+
+						<BuilderField
 							id={`achievement-description-${index}`}
-							name="description"
-							rows="5"
-							placeholder="Describe your achievement and its impact..."
-							class={inputClass}
-						></textarea>
-					</div>
-
-					<div class="flex flex-col gap-xs md:col-span-2">
-						<label
-							for={`achievement-supporting-link-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
+							label="Description"
+							className="md:col-span-2"
 						>
-							Supporting Link
-						</label>
-						<input
+							<textarea
+								id={`achievement-description-${index}`}
+								name="description"
+								rows="5"
+								placeholder="Describe your achievement and its impact..."
+								class={builderInputClass}
+							></textarea>
+						</BuilderField>
+
+						<BuilderField
 							id={`achievement-supporting-link-${index}`}
-							name="supportingLink"
-							type="url"
-							placeholder="https://..."
-							class={inputClass}
-						/>
+							label="Supporting Link"
+							className="md:col-span-2"
+						>
+							<input
+								id={`achievement-supporting-link-${index}`}
+								name="supportingLink"
+								type="url"
+								placeholder="https://..."
+								class={builderInputClass}
+							/>
+						</BuilderField>
 					</div>
 				</div>
 			))
 		}
 	</div>
 
-	<button
-		type="button"
-		data-add-entry
-		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
-	>
+	<button type="button" data-add-entry slot="actions" class={builderButtonSecondary}>
 		<Plus size="16" aria-hidden="true" />
 		Add Another Achievement
 	</button>
-</section>
+</BuilderSection>

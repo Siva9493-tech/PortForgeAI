@@ -35,7 +35,7 @@ const {
 
 		<div class="flex h-dvh flex-col overflow-hidden">
 			<header
-				class="flex h-14 shrink-0 items-center border-b border-hairline px-md md:px-xl"
+				class="flex h-14 shrink-0 items-center justify-between gap-md border-b border-hairline px-md md:px-xl"
 				aria-label="Portfolio builder header"
 			>
 				<div class="flex min-w-0 flex-col">
@@ -44,6 +44,12 @@ const {
 						Create your professional portfolio
 					</span>
 				</div>
+				<a
+					href="/portfolios"
+					class="inline-flex shrink-0 items-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-xs text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+				>
+					My Portfolios
+				</a>
 			</header>
 
 			<main
@@ -52,7 +58,6 @@ const {
 				aria-label="Portfolio builder workspace"
 				class="flex-1 overflow-y-auto"
 			>
-				<h1 class="sr-only">Portfolio Builder</h1>
 				<div class="w-full p-md md:p-xl">
 					<slot />
 				</div>

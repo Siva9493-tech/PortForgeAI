@@ -2,6 +2,8 @@
 import { FileUp, RefreshCw, Trash2 } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
 import type { ResumeData } from '../../lib/portfolio';
+import BuilderSection from './BuilderSection.astro';
+import { builderButtonDanger, builderButtonPrimary, builderDropzoneClass, builderPanelClass } from './builder-ui';
 
 const inputId = 'resume-upload-input';
 
@@ -15,22 +17,19 @@ const initial = wizardStore.getState().data.resume as ResumeData;
 const hasFile = Boolean(initial.fileName);
 ---
 
-<section
+<BuilderSection
 	id="resume-upload"
-	aria-labelledby="resume-upload-heading"
-	class="mt-md flex flex-col gap-md"
+	headingId="resume-upload-heading"
+	title="Resume Upload"
+	description="Upload your resume to automatically generate portfolio content later."
+	stepNumber={9}
 >
-	<div class="flex flex-col gap-xs">
-		<h2 id="resume-upload-heading" class="text-heading-md text-ink">
-			Resume Upload
-		</h2>
-		<p class="text-body-sm text-ink-subtle">
-			Upload your resume to automatically generate portfolio content later.
-		</p>
-	</div>
-
 	<div class="mx-auto w-full max-w-narrow" data-resume-upload data-step="resume">
-		<div class="card flex flex-col items-center gap-sm p-xl text-center animate-step-in" data-resume-dropzone hidden={hasFile}>
+		<div
+			class={`${builderDropzoneClass} animate-step-in`}
+			data-resume-dropzone
+			hidden={hasFile}
+		>
 			<span
 				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
 				aria-hidden="true"
@@ -38,7 +37,7 @@ const hasFile = Boolean(initial.fileName);
 				<FileUp size="22" />
 			</span>
 
-			<p class="text-heading-sm text-ink">Upload Resume</p>
+			<p class="text-card-title text-ink">Upload Resume</p>
 
 			<label for={inputId} class="inline-flex cursor-pointer flex-col items-center gap-sm">
 				<span class="text-body text-ink-muted">Drag &amp; Drop your resume here</span>
@@ -54,7 +53,7 @@ const hasFile = Boolean(initial.fileName);
 			<p class="text-caption text-semantic-danger" role="alert" data-resume-error hidden></p>
 		</div>
 
-		<div class="card flex flex-col gap-md p-lg animate-step-in" data-resume-preview hidden={!hasFile}>
+		<div class={`${builderPanelClass} animate-step-in`} data-resume-preview hidden={!hasFile}>
 			<div class="flex flex-col items-center gap-4 sm:flex-row">
 				<span
 					class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-primary"
@@ -76,20 +75,12 @@ const hasFile = Boolean(initial.fileName);
 				</div>
 			</div>
 
-			<div class="flex flex-wrap justify-center gap-2 sm:flex-wrap">
-				<button
-					type="button"
-					data-resume-replace
-					class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-body-sm font-semibold text-on-primary transition duration-200 hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2 focus:ring-offset-surface-1"
-				>
+			<div class="flex flex-wrap justify-center gap-sm sm:flex-wrap">
+				<button type="button" data-resume-replace class={builderButtonPrimary}>
 					<RefreshCw size="15" aria-hidden="true" />
 					Replace Resume
 				</button>
-				<button
-					type="button"
-					data-resume-remove
-					class="inline-flex items-center justify-center gap-2 rounded-md border border-hairline bg-surface-1 px-4 py-2 text-body-sm font-medium text-semantic-danger transition duration-200 hover:bg-surface-2 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2 focus:ring-offset-surface-1"
-				>
+				<button type="button" data-resume-remove class={builderButtonDanger}>
 					<Trash2 size="15" aria-hidden="true" />
 					Remove Resume
 				</button>
@@ -105,8 +96,8 @@ const hasFile = Boolean(initial.fileName);
 		/>
 	</div>
 
-	<div class="card flex flex-col gap-md p-lg">
-		<h3 class="text-heading-sm text-ink">Why upload a resume?</h3>
+	<div class={builderPanelClass}>
+		<h3 class="text-card-title text-ink">Why upload a resume?</h3>
 		<ul class="flex list-disc flex-col gap-xs pl-4 text-body-sm text-ink-muted marker:text-ink-subtle">
 			<li>Faster portfolio creation</li>
 			<li>Automatic data extraction (future)</li>
@@ -114,7 +105,7 @@ const hasFile = Boolean(initial.fileName);
 			<li>Editable later</li>
 		</ul>
 	</div>
-</section>
+</BuilderSection>
 
 <script>
 	import { wizardStore } from '../../lib/portfolio';

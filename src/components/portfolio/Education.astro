@@ -1,27 +1,20 @@
 ---
 import { Plus } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
-
-const inputClass =
-	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+import BuilderField from './BuilderField.astro';
+import BuilderSection from './BuilderSection.astro';
+import { builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
 
 const entries = wizardStore.getState().data.education;
 ---
 
-<section
+<BuilderSection
 	id="education"
-	aria-labelledby="education-heading"
-	class="mt-md flex flex-col gap-md"
+	headingId="education-heading"
+	title="Education"
+	description="Tell us about your academic background."
+	stepNumber={2}
 >
-	<div class="flex flex-col gap-xs">
-		<h2 id="education-heading" class="text-heading-md text-ink">
-			Education
-		</h2>
-		<p class="text-body-sm text-ink-subtle">
-			Tell us about your academic background.
-		</p>
-	</div>
-
 	<div class="flex flex-col gap-md">
 		{
 			entries.map((_, index) => (
@@ -29,130 +22,98 @@ const entries = wizardStore.getState().data.education;
 					role="group"
 					aria-label={`Education ${index + 1}`}
 					data-list-index={index}
-					class="grid grid-cols-1 gap-md md:grid-cols-2"
+					class={builderPanelClass}
 				>
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`education-degree-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Degree
-						</label>
-						<input
-							id={`education-degree-${index}`}
-							name="degree"
-							type="text"
-							placeholder="Bachelor of Technology"
-							class={inputClass}
-						/>
-					</div>
+					<p
+						data-entry-label
+						data-entry-base="Education"
+						class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle"
+					>
+						Education {index + 1}
+					</p>
 
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`education-institution-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Institution
-						</label>
-						<input
-							id={`education-institution-${index}`}
-							name="institution"
-							type="text"
-							placeholder="Vasireddy Venkatadri Institute of Technology"
-							class={inputClass}
-						/>
-					</div>
+					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
+						<BuilderField id={`education-degree-${index}`} label="Degree">
+							<input
+								id={`education-degree-${index}`}
+								name="degree"
+								type="text"
+								placeholder="Bachelor of Technology"
+								class={builderInputClass}
+							/>
+						</BuilderField>
 
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`education-field-of-study-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Field of Study
-						</label>
-						<input
-							id={`education-field-of-study-${index}`}
-							name="fieldOfStudy"
-							type="text"
-							placeholder="Computer Science and Engineering (AI & ML)"
-							class={inputClass}
-						/>
-					</div>
+						<BuilderField id={`education-institution-${index}`} label="Institution">
+							<input
+								id={`education-institution-${index}`}
+								name="institution"
+								type="text"
+								placeholder="Vasireddy Venkatadri Institute of Technology"
+								class={builderInputClass}
+							/>
+						</BuilderField>
 
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`education-start-year-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Start Year
-						</label>
-						<input
-							id={`education-start-year-${index}`}
-							name="startYear"
-							type="number"
-							placeholder="2023"
-							class={inputClass}
-						/>
-					</div>
+						<BuilderField id={`education-field-of-study-${index}`} label="Field of Study">
+							<input
+								id={`education-field-of-study-${index}`}
+								name="fieldOfStudy"
+								type="text"
+								placeholder="Computer Science and Engineering (AI & ML)"
+								class={builderInputClass}
+							/>
+						</BuilderField>
 
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`education-end-year-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							End Year
-						</label>
-						<input
-							id={`education-end-year-${index}`}
-							name="endYear"
-							type="number"
-							placeholder="2027"
-							class={inputClass}
-						/>
-					</div>
+						<BuilderField id={`education-start-year-${index}`} label="Start Year">
+							<input
+								id={`education-start-year-${index}`}
+								name="startYear"
+								type="number"
+								placeholder="2023"
+								class={builderInputClass}
+							/>
+						</BuilderField>
 
-					<div class="flex flex-col gap-xs">
-						<label
-							for={`education-cgpa-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							CGPA / Percentage
-						</label>
-						<input
-							id={`education-cgpa-${index}`}
-							name="cgpa"
-							type="text"
-							placeholder="8.9 CGPA"
-							class={inputClass}
-						/>
-					</div>
+						<BuilderField id={`education-end-year-${index}`} label="End Year">
+							<input
+								id={`education-end-year-${index}`}
+								name="endYear"
+								type="number"
+								placeholder="2027"
+								class={builderInputClass}
+							/>
+						</BuilderField>
 
-					<div class="flex flex-col gap-xs md:col-span-2">
-						<label
-							for={`education-description-${index}`}
-							class="text-body-sm font-medium text-ink-muted"
-						>
-							Description
-						</label>
-						<textarea
+						<BuilderField id={`education-cgpa-${index}`} label="CGPA / Percentage">
+							<input
+								id={`education-cgpa-${index}`}
+								name="cgpa"
+								type="text"
+								placeholder="8.9 CGPA"
+								class={builderInputClass}
+							/>
+						</BuilderField>
+
+						<BuilderField
 							id={`education-description-${index}`}
-							name="description"
-							rows="4"
-							placeholder="Write achievements, coursework or academic highlights..."
-							class={inputClass}
-						></textarea>
+							label="Description"
+							className="md:col-span-2"
+						>
+							<textarea
+								id={`education-description-${index}`}
+								name="description"
+								rows="4"
+								placeholder="Write achievements, coursework or academic highlights..."
+								class={builderInputClass}
+							></textarea>
+						</BuilderField>
 					</div>
 				</div>
 			))
 		}
 	</div>
 
-	<button
-		type="button"
-		data-add-entry
-		class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98]"
-	>
+	<button type="button" data-add-entry slot="actions" class={builderButtonSecondary}>
 		<Plus size="16" aria-hidden="true" />
 		Add Another Education
 	</button>
-</section>
+</BuilderSection>

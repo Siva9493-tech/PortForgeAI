@@ -1,21 +1,25 @@
 ---
 import { ArrowLeft, ArrowRight } from 'lucide-astro';
-import { TOTAL_STEPS, WIZARD_STEPS, wizardStore } from '../../lib/portfolio';
+import { TOTAL_STEPS, WIZARD_STEPS, getBuilderProgress, wizardStore } from '../../lib/portfolio';
 
 const isEdit = Boolean(new URL(Astro.url).searchParams.get('portfolio'));
 const state = wizardStore.getState();
 const currentIndex = WIZARD_STEPS.findIndex((step) => step.id === state.currentStep);
 const currentStep = WIZARD_STEPS[Math.max(0, currentIndex)];
+const prevStep = WIZARD_STEPS[currentIndex - 1];
+const nextStep = WIZARD_STEPS[currentIndex + 1];
 const isFirst = currentIndex === 0;
 const isLast = currentIndex === WIZARD_STEPS.length - 1;
-const percent = Math.round(((currentIndex + 1) / TOTAL_STEPS) * 100);
+const progress = getBuilderProgress(state.data);
+const percent = progress.percent;
+const percentLabel = `${progress.completed} of ${progress.total} sections complete (${percent}%)`;
 const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 ---
 
 <nav
 	id="wizard-navigation"
 	aria-label="Portfolio wizard navigation"
-	class="mt-md flex flex-col gap-sm border-t border-hairline pt-md"
+	class="card mt-md flex flex-col gap-md p-md"
 >
 	<div class="flex flex-col gap-sm">
 		<div class="flex items-center justify-center gap-xs">
@@ -30,15 +34,17 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 
 		<div
 			role="progressbar"
-			aria-label="Portfolio progress"
+			aria-label="Portfolio completion"
 			aria-valuemin="0"
 			aria-valuemax="100"
 			aria-valuenow={percent}
+			aria-valuetext={percentLabel}
 			class="h-2 w-full overflow-hidden rounded-full bg-surface-2"
 		>
 			<div
 				class="h-full rounded-full bg-primary transition-[width] duration-300"
 				data-progress-fill
+				style={`width: ${percent}%`}
 			></div>
 		</div>
 	</div>
@@ -59,18 +65,30 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 		hidden
 	></p>
 
-	<div class="grid grid-cols-1 items-center gap-sm sm:grid-cols-[auto_1fr_auto]">
+	<div class="grid grid-cols-1 items-center gap-sm sm:grid-cols-[1fr_auto_1fr] sm:gap-md">
 		<button
 			type="button"
 			data-nav="previous"
+			hidden={isFirst}
 			disabled={isFirst}
-			class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+			aria-label={prevStep ? `Go to ${prevStep.title}` : 'Previous section'}
+			class="inline-flex items-center justify-start gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition duration-200 hover:bg-surface-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:col-start-1 sm:row-start-1 sm:justify-self-start"
 		>
 			<ArrowLeft size="16" aria-hidden="true" />
-			Previous
+			<span class="flex min-w-0 flex-col items-start leading-tight">
+				<span class="text-button font-medium text-ink">Previous</span>
+				<span
+					class="hidden max-w-full truncate text-caption text-ink-tertiary sm:block"
+					data-prev-title
+				>
+					{prevStep?.title}
+				</span>
+			</span>
 		</button>
 
-		<div class="flex min-w-0 flex-col items-center justify-center text-center">
+		<div
+			class="flex min-w-0 flex-col items-center justify-center text-center sm:col-start-2 sm:row-start-1"
+		>
 			<span class="truncate text-body-sm font-medium text-ink" data-step-number>
 				Step {currentIndex + 1} of {TOTAL_STEPS}
 			</span>
@@ -83,16 +101,26 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 			type="button"
 			data-nav={isLast ? 'save' : 'next'}
 			disabled={false}
-			class="inline-flex items-center justify-center gap-xs whitespace-nowrap rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition duration-200 hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+			aria-label={isLast ? finalLabel : nextStep ? `Go to ${nextStep.title}` : 'Next section'}
+			class="inline-flex items-center justify-end gap-xs whitespace-nowrap rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition duration-200 hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:col-start-3 sm:row-start-1 sm:justify-self-end"
 		>
-			<span data-nav-label>{finalLabel}</span>
+			<span class="flex min-w-0 flex-col items-end leading-tight">
+				<span data-nav-label class="text-button font-medium text-on-primary">{finalLabel}</span>
+				<span
+					class="hidden max-w-full truncate text-caption text-on-primary/70 sm:block"
+					data-next-title
+					hidden={isLast}
+				>
+					{nextStep?.title}
+				</span>
+			</span>
 			<ArrowRight size="16" aria-hidden="true" />
 		</button>
 	</div>
 </nav>
 
 <script>
-	import { TOTAL_STEPS, WIZARD_STEPS, wizardStore } from '../../lib/portfolio';
+	import { TOTAL_STEPS, WIZARD_STEPS, getBuilderProgress, wizardStore } from '../../lib/portfolio';
 	import {
 		createPortfolioFromBuilder,
 		portfolioManagerStore,
@@ -110,6 +138,8 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 		const prev = nav.querySelector<HTMLButtonElement>('[data-nav="previous"]');
 		const next = nav.querySelector<HTMLButtonElement>('[data-nav="next"], [data-nav="save"]');
 		const navLabel = nav.querySelector<HTMLElement>('[data-nav-label]');
+		const prevTitle = nav.querySelector<HTMLElement>('[data-prev-title]');
+		const nextTitle = nav.querySelector<HTMLElement>('[data-next-title]');
 		const stepNumber = nav.querySelector<HTMLElement>('[data-step-number]');
 		const stepTitle = nav.querySelector<HTMLElement>('[data-step-title]');
 		const percentText = nav.querySelector<HTMLElement>('[data-progress-percent]');
@@ -152,14 +182,34 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 			const state = wizardStore.getState();
 			const index = WIZARD_STEPS.findIndex((step) => step.id === state.currentStep);
 			const step = WIZARD_STEPS[Math.max(0, index)];
+			const previousStep = WIZARD_STEPS[index - 1];
+			const followingStep = WIZARD_STEPS[index + 1];
 
-			const percent = Math.round(((index + 1) / TOTAL_STEPS) * 100);
+			const progress = getBuilderProgress(state.data);
+			const percent = progress.percent;
+			const percentLabel = `${progress.completed} of ${progress.total} sections complete (${percent}%)`;
 			const isLast = index === WIZARD_STEPS.length - 1;
 
-			if (prev) prev.disabled = index === 0;
+			if (prev) {
+				prev.hidden = index === 0;
+				prev.disabled = index === 0;
+				if (previousStep) {
+					prev.setAttribute('aria-label', `Go to ${previousStep.title}`);
+				}
+			}
+			if (prevTitle) prevTitle.textContent = previousStep?.title ?? '';
 			if (next) {
 				next.dataset.nav = isLast ? 'save' : 'next';
 				next.disabled = saving;
+				if (followingStep) {
+					next.setAttribute('aria-label', `Go to ${followingStep.title}`);
+				} else {
+					next.setAttribute('aria-label', finalLabel);
+				}
+			}
+			if (nextTitle) {
+				nextTitle.textContent = followingStep?.title ?? '';
+				nextTitle.hidden = isLast;
 			}
 			if (navLabel) {
 				navLabel.textContent = isLast ? (saving ? 'Saving…' : finalLabel) : 'Next';
@@ -167,7 +217,10 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 			if (stepNumber) stepNumber.textContent = `Step ${index + 1} of ${TOTAL_STEPS}`;
 			if (stepTitle) stepTitle.textContent = step.title;
 			if (percentText) percentText.textContent = `${percent}%`;
-			if (progressbar) progressbar.setAttribute('aria-valuenow', String(percent));
+			if (progressbar) {
+				progressbar.setAttribute('aria-valuenow', String(percent));
+				progressbar.setAttribute('aria-valuetext', percentLabel);
+			}
 			if (fill) fill.style.width = `${percent}%`;
 		};
 

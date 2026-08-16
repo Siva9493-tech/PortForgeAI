@@ -1,6 +1,7 @@
 ---
 import { Check } from 'lucide-astro';
 import { WIZARD_STEPS, isSectionCompleted, wizardStore } from '../../lib/portfolio';
+import { SECTION_META } from './section-meta';
 import type { StepId } from '../../lib/portfolio';
 
 const state = wizardStore.getState();
@@ -9,62 +10,73 @@ interface StepDisplay {
 	stepId: StepId;
 	number: number;
 	title: string;
+	shortLabel: string;
+	icon: (typeof SECTION_META)[number]['icon'];
 	isActive: boolean;
 	isCompleted: boolean;
 	isVisited: boolean;
-	isUpcoming: boolean;
 }
 
-const stepsWithState: StepDisplay[] = WIZARD_STEPS.map((step) => {
-	const isActive = state.currentStep === step.id;
-	const isCompleted = isSectionCompleted(state.data, step.id);
-	const isVisited = state.visitedSteps.includes(step.id);
+const stepsWithState: StepDisplay[] = SECTION_META.map((meta) => {
+	const isActive = state.currentStep === meta.stepId;
+	const isCompleted = isSectionCompleted(state.data, meta.stepId);
+	const isVisited = state.visitedSteps.includes(meta.stepId);
 	return {
-		stepId: step.id,
-		number: step.number,
-		title: step.title,
+		stepId: meta.stepId,
+		number: meta.number,
+		title: meta.title,
+		shortLabel: meta.shortLabel,
+		icon: meta.icon,
 		isActive,
 		isCompleted,
 		isVisited,
-		isUpcoming: !isActive && !isVisited,
 	};
 });
 
 function itemClasses({ isActive, isCompleted, isVisited }: StepDisplay): string {
 	const base =
-		'flex w-full items-center gap-sm rounded-md px-sm py-sm text-left transition-colors duration-200';
-	if (isActive) return `${base} bg-surface-2 text-ink`;
-	if (isCompleted || isVisited) return `${base} text-ink-muted`;
-	return `${base} text-ink-subtle`;
+		'flex w-auto items-center gap-sm rounded-md px-sm py-sm text-left transition-colors duration-200 lg:w-full';
+	if (isActive) return `${base} bg-surface-2 text-ink font-medium ring-1 ring-inset ring-primary`;
+	if (isCompleted || isVisited) return `${base} text-ink-muted hover:bg-surface-2/60`;
+	return `${base} text-ink-subtle hover:bg-surface-2/60`;
 }
 
-function badgeClasses(isActive: boolean, isCompleted: boolean): string {
-	const base =
-		'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-caption font-medium transition-colors duration-200';
-	if (isActive) return `${base} bg-primary text-on-primary`;
-	if (isCompleted) return `${base} bg-surface-2 text-semantic-success`;
-	return `${base} bg-surface-1 text-ink-tertiary`;
-}
+	function badgeClasses(isActive: boolean, isCompleted: boolean): string {
+		const base =
+			'hidden h-6 w-6 shrink-0 items-center justify-center rounded-md text-caption font-medium transition-colors duration-200 lg:flex';
+		if (isActive) return `${base} bg-primary text-on-primary`;
+		if (isCompleted) return `${base} bg-surface-2 text-semantic-success`;
+		return `${base} bg-surface-1 text-ink-tertiary`;
+	}
+
+	function stateLabel(item: StepDisplay): string {
+		if (item.isActive) return 'current section';
+		return item.isCompleted ? 'complete' : 'incomplete';
+	}
 ---
 
 <aside
 	id="wizard-sidebar"
 	aria-label="Portfolio Builder Steps"
-	class="card self-start p-md lg:sticky lg:top-0"
+	class="card min-w-0 self-start p-md lg:sticky lg:top-0"
 >
 	<div class="mb-md flex items-center justify-between gap-sm">
-		<h2 class="text-body font-semibold text-ink">Portfolio Builder</h2>
-		<span class="text-caption text-ink-tertiary">{WIZARD_STEPS.length} Steps</span>
+		<h2 class="text-card-title text-ink">Portfolio Builder</h2>
+		<span class="rounded-pill border border-hairline bg-surface-2 px-xs py-xxs text-caption text-ink-tertiary">
+			<span class="sr-only">Sections complete:</span>
+			<span data-steps-complete>{stepsWithState.filter((s) => s.isCompleted).length}</span> / {WIZARD_STEPS.length}
+		</span>
 	</div>
 
 	<nav aria-label="Builder steps">
-		<ol class="flex flex-col gap-1">
+		<ol class="relative flex gap-xs overflow-x-auto pb-xs lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
 			{
 				stepsWithState.map((item) => (
-					<li>
+					<li class="shrink-0 lg:w-full lg:shrink">
 						<button
 							type="button"
 							data-step-id={item.stepId}
+							data-step-title={item.title}
 							data-state={
 								item.isActive
 									? 'active'
@@ -75,6 +87,7 @@ function badgeClasses(isActive: boolean, isCompleted: boolean): string {
 											: 'upcoming'
 							}
 							aria-current={item.isActive ? 'step' : undefined}
+							aria-label={`${item.title}, ${stateLabel(item)}`}
 							class={itemClasses(item)}
 						>
 							<span
@@ -84,7 +97,9 @@ function badgeClasses(isActive: boolean, isCompleted: boolean): string {
 							>
 								{item.isCompleted && !item.isActive ? <Check size="14" /> : item.number}
 							</span>
-							<span class="truncate text-body-sm">{item.title}</span>
+							<item.icon size="16" class="shrink-0" aria-hidden="true" />
+							<span class="hidden truncate text-body-sm lg:block">{item.title}</span>
+							<span class="truncate text-body-sm lg:hidden">{item.shortLabel}</span>
 						</button>
 					</li>
 				))
@@ -103,6 +118,11 @@ function badgeClasses(isActive: boolean, isCompleted: boolean): string {
 		const buttons = Array.from(
 			sidebar.querySelectorAll<HTMLButtonElement>('[data-step-id]')
 		);
+		const list = sidebar.querySelector('ol');
+		const stepsComplete = sidebar.querySelector<HTMLElement>('[data-steps-complete]');
+
+		const stateLabel = (info: { isActive: boolean; isCompleted: boolean }): string =>
+			info.isActive ? 'current section' : info.isCompleted ? 'complete' : 'incomplete';
 
 		const stepState = (button: HTMLButtonElement) => {
 			const stepId = button.dataset.stepId as StepId | undefined;
@@ -110,6 +130,7 @@ function badgeClasses(isActive: boolean, isCompleted: boolean): string {
 			const state = wizardStore.getState();
 			return {
 				stepId,
+				title: button.dataset.stepTitle ?? stepId,
 				isActive: state.currentStep === stepId,
 				isCompleted: isSectionCompleted(state.data, stepId),
 				isVisited: state.visitedSteps.includes(stepId),
@@ -134,12 +155,20 @@ function badgeClasses(isActive: boolean, isCompleted: boolean): string {
 		};
 
 		const applyState = () => {
+			let completeCount = 0;
+
 			for (const button of buttons) {
 				const info = stepState(button);
 				if (!info) continue;
 
+				if (info.isCompleted) completeCount += 1;
+
 				button.classList.toggle('bg-surface-2', info.isActive);
 				button.classList.toggle('text-ink', info.isActive);
+				button.classList.toggle('font-medium', info.isActive);
+				button.classList.toggle('ring-1', info.isActive);
+				button.classList.toggle('ring-inset', info.isActive);
+				button.classList.toggle('ring-primary', info.isActive);
 				button.classList.toggle(
 					'text-ink-muted',
 					!info.isActive && (info.isVisited || info.isCompleted)
@@ -173,6 +202,8 @@ function badgeClasses(isActive: boolean, isCompleted: boolean): string {
 					button.removeAttribute('aria-current');
 				}
 
+				button.setAttribute('aria-label', `${info.title}, ${stateLabel(info)}`);
+
 				button.dataset.state = info.isActive
 					? 'active'
 					: info.isCompleted
@@ -180,6 +211,16 @@ function badgeClasses(isActive: boolean, isCompleted: boolean): string {
 						: info.isVisited
 							? 'visited'
 							: 'upcoming';
+			}
+
+			if (stepsComplete) stepsComplete.textContent = String(completeCount);
+
+			if (list && list.scrollWidth > list.clientWidth) {
+				const active = buttons.find((button) => button.dataset.state === 'active');
+				if (active) {
+					const target = active.offsetLeft - (list.clientWidth - active.clientWidth) / 2;
+					list.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+				}
 			}
 		};
 

@@ -1,111 +1,89 @@
 ---
+import BuilderField from './BuilderField.astro';
+import BuilderSection from './BuilderSection.astro';
 import ProfilePhotoUpload from './ProfilePhotoUpload.astro';
-
-const inputClass =
-	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+import { builderInputClass } from './builder-ui';
 ---
 
-<section
+<BuilderSection
 	id="personal-information"
-	aria-labelledby="personal-information-heading"
-	class="flex flex-col gap-md"
+	headingId="personal-information-heading"
+	title="Personal Information"
+	description="Provide your basic professional details."
+	stepNumber={1}
 >
-	<div class="flex flex-col gap-xs">
-		<h2 id="personal-information-heading" class="text-heading-md text-ink">
-			Personal Information
-		</h2>
-		<p class="text-body-sm text-ink-subtle">
-			Provide your basic professional details.
-		</p>
-	</div>
-
 	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="full-name" class="text-body-sm font-medium text-ink-muted">
-				Full Name
-				<span class="text-semantic-danger" aria-hidden="true">*</span>
-			</label>
+		<BuilderField id="full-name" label="Full Name" required className="md:col-span-2">
 			<input
 				id="full-name"
 				name="fullName"
 				type="text"
 				autocomplete="name"
-				class={inputClass}
+				class={builderInputClass}
 			/>
-		</div>
+		</BuilderField>
 
-		<div class="flex flex-col gap-xs">
-			<label for="professional-title" class="text-body-sm font-medium text-ink-muted">
-				Professional Title
-			</label>
+		<BuilderField id="professional-title" label="Professional Title">
 			<input
 				id="professional-title"
 				name="professionalTitle"
 				type="text"
 				autocomplete="organization-title"
 				placeholder="AI & ML Engineer"
-				class={inputClass}
+				class={builderInputClass}
 			/>
-		</div>
+		</BuilderField>
 
-		<div class="flex flex-col gap-xs">
-			<label for="email" class="text-body-sm font-medium text-ink-muted">
-				Email Address
-			</label>
+		<BuilderField id="email" label="Email Address">
 			<input
 				id="email"
 				name="email"
 				type="email"
 				autocomplete="email"
-				class={inputClass}
+				class={builderInputClass}
 			/>
-		</div>
+		</BuilderField>
 
-		<div class="flex flex-col gap-xs">
-			<label for="phone" class="text-body-sm font-medium text-ink-muted">
-				Phone Number
-			</label>
+		<BuilderField id="phone" label="Phone Number">
 			<input
 				id="phone"
 				name="phone"
 				type="tel"
 				autocomplete="tel"
-				class={inputClass}
+				class={builderInputClass}
 			/>
-		</div>
+		</BuilderField>
 
-		<div class="flex flex-col gap-xs">
-			<label for="location" class="text-body-sm font-medium text-ink-muted">
-				Location
-			</label>
+		<BuilderField id="location" label="Location">
 			<input
 				id="location"
 				name="location"
 				type="text"
 				autocomplete="address-level2"
 				placeholder="Guntur, Andhra Pradesh"
-				class={inputClass}
+				class={builderInputClass}
 			/>
-		</div>
+		</BuilderField>
 
-		<div class="flex flex-col gap-xs md:col-span-2">
-			<label for="about" class="text-body-sm font-medium text-ink-muted">
-				About Me
-			</label>
+		<BuilderField id="about" label="About Me" className="md:col-span-2">
 			<textarea
 				id="about"
 				name="about"
 				rows="6"
 				placeholder="Write a short professional introduction..."
-				class={inputClass}
+				class={builderInputClass}
 			></textarea>
-		</div>
-
-		<div class="flex flex-col gap-xs md:col-span-2" role="group" aria-labelledby="profile-photo-label">
-			<p id="profile-photo-label" class="text-body-sm font-medium text-ink-muted">
-				Profile Photo
-			</p>
-			<ProfilePhotoUpload />
-		</div>
+		</BuilderField>
 	</form>
-</section>
+
+	<div
+		class="flex flex-col gap-xs border-t border-hairline pt-md"
+		role="group"
+		aria-labelledby="profile-photo-label"
+	>
+		<p id="profile-photo-label" class="text-body-sm font-medium text-ink-muted">
+			Profile Photo
+		</p>
+		<ProfilePhotoUpload />
+	</div>
+</BuilderSection>

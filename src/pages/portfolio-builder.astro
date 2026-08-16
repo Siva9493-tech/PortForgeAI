@@ -1,5 +1,6 @@
 ---
 import Achievements from '../components/portfolio/Achievements.astro';
+import BuilderProgress from '../components/portfolio/BuilderProgress.astro';
 import Certifications from '../components/portfolio/Certifications.astro';
 import Education from '../components/portfolio/Education.astro';
 import Experience from '../components/portfolio/Experience.astro';
@@ -20,6 +21,7 @@ const title = 'Portfolio Builder — PortForge AI';
 const description = 'Create your professional portfolio with the PortForge AI guided builder.';
 
 const activeStepId = wizardStore.getState().currentStep;
+const isEdit = Boolean(new URL(Astro.url).searchParams.get('portfolio'));
 
 const sectionsByStep = {
 	personalInformation: PersonalInformation,
@@ -37,38 +39,52 @@ const sectionsByStep = {
 ---
 
 <PortfolioLayout title={title} description={description}>
-	<div class="grid grid-cols-1 gap-md lg:grid-cols-[15rem_1fr]">
-		<WizardSidebar />
+	<div class="flex w-full flex-col gap-lg">
+		<header class="flex flex-col gap-md border-b border-hairline pb-lg">
+			<div class="flex flex-col gap-xxs">
+				<p class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+					{isEdit ? 'Edit Portfolio' : 'New Portfolio'}
+				</p>
+				<h1 class="text-headline text-ink">Build your professional portfolio</h1>
+				<p class="max-w-narrow text-body-sm text-ink-subtle">{description}</p>
+			</div>
 
-		<div class="flex min-w-0 flex-col">
 			<div
 				id="builder-edit-indicator"
-				class="mb-md flex items-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm"
+				class="flex items-center gap-sm rounded-md border border-hairline bg-surface-2 px-md py-sm"
 				role="status"
 				hidden
 			>
 				<PenLine size="16" class="shrink-0 text-primary" aria-hidden="true" />
 				<span class="text-body-sm font-medium text-ink">Editing Portfolio:</span>
-				<span data-edit-title class="truncate text-body-sm text-ink-subtle"></span>
+				<span data-edit-title class="truncate text-body-sm font-medium text-ink-muted"></span>
 			</div>
+		</header>
 
-			<div id="wizard-step-container">
-				{
-					WIZARD_STEPS.map((step) => {
-						const SectionComponent = sectionsByStep[step.id];
-						return (
-							<div
-								data-step-section-id={step.id}
-								hidden={step.id !== activeStepId}
-							>
-								<SectionComponent />
-							</div>
-						);
-					})
-				}
+		<BuilderProgress />
+
+		<div class="grid grid-cols-1 gap-md lg:grid-cols-[15rem_1fr]">
+			<WizardSidebar />
+
+			<div class="flex min-w-0 flex-col">
+				<div id="wizard-step-container">
+					{
+						WIZARD_STEPS.map((step) => {
+							const SectionComponent = sectionsByStep[step.id];
+							return (
+								<div
+									data-step-section-id={step.id}
+									hidden={step.id !== activeStepId}
+								>
+									<SectionComponent />
+								</div>
+							);
+						})
+					}
+				</div>
+
+				<WizardNavigation />
 			</div>
-
-			<WizardNavigation />
 		</div>
 	</div>
 </PortfolioLayout>
@@ -107,6 +123,20 @@ const sectionsByStep = {
 		}
 	}
 
+	/**
+	 * Keeps repeatable-entry labels ("Education 2", "Project 3", …) accurate
+	 * after the store-driven row sync clones templates. Each entry panel marks
+	 * its label with `[data-entry-label]` and `data-entry-base`.
+	 */
+	const renumberEntryLabels = (section: HTMLElement): void => {
+		for (const group of Array.from(section.querySelectorAll<HTMLElement>('[data-list-index]'))) {
+			const label = group.querySelector<HTMLElement>('[data-entry-label]');
+			if (!label) continue;
+			const base = label.dataset.entryBase ?? '';
+			label.textContent = base ? `${base} ${Number(group.dataset.listIndex) + 1}` : '';
+		}
+	};
+
 	if (container) {
 		const sections = Array.from(
 			container.querySelectorAll<HTMLElement>('[data-step-section-id]')
@@ -117,6 +147,7 @@ const sectionsByStep = {
 			if (stepId) {
 				syncRepeatableRows(section, stepId);
 				applySectionValues(section, stepId);
+				renumberEntryLabels(section);
 			}
 		}
 
@@ -140,7 +171,10 @@ const sectionsByStep = {
 			if (!button) return;
 			const section = button.closest<HTMLElement>('[data-step-section-id]');
 			const stepId = section?.dataset.stepSectionId as keyof PortfolioData | undefined;
-			if (section && stepId) addRepeatEntry(section, stepId);
+			if (section && stepId) {
+				addRepeatEntry(section, stepId);
+				renumberEntryLabels(section);
+			}
 		});
 
 		let lastStep = wizardStore.getState().currentStep;

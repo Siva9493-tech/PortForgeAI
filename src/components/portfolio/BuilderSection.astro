@@ -1,0 +1,63 @@
+---
+import { getSectionMetaByNumber } from './section-meta';
+
+interface Props {
+	/** Section element id (also the scroll / step binding hook). */
+	id: string;
+	/** Id of the h2 heading used for `aria-labelledby`. */
+	headingId: string;
+	/** Visible section title. */
+	title: string;
+	/** Short helper text under the title. */
+	description?: string;
+	/** Step number shown as an eyebrow above the title. */
+	stepNumber?: number;
+	/** Extra classes applied to the section root. */
+	className?: string;
+}
+
+const {
+	id,
+	headingId,
+	title,
+	description,
+	stepNumber,
+	className = '',
+} = Astro.props;
+
+const sectionMeta = stepNumber !== undefined ? getSectionMetaByNumber(stepNumber) : undefined;
+const SectionIcon = sectionMeta?.icon;
+---
+---
+
+<section
+	id={id}
+	aria-labelledby={headingId}
+	class={['flex flex-col gap-md', className].filter(Boolean).join(' ')}
+>
+	<header class="flex flex-col gap-xxs">
+		<div class="flex items-center gap-xs">
+			{SectionIcon && (
+				<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-hairline bg-surface-2 text-primary">
+					<SectionIcon size="16" aria-hidden="true" />
+				</span>
+			)}
+			<p class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+				{stepNumber !== undefined && <>Step {stepNumber}</>}
+				{stepNumber !== undefined && sectionMeta ? ` · ${sectionMeta.shortLabel}` : ''}
+			</p>
+		</div>
+		<h2 id={headingId} class="text-headline text-ink">
+			{title}
+		</h2>
+		{description && (
+			<p class="max-w-narrow text-body-sm text-ink-subtle">{description}</p>
+		)}
+	</header>
+
+	<div class="card flex flex-col gap-md p-md md:p-lg">
+		<slot />
+	</div>
+
+	<slot name="actions" />
+</section>

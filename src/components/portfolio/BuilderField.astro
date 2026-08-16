@@ -1,0 +1,38 @@
+---
+interface Props {
+	/** Id of the labelled control (used for `<label for>`). */
+	id?: string;
+	/** Visible field label. */
+	label: string;
+	/** Renders the required asterisk (decorative, aria-hidden). */
+	required?: boolean;
+	/** Helper text shown under the control. */
+	hint?: string;
+	/** Extra classes applied to the field wrapper (e.g. `md:col-span-2`). */
+	className?: string;
+}
+
+const { id, label, required = false, hint, className = '' } = Astro.props;
+
+const rootClass = ['flex flex-col gap-xs', className].filter(Boolean).join(' ');
+const labelClass = 'text-body-sm font-medium text-ink-muted';
+---
+---
+
+<div class={rootClass}>
+	{id ? (
+		<label for={id} class={labelClass}>
+			{label}
+			{required && <span class="text-semantic-danger" aria-hidden="true">*</span>}
+		</label>
+	) : (
+		<p class={labelClass}>
+			{label}
+			{required && <span class="text-semantic-danger" aria-hidden="true">*</span>}
+		</p>
+	)}
+
+	<slot />
+
+	{hint && <p class="text-caption text-ink-tertiary">{hint}</p>}
+</div>

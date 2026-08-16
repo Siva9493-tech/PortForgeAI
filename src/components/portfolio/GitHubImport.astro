@@ -1,61 +1,45 @@
 ---
 import { Github } from 'lucide-astro';
-
-const inputClass =
-	'w-full rounded-md border border-hairline bg-surface-2 px-md py-sm text-body text-ink transition-colors duration-200 placeholder:text-ink-tertiary focus:border-primary-focus focus:outline-none';
+import BuilderField from './BuilderField.astro';
+import BuilderSection from './BuilderSection.astro';
+import { builderButtonPrimary, builderInputClass, builderPanelClass } from './builder-ui';
 
 const visibilityOptions = ['All Repositories', 'Public Only', 'Selected Repositories'];
+
+const connectPanelClass =
+	'flex flex-col items-center gap-sm rounded-md border border-hairline bg-surface-2 p-xl text-center';
 ---
 
-<section
+<BuilderSection
 	id="github-import"
-	aria-labelledby="github-import-heading"
-	class="mt-md flex flex-col gap-md"
+	headingId="github-import-heading"
+	title="GitHub Import"
+	description="Connect your GitHub profile to automatically import repositories in the future."
+	stepNumber={10}
 >
-	<div class="flex flex-col gap-xs">
-		<h2 id="github-import-heading" class="text-heading-md text-ink">
-			GitHub Import
-		</h2>
-		<p class="text-body-sm text-ink-subtle">
-			Connect your GitHub profile to automatically import repositories in the future.
-		</p>
-	</div>
-
 	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
-		<div class="flex flex-col gap-xs">
-			<label
-				for="github-username"
-				class="text-body-sm font-medium text-ink-muted"
-			>
-				GitHub Username
-			</label>
+		<BuilderField id="github-username" label="GitHub Username">
 			<input
 				id="github-username"
 				name="githubUsername"
 				type="text"
 				placeholder="octocat"
-				class={inputClass}
+				class={builderInputClass}
 			/>
-		</div>
+		</BuilderField>
 
-		<div class="flex flex-col gap-xs">
-			<label
-				for="repository-visibility"
-				class="text-body-sm font-medium text-ink-muted"
-			>
-				Repository Visibility
-			</label>
-			<select id="repository-visibility" name="repositoryVisibility" class={inputClass}>
+		<BuilderField id="repository-visibility" label="Repository Visibility">
+			<select id="repository-visibility" name="repositoryVisibility" class={builderInputClass}>
 				<option value="" disabled selected>
 					Select visibility
 				</option>
 				{visibilityOptions.map((option) => <option value={option}>{option}</option>)}
 			</select>
-		</div>
+		</BuilderField>
 	</form>
 
 	<div class="mx-auto w-full max-w-narrow">
-		<div class="card flex flex-col items-center gap-sm p-xl text-center">
+		<div class={connectPanelClass}>
 			<span
 				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
 				aria-hidden="true"
@@ -63,7 +47,7 @@ const visibilityOptions = ['All Repositories', 'Public Only', 'Selected Reposito
 				<Github size="22" />
 			</span>
 
-			<p class="text-heading-sm text-ink">Connect GitHub</p>
+			<p class="text-card-title text-ink">Connect GitHub</p>
 			<p class="max-w-prose text-body text-ink-muted">
 				Future versions will securely import your repositories and project information.
 			</p>
@@ -71,15 +55,15 @@ const visibilityOptions = ['All Repositories', 'Public Only', 'Selected Reposito
 			<button
 				type="button"
 				disabled
-				class="mt-2 inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+				class={`${builderButtonPrimary} mt-2`}
 			>
 				Connect GitHub
 			</button>
 		</div>
 	</div>
 
-	<div class="card flex flex-col gap-md p-lg">
-		<h3 class="text-heading-sm text-ink">What will be imported?</h3>
+	<div class={builderPanelClass}>
+		<h3 class="text-card-title text-ink">What will be imported?</h3>
 		<ul class="flex list-disc flex-col gap-xs pl-4 text-body-sm text-ink-muted marker:text-ink-subtle">
 			<li>Repository names</li>
 			<li>Project descriptions</li>
@@ -88,4 +72,4 @@ const visibilityOptions = ['All Repositories', 'Public Only', 'Selected Reposito
 			<li>Repository links</li>
 		</ul>
 	</div>
-</section>
+</BuilderSection>

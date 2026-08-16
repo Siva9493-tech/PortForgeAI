@@ -1,0 +1,140 @@
+---
+import { ArrowRight, CheckCircle2, Circle } from 'lucide-astro';
+import { getBuilderProgress, getNextIncompleteStep, isMeaningful, wizardStore } from '../../lib/portfolio';
+import { getSectionMetaById } from './section-meta';
+
+const state = wizardStore.getState();
+const progress = getBuilderProgress(state.data);
+const nextStep = getNextIncompleteStep(state.data, state.currentStep);
+const allComplete = progress.completed === progress.total;
+const nextMeta = nextStep ? getSectionMetaById(nextStep.id) : undefined;
+const nextLabel = nextMeta && nextStep
+	? isMeaningful(state.data[nextStep.id])
+		? `Continue with ${nextMeta.shortLabel}`
+		: `Complete ${nextMeta.shortLabel}`
+	: '';
+const percentLabel = `${progress.completed} of ${progress.total} sections complete (${progress.percent}%)`;
+---
+
+<aside
+	id="builder-progress"
+	aria-label="Portfolio builder progress"
+	class="card flex flex-col gap-sm p-md sm:flex-row sm:items-center sm:justify-between sm:gap-md"
+>
+	<div class="flex min-w-0 items-center gap-xs">
+		<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-hairline bg-surface-2 text-primary" aria-hidden="true">
+			<span data-progress-icon-check hidden={!allComplete}>
+				<CheckCircle2 size="16" />
+			</span>
+			<span data-progress-icon-open hidden={allComplete}>
+				<Circle size="16" />
+			</span>
+		</span>
+		<div class="flex min-w-0 flex-col">
+			<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+				Progress
+			</span>
+			<span class="truncate text-body-sm font-medium text-ink" data-progress-summary>
+				{percentLabel}
+			</span>
+		</div>
+	</div>
+
+	<div class="flex min-w-0 flex-1 items-center gap-sm sm:max-w-sm">
+		<div
+			role="progressbar"
+			aria-label="Portfolio builder completion"
+			aria-valuemin="0"
+			aria-valuemax="100"
+			aria-valuenow={progress.percent}
+			aria-valuetext={percentLabel}
+			class="h-2 w-full overflow-hidden rounded-full bg-surface-2"
+		>
+			<div
+				class="h-full rounded-full bg-primary transition-[width] duration-300"
+				data-progress-fill
+				style={`width: ${progress.percent}%`}
+			></div>
+		</div>
+		<span class="shrink-0 text-caption font-medium text-ink" data-progress-percent>
+			{progress.percent}%
+		</span>
+	</div>
+
+	<div class="flex shrink-0 items-center justify-end">
+		<p class="text-caption font-medium text-semantic-success" data-complete-status hidden={!allComplete}>
+			All sections complete — generate your portfolio to preview.
+		</p>
+		<button
+			type="button"
+			data-next-step
+			data-next-step-id={nextStep?.id ?? ''}
+			hidden={allComplete}
+			aria-label={nextLabel || 'Next section'}
+			class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+		>
+			<span data-next-step-label>{nextLabel}</span>
+			<ArrowRight size="15" aria-hidden="true" />
+		</button>
+	</div>
+</aside>
+
+<script>
+	import { getBuilderProgress, getNextIncompleteStep, isMeaningful, wizardStore } from '../../lib/portfolio';
+	import type { StepId } from '../../lib/portfolio';
+	import { getSectionMetaById } from './section-meta';
+
+	const root = document.getElementById('builder-progress');
+
+	if (root) {
+		const fill = root.querySelector<HTMLElement>('[data-progress-fill]');
+		const progressbar = root.querySelector<HTMLElement>('[role="progressbar"]');
+		const percentEl = root.querySelector<HTMLElement>('[data-progress-percent]');
+		const summaryEl = root.querySelector<HTMLElement>('[data-progress-summary]');
+		const nextBtn = root.querySelector<HTMLButtonElement>('[data-next-step]');
+		const nextLabelEl = root.querySelector<HTMLElement>('[data-next-step-label]');
+		const completeStatus = root.querySelector<HTMLElement>('[data-complete-status]');
+		const iconCheck = root.querySelector<HTMLElement>('[data-progress-icon-check]');
+		const iconOpen = root.querySelector<HTMLElement>('[data-progress-icon-open]');
+
+		const applyState = () => {
+			const state = wizardStore.getState();
+			const progress = getBuilderProgress(state.data);
+			const nextStep = getNextIncompleteStep(state.data, state.currentStep);
+			const allComplete = progress.completed === progress.total;
+			const percentLabel = `${progress.completed} of ${progress.total} sections complete (${progress.percent}%)`;
+			const nextMeta = nextStep ? getSectionMetaById(nextStep.id) : undefined;
+			const nextLabel = nextMeta && nextStep
+				? isMeaningful(state.data[nextStep.id])
+					? `Continue with ${nextMeta.shortLabel}`
+					: `Complete ${nextMeta.shortLabel}`
+				: '';
+
+			if (fill) fill.style.width = `${progress.percent}%`;
+			if (progressbar) {
+				progressbar.setAttribute('aria-valuenow', String(progress.percent));
+				progressbar.setAttribute('aria-valuetext', percentLabel);
+			}
+			if (percentEl) percentEl.textContent = `${progress.percent}%`;
+			if (summaryEl) summaryEl.textContent = percentLabel;
+			if (completeStatus) completeStatus.hidden = !allComplete;
+			if (iconCheck) iconCheck.hidden = !allComplete;
+			if (iconOpen) iconOpen.hidden = allComplete;
+
+			if (nextBtn) {
+				nextBtn.hidden = allComplete;
+				nextBtn.dataset.nextStepId = nextStep?.id ?? '';
+				nextBtn.setAttribute('aria-label', nextLabel || 'Next section');
+			}
+			if (nextLabelEl) nextLabelEl.textContent = nextLabel;
+		};
+
+		nextBtn?.addEventListener('click', () => {
+			const stepId = nextBtn.dataset.nextStepId as StepId | undefined;
+			if (stepId) wizardStore.goToStep(stepId);
+		});
+
+		wizardStore.subscribe(applyState);
+		applyState();
+	}
+</script>
