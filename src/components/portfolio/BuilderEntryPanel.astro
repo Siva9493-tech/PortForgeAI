@@ -1,0 +1,41 @@
+---
+import { Trash2 } from 'lucide-astro';
+import { builderButtonDanger } from './builder-ui';
+
+interface Props {
+	/** Base noun for the entry label (e.g. "Project") — renders "Project 1". */
+	entryBase: string;
+	/** Zero-based index of this entry. */
+	index: number;
+}
+
+const { entryBase, index } = Astro.props;
+const label = `${entryBase} ${index + 1}`;
+const removeLabel = `Remove ${entryBase.toLowerCase()} ${index + 1}`;
+---
+
+<div
+	role="group"
+	aria-label={label}
+	data-list-index={index}
+	data-reveal
+	class="flex flex-col rounded-md border border-hairline bg-surface-2"
+>
+	<header class="flex flex-wrap items-center justify-between gap-sm border-b border-hairline px-md py-sm">
+		<p
+			data-entry-label
+			data-entry-base={entryBase}
+			class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle"
+		>
+			{label}
+		</p>
+		<button type="button" data-remove-entry aria-label={removeLabel} class={builderButtonDanger}>
+			<Trash2 size="15" aria-hidden="true" />
+			Remove
+		</button>
+	</header>
+
+	<div class="grid grid-cols-1 gap-md p-md md:grid-cols-2">
+		<slot />
+	</div>
+</div>

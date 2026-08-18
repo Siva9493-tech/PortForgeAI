@@ -284,12 +284,12 @@ export function createEmptyLinkedInImport(): LinkedInImportData {
 export function createEmptyPortfolioData(): PortfolioData {
 	return {
 		personalInformation: createEmptyPersonalInformation(),
-		education: [createEmptyEducationEntry()],
-		experience: [createEmptyExperienceEntry()],
-		projects: [createEmptyProjectEntry()],
+		education: [],
+		experience: [],
+		projects: [],
 		skills: createEmptySkills(),
-		certifications: [createEmptyCertificationEntry()],
-		achievements: [createEmptyAchievementEntry()],
+		certifications: [],
+		achievements: [],
 		socialLinks: [createEmptySocialLinks()],
 		resume: createEmptyResume(),
 		githubImport: createEmptyGitHubImport(),

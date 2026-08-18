@@ -34,14 +34,16 @@ function skillsFromOutput(skills: PortfolioSkill[]): ReturnType<typeof createEmp
  * existing field-binding system can populate the Portfolio Builder in edit
  * mode. This is a read-only adapter over the stored content — it does not
  * create a second transformation pipeline. Fields that the output schema does
- * not carry (email, phone, location, profile photo, custom links, import
- * metadata) fall back to their empty builder defaults.
+ * not carry (profile photo, GitHub/LinkedIn import preferences) are restored
+ * from the preserved `builder` payload when present; otherwise they fall back
+ * to their empty builder defaults.
  */
 export function portfolioOutputToData(output: PortfolioOutput): PortfolioData {
 	const base = createEmptyPortfolioData();
 	const seo = output.seo;
 	const social = output.social;
 	const resume = output.resume;
+	const builder = output.builder;
 
 	const seoTitle = seo?.title ?? '';
 	const isFallbackTitle = seoTitle === 'Portfolio';
@@ -51,9 +53,9 @@ export function portfolioOutputToData(output: PortfolioOutput): PortfolioData {
 	base.personalInformation = {
 		fullName: isFallbackTitle ? '' : candidateName,
 		professionalTitle,
-		email: '',
-		phone: '',
-		location: '',
+		email: builder?.email ?? '',
+		phone: builder?.phone ?? '',
+		location: builder?.location ?? '',
 		about: seo?.description ?? '',
 		profilePhoto: null,
 	};
@@ -109,20 +111,42 @@ export function portfolioOutputToData(output: PortfolioOutput): PortfolioData {
 
 	base.skills = skillsFromOutput(output.skills);
 
-	base.socialLinks = social
-		? [
-				{
-					linkedinProfile: social.linkedin ?? '',
-					githubProfile: social.github ?? '',
-					portfolioWebsite: social.website ?? '',
-					twitterProfile: social.twitter ?? '',
-					instagram: social.instagram ?? '',
-					youtubeChannel: social.youtube ?? '',
-					otherWebsite: social.other ?? '',
-					customLinks: [],
-				},
-			]
-		: [];
+	if (social || (builder?.customLinks?.length ?? 0) > 0) {
+		base.socialLinks = [
+			{
+				linkedinProfile: social?.linkedin ?? '',
+				githubProfile: social?.github ?? '',
+				portfolioWebsite: social?.website ?? '',
+				twitterProfile: social?.twitter ?? '',
+				instagram: social?.instagram ?? '',
+				youtubeChannel: social?.youtube ?? '',
+				otherWebsite: social?.other ?? '',
+				customLinks: (builder?.customLinks ?? []).map((link) => ({
+					label: link.label,
+					url: link.url,
+				})),
+			},
+		];
+	} else {
+		base.socialLinks = [];
+	}
+
+	if (builder?.githubImport) {
+		base.githubImport = {
+			githubUsername: builder.githubImport.githubUsername,
+			repositoryVisibility: builder.githubImport.repositoryVisibility,
+			connected: builder.githubImport.connected,
+			importedRepositories: builder.githubImport.importedRepositories ?? [],
+		};
+	}
+
+	if (builder?.linkedinImport) {
+		base.linkedinImport = {
+			linkedinProfileUrl: builder.linkedinImport.linkedinProfileUrl,
+			importMode: builder.linkedinImport.importMode,
+			connected: builder.linkedinImport.connected,
+		};
+	}
 
 	base.resume = resume
 		? {

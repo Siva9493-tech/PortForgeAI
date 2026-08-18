@@ -1,8 +1,9 @@
 ---
 import BuilderField from './BuilderField.astro';
 import BuilderSection from './BuilderSection.astro';
+import BuilderSuggestions from './BuilderSuggestions.astro';
 import ProfilePhotoUpload from './ProfilePhotoUpload.astro';
-import { builderInputClass } from './builder-ui';
+import { builderGroupLabelClass, builderInputClass, builderTextareaClass } from './builder-ui';
 ---
 
 <BuilderSection
@@ -13,12 +14,15 @@ import { builderInputClass } from './builder-ui';
 	stepNumber={1}
 >
 	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
+		<p class="text-caption text-ink-tertiary md:col-span-2">Fields marked * are required.</p>
 		<BuilderField id="full-name" label="Full Name" required className="md:col-span-2">
 			<input
 				id="full-name"
 				name="fullName"
 				type="text"
 				autocomplete="name"
+				required
+				aria-required="true"
 				class={builderInputClass}
 			/>
 		</BuilderField>
@@ -65,25 +69,33 @@ import { builderInputClass } from './builder-ui';
 			/>
 		</BuilderField>
 
-		<BuilderField id="about" label="About Me" className="md:col-span-2">
+		<BuilderField
+			id="about"
+			label="About Me"
+			className="md:col-span-2"
+			hint="A short professional introduction for your portfolio summary."
+		>
 			<textarea
 				id="about"
 				name="about"
 				rows="6"
 				placeholder="Write a short professional introduction..."
-				class={builderInputClass}
+				class={builderTextareaClass}
 			></textarea>
 		</BuilderField>
 	</form>
 
+	<BuilderSuggestions section="personalInformation" />
+
 	<div
-		class="flex flex-col gap-xs border-t border-hairline pt-md"
+		class="flex flex-col gap-sm"
 		role="group"
 		aria-labelledby="profile-photo-label"
+		data-reveal
 	>
-		<p id="profile-photo-label" class="text-body-sm font-medium text-ink-muted">
+		<h3 id="profile-photo-label" class={builderGroupLabelClass}>
 			Profile Photo
-		</p>
+		</h3>
 		<ProfilePhotoUpload />
 	</div>
 </BuilderSection>

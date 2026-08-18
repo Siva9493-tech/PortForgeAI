@@ -1,5 +1,6 @@
 import type {
 	PortfolioAchievement,
+	PortfolioBuilderExtras,
 	PortfolioCertification,
 	PortfolioEducation,
 	PortfolioExperience,
@@ -104,7 +105,78 @@ export function normalizePortfolioOutput(raw: unknown): PortfolioOutput {
 		resume: normalizeResume(raw.resume),
 		seo: normalizeSEO(raw.seo),
 		metadata: normalizeMetadata(raw.metadata, fallback.metadata),
+		builder: normalizeBuilderExtras(raw.builder),
 	};
+}
+
+/** Normalizes builder-only data (preserved, never rendered) into known fields. */
+function normalizeBuilderExtras(value: unknown): PortfolioOutput['builder'] {
+	if (!isRecord(value)) {
+		return undefined;
+	}
+	const extras: PortfolioBuilderExtras = {};
+
+	if (isString(value.email)) extras.email = value.email;
+	if (isString(value.phone)) extras.phone = value.phone;
+	if (isString(value.location)) extras.location = value.location;
+
+	if (isRecord(value.profilePhoto)) {
+		extras.profilePhoto = {
+			name: isString(value.profilePhoto.name) ? value.profilePhoto.name : '',
+			type: isString(value.profilePhoto.type) ? value.profilePhoto.type : '',
+			size: isNumber(value.profilePhoto.size) ? value.profilePhoto.size : 0,
+		};
+		if (isString(value.profilePhoto.dataUrl)) {
+			extras.profilePhoto.dataUrl = value.profilePhoto.dataUrl;
+		}
+	} else if (value.profilePhoto === null) {
+		extras.profilePhoto = null;
+	}
+
+	if (Array.isArray(value.customLinks)) {
+		const links = value.customLinks
+			.filter(isRecord)
+			.map((link) => ({
+				label: isString(link.label) ? link.label : '',
+				url: isString(link.url) ? link.url : '',
+			}))
+			.filter((link) => link.label !== '' || link.url !== '');
+		if (links.length > 0) extras.customLinks = links;
+	}
+
+	if (isRecord(value.githubImport)) {
+		const github = value.githubImport;
+		extras.githubImport = {
+			githubUsername: isString(github.githubUsername) ? github.githubUsername : '',
+			repositoryVisibility: isString(github.repositoryVisibility)
+				? github.repositoryVisibility
+				: '',
+			connected: isBoolean(github.connected) ? github.connected : false,
+			importedRepositories: Array.isArray(github.importedRepositories)
+				? github.importedRepositories.filter(isRecord).map((repository) => ({
+						name: isString(repository.name) ? repository.name : '',
+						description: isString(repository.description) ? repository.description : '',
+						url: isString(repository.url) ? repository.url : '',
+						technologies: isStringArray(repository.technologies)
+							? repository.technologies
+							: [],
+					}))
+				: [],
+		};
+	}
+
+	if (isRecord(value.linkedinImport)) {
+		const linkedin = value.linkedinImport;
+		extras.linkedinImport = {
+			linkedinProfileUrl: isString(linkedin.linkedinProfileUrl)
+				? linkedin.linkedinProfileUrl
+				: '',
+			importMode: isString(linkedin.importMode) ? linkedin.importMode : '',
+			connected: isBoolean(linkedin.connected) ? linkedin.connected : false,
+		};
+	}
+
+	return Object.keys(extras).length > 0 ? extras : undefined;
 }
 
 function normalizeTheme(value: unknown, fallback: PortfolioTheme | null): PortfolioTheme | null {

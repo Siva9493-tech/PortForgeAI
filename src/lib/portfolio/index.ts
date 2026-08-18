@@ -4,5 +4,6 @@ export * from './wizard-store';
 export * from './field-config';
 export * from './form-binding';
 export * from './completion';
+export * from './section-guidance';
 export * from './scroll-focus';
 export * from './generator';

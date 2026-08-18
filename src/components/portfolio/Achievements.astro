@@ -1,9 +1,16 @@
 ---
-import { Plus } from 'lucide-astro';
+import { Link2, Trophy } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
+import BuilderEntryPanel from './BuilderEntryPanel.astro';
 import BuilderField from './BuilderField.astro';
+import BuilderRepeatedList from './BuilderRepeatedList.astro';
 import BuilderSection from './BuilderSection.astro';
-import { builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
+import BuilderSuggestions from './BuilderSuggestions.astro';
+import {
+	builderInputClass,
+	builderInputWithIconClass,
+	builderTextareaClass,
+} from './builder-ui';
 
 const categories = [
 	'Award',
@@ -25,25 +32,21 @@ const entries = wizardStore.getState().data.achievements;
 	description="Highlight your awards, accomplishments and recognitions."
 	stepNumber={7}
 >
-	<div class="flex flex-col gap-md">
+	<BuilderRepeatedList
+		itemsCount={entries.length}
+		emptyTitle="No achievements added yet"
+		emptyHint="Meaningful accomplishments strengthen your credibility beyond your job title."
+		emptyGuidance="Include the achievement, the organization, a date, and what it meant."
+		addLabel="Add Achievement"
+		addAnotherLabel="Add Another Achievement"
+		addHintComplete="Add another achievement to highlight more of your impact."
+		addHintIncomplete="Add the achievement title to complete this section."
+		emptyIcon={Trophy}
+	>
 		{
 			entries.map((_, index) => (
-				<div
-					role="group"
-					aria-label={`Achievement ${index + 1}`}
-					data-list-index={index}
-					class={builderPanelClass}
-				>
-					<p
-						data-entry-label
-						data-entry-base="Achievement"
-						class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle"
-					>
-						Achievement {index + 1}
-					</p>
-
-					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
-						<BuilderField id={`achievement-title-${index}`} label="Achievement Title">
+				<BuilderEntryPanel entryBase="Achievement" index={index}>
+					<BuilderField id={`achievement-title-${index}`} label="Achievement Title">
 							<input
 								id={`achievement-title-${index}`}
 								name="achievementTitle"
@@ -89,13 +92,14 @@ const entries = wizardStore.getState().data.achievements;
 							id={`achievement-description-${index}`}
 							label="Description"
 							className="md:col-span-2"
+							hint="Describe your achievement and its impact."
 						>
 							<textarea
 								id={`achievement-description-${index}`}
 								name="description"
 								rows="5"
 								placeholder="Describe your achievement and its impact..."
-								class={builderInputClass}
+								class={builderTextareaClass}
 							></textarea>
 						</BuilderField>
 
@@ -103,23 +107,96 @@ const entries = wizardStore.getState().data.achievements;
 							id={`achievement-supporting-link-${index}`}
 							label="Supporting Link"
 							className="md:col-span-2"
+							icon={Link2}
 						>
 							<input
 								id={`achievement-supporting-link-${index}`}
 								name="supportingLink"
 								type="url"
 								placeholder="https://..."
-								class={builderInputClass}
+								class={builderInputWithIconClass}
 							/>
 						</BuilderField>
-					</div>
-				</div>
+				</BuilderEntryPanel>
 			))
 		}
-	</div>
 
-	<button type="button" data-add-entry slot="actions" class={builderButtonSecondary}>
-		<Plus size="16" aria-hidden="true" />
-		Add Another Achievement
-	</button>
+		<template slot="template">
+			<BuilderEntryPanel entryBase="Achievement" index={0}>
+				<BuilderField id="achievement-title-template" label="Achievement Title">
+						<input
+						id="achievement-title-template"
+						name="achievementTitle"
+						type="text"
+						placeholder="Winner — Smart India Hackathon"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="achievement-organization-template" label="Organization">
+						<input
+						id="achievement-organization-template"
+						name="organization"
+						type="text"
+						placeholder="Government of India"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="achievement-date-template" label="Achievement Date">
+						<input
+							id="achievement-date-template"
+							name="achievementDate"
+							type="month"
+							class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="achievement-category-template" label="Achievement Category">
+						<select
+							id="achievement-category-template"
+							name="category"
+							class={builderInputClass}
+						>
+							<option value="" disabled selected>
+								Select a category
+							</option>
+							{categories.map((category) => <option value={category}>{category}</option>)}
+						</select>
+					</BuilderField>
+
+					<BuilderField
+						id="achievement-description-template"
+						label="Description"
+						className="md:col-span-2"
+						hint="Describe your achievement and its impact."
+					>
+						<textarea
+							id="achievement-description-template"
+							name="description"
+							rows="5"
+							placeholder="Describe your achievement and its impact..."
+							class={builderTextareaClass}
+						></textarea>
+					</BuilderField>
+
+					<BuilderField
+						id="achievement-supporting-link-template"
+						label="Supporting Link"
+						className="md:col-span-2"
+						icon={Link2}
+					>
+						<input
+							id="achievement-supporting-link-template"
+							name="supportingLink"
+							type="url"
+							placeholder="https://..."
+							class={builderInputWithIconClass}
+						/>
+</BuilderField>
+				</BuilderEntryPanel>
+			</template>
+		</BuilderRepeatedList>
+
+		<BuilderSuggestions section="achievements" />
 </BuilderSection>

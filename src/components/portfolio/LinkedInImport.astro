@@ -1,8 +1,11 @@
 ---
-import { CheckCircle2, Linkedin } from 'lucide-astro';
+import { CheckCircle2, Linkedin, Link2 } from 'lucide-astro';
 import BuilderField from './BuilderField.astro';
 import BuilderSection from './BuilderSection.astro';
-import { builderButtonPrimary, builderInputClass, builderPanelClass } from './builder-ui';
+import { isPortfolioReadyForReview, wizardStore } from '../../lib/portfolio';
+import { builderButtonPrimary, builderGroupLabelClass, builderInfoBlockClass, builderInputClass, builderInputWithIconClass } from './builder-ui';
+
+const readyForReview = isPortfolioReadyForReview(wizardStore.getState().data);
 
 const importModes = [
 	'Import Everything',
@@ -24,13 +27,13 @@ const connectPanelClass =
 	stepNumber={11}
 >
 	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
-		<BuilderField id="linkedin-profile-url" label="LinkedIn Profile URL">
+		<BuilderField id="linkedin-profile-url" label="LinkedIn Profile URL" icon={Link2}>
 			<input
 				id="linkedin-profile-url"
 				name="linkedinProfileUrl"
 				type="url"
 				placeholder="https://linkedin.com/in/yourname"
-				class={builderInputClass}
+				class={builderInputWithIconClass}
 			/>
 		</BuilderField>
 
@@ -45,7 +48,7 @@ const connectPanelClass =
 	</form>
 
 	<div class="mx-auto w-full max-w-narrow">
-		<div class={connectPanelClass}>
+		<div class={connectPanelClass} data-reveal>
 			<span
 				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
 				aria-hidden="true"
@@ -69,8 +72,8 @@ const connectPanelClass =
 		</div>
 	</div>
 
-	<div class={builderPanelClass}>
-		<h3 class="text-card-title text-ink">What will be imported?</h3>
+	<div class={builderInfoBlockClass} data-reveal>
+		<h3 class={builderGroupLabelClass}>What will be imported?</h3>
 		<ul class="flex list-disc flex-col gap-xs pl-4 text-body-sm text-ink-muted marker:text-ink-subtle">
 			<li>Professional headline</li>
 			<li>Work experience</li>
@@ -81,7 +84,12 @@ const connectPanelClass =
 		</ul>
 	</div>
 
-	<div class="flex flex-col items-start gap-xs rounded-md border border-semantic-success/25 bg-surface-2 p-md">
+	<div
+		class="flex flex-col items-start gap-xs rounded-md border border-semantic-success/25 bg-surface-2 p-md"
+		data-builder-complete
+		data-reveal
+		hidden={!readyForReview}
+	>
 		<div class="flex items-center gap-xs">
 			<CheckCircle2 size="18" class="shrink-0 text-semantic-success" aria-hidden="true" />
 			<h3 class="text-card-title text-ink">Portfolio Builder Complete</h3>
@@ -91,3 +99,17 @@ const connectPanelClass =
 		</p>
 	</div>
 </BuilderSection>
+
+<script>
+	import { isPortfolioReadyForReview, wizardStore } from '../../lib/portfolio';
+
+	const block = document.querySelector<HTMLElement>('[data-builder-complete]');
+
+	if (block) {
+		const sync = (): void => {
+			block.hidden = !isPortfolioReadyForReview(wizardStore.getState().data);
+		};
+		wizardStore.subscribe(sync);
+		sync();
+	}
+</script>

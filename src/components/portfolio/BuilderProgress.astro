@@ -1,16 +1,24 @@
 ---
-import { ArrowRight, CheckCircle2, Circle } from 'lucide-astro';
-import { getBuilderProgress, getNextIncompleteStep, isMeaningful, wizardStore } from '../../lib/portfolio';
+import { ArrowRight, CheckCircle2, Circle, Eye, ListChecks } from 'lucide-astro';
+import { getBuilderProgress, getNextGuidedStep, isMeaningful, isPortfolioReadyForReview, wizardStore } from '../../lib/portfolio';
 import { getSectionMetaById } from './section-meta';
+import { builderButtonPrimary, builderButtonSecondary } from './builder-ui';
+
+interface Props {
+	/** Destination of the "Preview Portfolio" action. */
+	previewHref: string;
+}
+
+const { previewHref } = Astro.props;
 
 const state = wizardStore.getState();
 const progress = getBuilderProgress(state.data);
-const nextStep = getNextIncompleteStep(state.data, state.currentStep);
-const allComplete = progress.completed === progress.total;
+const readyForReview = isPortfolioReadyForReview(state.data);
+const nextStep = getNextGuidedStep(state.data, state.currentStep);
 const nextMeta = nextStep ? getSectionMetaById(nextStep.id) : undefined;
 const nextLabel = nextMeta && nextStep
 	? isMeaningful(state.data[nextStep.id])
-		? `Continue with ${nextMeta.shortLabel}`
+		? `Continue to ${nextMeta.shortLabel}`
 		: `Complete ${nextMeta.shortLabel}`
 	: '';
 const percentLabel = `${progress.completed} of ${progress.total} sections complete (${progress.percent}%)`;
@@ -19,14 +27,14 @@ const percentLabel = `${progress.completed} of ${progress.total} sections comple
 <aside
 	id="builder-progress"
 	aria-label="Portfolio builder progress"
-	class="card flex flex-col gap-sm p-md sm:flex-row sm:items-center sm:justify-between sm:gap-md"
+	class="card edge-highlight shadow-sm flex flex-col gap-sm p-md sm:flex-row sm:items-center sm:justify-between sm:gap-md"
 >
 	<div class="flex min-w-0 items-center gap-xs">
 		<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-hairline bg-surface-2 text-primary" aria-hidden="true">
-			<span data-progress-icon-check hidden={!allComplete}>
+			<span data-progress-icon-check class="inline-flex animate-pop-in" hidden={!readyForReview}>
 				<CheckCircle2 size="16" />
 			</span>
-			<span data-progress-icon-open hidden={allComplete}>
+			<span data-progress-icon-open hidden={readyForReview}>
 				<Circle size="16" />
 			</span>
 		</span>
@@ -61,26 +69,46 @@ const percentLabel = `${progress.completed} of ${progress.total} sections comple
 		</span>
 	</div>
 
-	<div class="flex shrink-0 items-center justify-end">
-		<p class="text-caption font-medium text-semantic-success" data-complete-status hidden={!allComplete}>
-			All sections complete — generate your portfolio to preview.
-		</p>
-		<button
-			type="button"
-			data-next-step
-			data-next-step-id={nextStep?.id ?? ''}
-			hidden={allComplete}
-			aria-label={nextLabel || 'Next section'}
-			class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+	<div class="flex w-full shrink-0 flex-col items-stretch gap-sm sm:w-auto sm:items-end">
+		<div
+			class="flex flex-col items-stretch gap-xs animate-step-in sm:items-end"
+			data-ready-status
+			hidden={!readyForReview}
 		>
-			<span data-next-step-label>{nextLabel}</span>
-			<ArrowRight size="15" aria-hidden="true" />
-		</button>
+			<p class="text-caption font-medium text-semantic-success">
+				Your portfolio is ready for review.
+			</p>
+			<a
+				data-preview-guide
+				href={previewHref}
+				class={`${builderButtonPrimary} w-full sm:w-auto`}
+			>
+				<Eye size="16" aria-hidden="true" />
+				Preview Portfolio
+			</a>
+		</div>
+		<div class="flex flex-col items-stretch gap-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-sm">
+			<button type="button" data-open-review class={`${builderButtonSecondary} w-full sm:w-auto`}>
+				<ListChecks size="16" aria-hidden="true" />
+				Review Portfolio
+			</button>
+			<button
+				type="button"
+				data-next-step
+				data-next-step-id={nextStep?.id ?? ''}
+				hidden={readyForReview}
+				aria-label={nextLabel || 'Next section'}
+				class="inline-flex w-full items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+			>
+				<span data-next-step-label>{nextLabel}</span>
+				<ArrowRight size="15" aria-hidden="true" />
+			</button>
+		</div>
 	</div>
 </aside>
 
 <script>
-	import { getBuilderProgress, getNextIncompleteStep, isMeaningful, wizardStore } from '../../lib/portfolio';
+	import { getBuilderProgress, getNextGuidedStep, isMeaningful, isPortfolioReadyForReview, wizardStore } from '../../lib/portfolio';
 	import type { StepId } from '../../lib/portfolio';
 	import { getSectionMetaById } from './section-meta';
 
@@ -93,20 +121,21 @@ const percentLabel = `${progress.completed} of ${progress.total} sections comple
 		const summaryEl = root.querySelector<HTMLElement>('[data-progress-summary]');
 		const nextBtn = root.querySelector<HTMLButtonElement>('[data-next-step]');
 		const nextLabelEl = root.querySelector<HTMLElement>('[data-next-step-label]');
-		const completeStatus = root.querySelector<HTMLElement>('[data-complete-status]');
+		const readyStatus = root.querySelector<HTMLElement>('[data-ready-status]');
+		const previewGuide = root.querySelector<HTMLAnchorElement>('[data-preview-guide]');
 		const iconCheck = root.querySelector<HTMLElement>('[data-progress-icon-check]');
 		const iconOpen = root.querySelector<HTMLElement>('[data-progress-icon-open]');
 
 		const applyState = () => {
 			const state = wizardStore.getState();
 			const progress = getBuilderProgress(state.data);
-			const nextStep = getNextIncompleteStep(state.data, state.currentStep);
-			const allComplete = progress.completed === progress.total;
+			const readyForReview = isPortfolioReadyForReview(state.data);
+			const nextStep = getNextGuidedStep(state.data, state.currentStep);
 			const percentLabel = `${progress.completed} of ${progress.total} sections complete (${progress.percent}%)`;
 			const nextMeta = nextStep ? getSectionMetaById(nextStep.id) : undefined;
 			const nextLabel = nextMeta && nextStep
 				? isMeaningful(state.data[nextStep.id])
-					? `Continue with ${nextMeta.shortLabel}`
+					? `Continue to ${nextMeta.shortLabel}`
 					: `Complete ${nextMeta.shortLabel}`
 				: '';
 
@@ -117,16 +146,17 @@ const percentLabel = `${progress.completed} of ${progress.total} sections comple
 			}
 			if (percentEl) percentEl.textContent = `${progress.percent}%`;
 			if (summaryEl) summaryEl.textContent = percentLabel;
-			if (completeStatus) completeStatus.hidden = !allComplete;
-			if (iconCheck) iconCheck.hidden = !allComplete;
-			if (iconOpen) iconOpen.hidden = allComplete;
+			if (iconCheck) iconCheck.hidden = !readyForReview;
+			if (iconOpen) iconOpen.hidden = readyForReview;
 
 			if (nextBtn) {
-				nextBtn.hidden = allComplete;
+				nextBtn.hidden = readyForReview;
 				nextBtn.dataset.nextStepId = nextStep?.id ?? '';
 				nextBtn.setAttribute('aria-label', nextLabel || 'Next section');
 			}
 			if (nextLabelEl) nextLabelEl.textContent = nextLabel;
+			if (readyStatus) readyStatus.hidden = !readyForReview;
+			if (previewGuide) previewGuide.hidden = !readyForReview;
 		};
 
 		nextBtn?.addEventListener('click', () => {

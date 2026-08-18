@@ -125,13 +125,27 @@ export function addRepeatEntry(sectionRoot: HTMLElement, stepId: keyof Portfolio
 	if (!factory) return false;
 
 	const groups = Array.from(sectionRoot.querySelectorAll<HTMLElement>('[data-list-index]'));
-	const template = groups[groups.length - 1];
-	if (!template) return false;
+	const template = sectionRoot.querySelector<HTMLTemplateElement>('[data-entry-template]');
+	const last = groups[groups.length - 1];
 
-	const entryClone = template.cloneNode(true) as HTMLElement;
-	clearGroupValues(entryClone);
-	entryClone.dataset.listIndex = String(groups.length);
-	template.after(entryClone);
+	let entryClone: HTMLElement | undefined;
+	if (last) {
+		entryClone = last.cloneNode(true) as HTMLElement;
+		clearGroupValues(entryClone);
+		entryClone.dataset.listIndex = String(groups.length);
+		last.after(entryClone);
+	} else if (template) {
+		let first = template.content.firstElementChild as HTMLElement | null;
+		while (first instanceof HTMLTemplateElement) {
+			first = first.content.firstElementChild as HTMLElement | null;
+		}
+		if (!first) return false;
+		entryClone = first.cloneNode(true) as HTMLElement;
+		clearGroupValues(entryClone);
+		entryClone.dataset.listIndex = '0';
+		template.after(entryClone);
+	}
+	if (!entryClone) return false;
 
 	const currentList = wizardStore.getState().data[stepId] as unknown;
 	const list = clone(
@@ -139,5 +153,32 @@ export function addRepeatEntry(sectionRoot: HTMLElement, stepId: keyof Portfolio
 	) as Record<string, unknown>[];
 	list.push(factory() as Record<string, unknown>);
 	wizardStore.setSectionData(stepId, list as unknown as PortfolioData[keyof PortfolioData]);
+	return true;
+}
+
+/**
+ * Removes the entry at `index` from a repeated section: splices it out of the
+ * wizard store and removes the matching DOM group. Callers should renumber the
+ * remaining `[data-list-index]` groups afterwards.
+ */
+export function removeRepeatEntry(
+	sectionRoot: HTMLElement,
+	stepId: keyof PortfolioData,
+	index: number
+): boolean {
+	const binding = SECTION_BINDINGS[stepId];
+	if (binding.mode !== 'list') return false;
+
+	const current = wizardStore.getState().data[stepId] as unknown;
+	const list = clone(
+		Array.isArray(current) ? current : []
+	) as Record<string, unknown>[];
+	if (index < 0 || index >= list.length) return false;
+
+	list.splice(index, 1);
+	wizardStore.setSectionData(stepId, list as unknown as PortfolioData[keyof PortfolioData]);
+
+	const group = sectionRoot.querySelector<HTMLElement>(`[data-list-index="${index}"]`);
+	if (group) group.remove();
 	return true;
 }

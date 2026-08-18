@@ -2,6 +2,7 @@
 import { RefreshCw, Trash2, Upload } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
 import type { ProfilePhotoData, StepId } from '../../lib/portfolio';
+import { builderButtonDanger, builderButtonPrimary, builderDropzoneClass, builderPanelClass } from './builder-ui';
 
 interface Props {
 	name?: string;
@@ -58,18 +59,18 @@ const inputId = `${name}-input`;
 	/>
 
 	<div
-		class="flex flex-col items-center justify-center gap-sm rounded-md border border-dashed border-hairline-strong bg-surface-1 px-md py-lg text-center transition-colors duration-200 hover:bg-surface-2 focus-within:border-primary-focus focus-within:bg-surface-1 animate-step-in"
+		class={`${builderDropzoneClass} animate-step-in`}
 		data-upload-dropzone
 		hidden={hasPhoto}
 	>
 		<label for={inputId} class="inline-flex cursor-pointer flex-col items-center gap-sm">
 			<span
-				class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
+				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
 				aria-hidden="true"
 			>
-				<Upload size="18" />
+				<Upload size="22" />
 			</span>
-			<span class="text-body-sm font-medium text-ink">Upload {label}</span>
+			<span class="text-card-title text-ink">Upload {label}</span>
 			<span class="text-caption text-ink-tertiary">Click to browse or drag &amp; drop</span>
 			<span class="text-caption text-ink-tertiary">{hint}</span>
 		</label>
@@ -77,11 +78,12 @@ const inputId = `${name}-input`;
 	</div>
 
 	<div
-		class="flex flex-col items-center gap-lg sm:flex-row animate-step-in"
+		class={`${builderPanelClass} animate-step-in`}
 		data-upload-preview
 		hidden={!hasPhoto}
 	>
-		<figure class="w-full max-w-44 shrink-0">
+		<div class="flex flex-col items-center gap-lg sm:flex-row">
+			<figure class="w-full max-w-44 shrink-0">
 			<img
 				data-upload-image
 				src={stored?.dataUrl}
@@ -99,10 +101,10 @@ const inputId = `${name}-input`;
 		</figure>
 
 		<div class="flex flex-wrap justify-center gap-2 sm:justify-start sm:flex-col">
-<button
+			<button
 				type="button"
 				data-upload-replace
-				class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-body-sm font-semibold text-on-primary transition duration-200 hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2 focus:ring-offset-surface-1"
+				class={builderButtonPrimary}
 			>
 				<RefreshCw size="15" aria-hidden="true" />
 				Replace Photo
@@ -110,11 +112,12 @@ const inputId = `${name}-input`;
 			<button
 				type="button"
 				data-upload-remove
-				class="inline-flex items-center justify-center gap-2 rounded-md border border-hairline bg-surface-1 px-4 py-2 text-body-sm font-medium text-semantic-danger transition duration-200 hover:bg-surface-2 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2 focus:ring-offset-surface-1"
+				class={builderButtonDanger}
 			>
 				<Trash2 size="15" aria-hidden="true" />
 				Remove Photo
 			</button>
+		</div>
 		</div>
 	</div>
 </section>

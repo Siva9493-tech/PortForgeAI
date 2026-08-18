@@ -1,4 +1,7 @@
 ---
+import { ArrowRight, CheckCircle2, Circle, CircleDot } from 'lucide-astro';
+import { getNextGuidedStep, getSectionStatus, getSectionSummary, wizardStore } from '../../lib/portfolio';
+import type { StepId } from '../../lib/portfolio';
 import { getSectionMetaByNumber } from './section-meta';
 
 interface Props {
@@ -25,28 +28,75 @@ const {
 	className = '',
 } = Astro.props;
 
+const state = wizardStore.getState();
 const sectionMeta = stepNumber !== undefined ? getSectionMetaByNumber(stepNumber) : undefined;
 const SectionIcon = sectionMeta?.icon;
+const stepId: StepId | undefined = sectionMeta?.stepId;
+const isActiveSection = stepId !== undefined && state.currentStep === stepId;
+
+const status = stepId
+	? getSectionStatus(state.data, state.visitedSteps, stepId)
+	: 'not-started';
+const statusLabel = status === 'complete' ? 'Complete' : status === 'in-progress' ? 'In progress' : 'Not started';
+const statusClass = {
+	complete: 'border-semantic-success/25 bg-semantic-success/10 text-semantic-success',
+	'in-progress': 'border-primary/30 bg-primary/10 text-primary',
+	'not-started': 'border-hairline bg-surface-2 text-ink-muted',
+}[status];
+const StatusIcon = status === 'complete' ? CheckCircle2 : status === 'in-progress' ? CircleDot : Circle;
+
+const summary = stepId ? getSectionSummary(state.data, stepId) : null;
+
+const nextStep = stepId ? getNextGuidedStep(state.data, stepId) : undefined;
+const nextMeta = nextStep ? getSectionMetaByNumber(nextStep.number) : undefined;
+const nextLabel = nextMeta ? `Continue to ${nextMeta.shortLabel}` : '';
+const showNextFooter = isActiveSection && status === 'complete' && nextStep !== undefined && nextStep.id !== stepId;
 ---
 ---
 
 <section
 	id={id}
 	aria-labelledby={headingId}
-	class={['flex flex-col gap-md', className].filter(Boolean).join(' ')}
+	data-reveal
+	class={['card edge-highlight flex flex-col overflow-hidden shadow-sm', className].filter(Boolean).join(' ')}
 >
-	<header class="flex flex-col gap-xxs">
-		<div class="flex items-center gap-xs">
-			{SectionIcon && (
-				<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-hairline bg-surface-2 text-primary">
-					<SectionIcon size="16" aria-hidden="true" />
-				</span>
+	<header class="flex flex-col gap-xxs border-b border-hairline px-md py-md md:px-lg">
+		<div class="flex flex-wrap items-center justify-between gap-sm">
+			<div class="flex items-center gap-xs">
+				{SectionIcon && (
+					<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-hairline bg-surface-2 text-primary">
+						<SectionIcon size="16" aria-hidden="true" />
+					</span>
+				)}
+				<p class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+					{stepNumber !== undefined && <>Step {stepNumber}</>}
+					{stepNumber !== undefined && sectionMeta ? ` · ${sectionMeta.shortLabel}` : ''}
+				</p>
+			</div>
+
+			{stepId && (
+				<div class="flex flex-wrap items-center gap-xs">
+					<span
+						data-section-summary
+						hidden={!summary}
+						class="inline-flex items-center rounded-pill border border-hairline bg-surface-2 px-sm py-1 text-caption font-medium text-ink-muted"
+					>
+						{summary ?? ''}
+					</span>
+					<span
+						data-section-status
+						data-section-step-id={stepId}
+						class={`inline-flex items-center gap-xs rounded-pill border px-sm py-1 text-caption font-medium ${statusClass}`}
+					>
+						<span data-section-status-icon class="shrink-0" aria-hidden="true">
+							<StatusIcon size="14" />
+						</span>
+						<span data-section-status-label>{statusLabel}</span>
+					</span>
+				</div>
 			)}
-			<p class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
-				{stepNumber !== undefined && <>Step {stepNumber}</>}
-				{stepNumber !== undefined && sectionMeta ? ` · ${sectionMeta.shortLabel}` : ''}
-			</p>
 		</div>
+
 		<h2 id={headingId} class="text-headline text-ink">
 			{title}
 		</h2>
@@ -55,9 +105,139 @@ const SectionIcon = sectionMeta?.icon;
 		)}
 	</header>
 
-	<div class="card flex flex-col gap-md p-md md:p-lg">
+	<div class="flex flex-col gap-lg p-md md:p-lg">
 		<slot />
-	</div>
+		<slot name="actions" />
 
-	<slot name="actions" />
+		{stepId && (
+			<div
+				data-section-next
+				class="mt-auto border-t border-hairline pt-lg"
+				hidden={!showNextFooter}
+			>
+				<div class="flex flex-col gap-xs sm:flex-row sm:items-center sm:justify-between">
+					<p class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+						Next up
+					</p>
+					<button
+						type="button"
+						data-next-guide
+						data-next-guide-id={nextStep?.id ?? ''}
+						class="inline-flex items-center justify-center gap-xs self-start rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+					>
+						<span data-next-guide-label>{nextLabel}</span>
+						<ArrowRight size="15" aria-hidden="true" />
+					</button>
+				</div>
+			</div>
+		)}
+	</div>
 </section>
+
+<script>
+	import { getNextGuidedStep, getSectionStatus, getSectionSummary, wizardStore } from '../../lib/portfolio';
+	import type { StepId } from '../../lib/portfolio';
+	import { getSectionMetaByNumber } from './section-meta';
+
+	const sections = Array.from(document.querySelectorAll<HTMLElement>('[data-step-section-id]'));
+
+	const checkSvg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>';
+	const circleDotSvg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="1"/></svg>';
+	const circleSvg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>';
+
+	const STATUS_LABELS: Record<string, string> = {
+		complete: 'Complete',
+		'in-progress': 'In progress',
+		'not-started': 'Not started',
+	};
+
+	const STATUS_ICONS: Record<string, string> = {
+		complete: checkSvg,
+		'in-progress': circleDotSvg,
+		'not-started': circleSvg,
+	};
+
+	const STATUS_CLASSES: Record<string, readonly string[]> = {
+		complete: ['border-semantic-success/25', 'bg-semantic-success/10', 'text-semantic-success'],
+		'in-progress': ['border-primary/30', 'bg-primary/10', 'text-primary'],
+		'not-started': ['border-hairline', 'bg-surface-2', 'text-ink-muted'],
+	};
+
+	const ALL_STATUS_CLASSES = [
+		'border-semantic-success/25',
+		'bg-semantic-success/10',
+		'text-semantic-success',
+		'border-primary/30',
+		'bg-primary/10',
+		'text-primary',
+		'border-hairline',
+		'bg-surface-2',
+		'text-ink-muted',
+	];
+
+	const applyState = () => {
+		const state = wizardStore.getState();
+		for (const section of sections) {
+			const stepId = section.dataset.stepSectionId as StepId | undefined;
+			if (!stepId) continue;
+
+			const status = getSectionStatus(state.data, state.visitedSteps, stepId);
+
+			const pill = section.querySelector<HTMLElement>('[data-section-status]');
+			if (pill) {
+				const label = pill.querySelector<HTMLElement>('[data-section-status-label]');
+				const icon = pill.querySelector<HTMLElement>('[data-section-status-icon]');
+				if (label) label.textContent = STATUS_LABELS[status];
+				if (icon) icon.innerHTML = STATUS_ICONS[status];
+				pill.classList.remove(...ALL_STATUS_CLASSES);
+				pill.classList.add(...STATUS_CLASSES[status]);
+				const prev = pill.dataset.prevStatus ?? '';
+				if (prev && prev !== status) {
+					pill.classList.remove('animate-pop-in');
+					void pill.offsetWidth;
+					pill.classList.add('animate-pop-in');
+				}
+				pill.dataset.prevStatus = status;
+			}
+
+			const summaryEl = section.querySelector<HTMLElement>('[data-section-summary]');
+			if (summaryEl) {
+				const summary = getSectionSummary(state.data, stepId);
+				summaryEl.textContent = summary ?? '';
+				summaryEl.hidden = !summary;
+			}
+
+			const next = section.querySelector<HTMLElement>('[data-section-next]');
+			if (next) {
+				const guided = getNextGuidedStep(state.data, stepId);
+				const hasNext = guided !== undefined && guided.id !== stepId;
+				next.hidden = !(stepId === state.currentStep && status === 'complete' && hasNext);
+				const button = next.querySelector<HTMLButtonElement>('[data-next-guide]');
+				if (button) {
+					button.dataset.nextGuideId = guided?.id ?? '';
+					const labelEl = next.querySelector<HTMLElement>('[data-next-guide-label]');
+					if (labelEl) {
+						labelEl.textContent = guided
+							? `Continue to ${getSectionMetaByNumber(guided.number)?.shortLabel ?? guided.title}`
+							: '';
+					}
+				}
+			}
+		}
+	};
+
+	for (const section of sections) {
+		section.querySelector<HTMLButtonElement>('[data-next-guide]')?.addEventListener('click', () => {
+			const stepId = section.querySelector<HTMLElement>('[data-next-guide]')?.dataset.nextGuideId as StepId | undefined;
+			if (stepId) wizardStore.goToStep(stepId);
+		});
+	}
+
+	if (sections.length > 0) {
+		wizardStore.subscribe(applyState);
+		applyState();
+	}
+</script>

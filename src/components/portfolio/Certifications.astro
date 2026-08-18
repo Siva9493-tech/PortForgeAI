@@ -1,9 +1,16 @@
 ---
-import { Plus } from 'lucide-astro';
+import { Award, Link2 } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
+import BuilderEntryPanel from './BuilderEntryPanel.astro';
 import BuilderField from './BuilderField.astro';
+import BuilderRepeatedList from './BuilderRepeatedList.astro';
 import BuilderSection from './BuilderSection.astro';
-import { builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
+import BuilderSuggestions from './BuilderSuggestions.astro';
+import {
+	builderInputClass,
+	builderInputWithIconClass,
+	builderTextareaClass,
+} from './builder-ui';
 
 const entries = wizardStore.getState().data.certifications;
 ---
@@ -15,25 +22,21 @@ const entries = wizardStore.getState().data.certifications;
 	description="Show your professional certifications and achievements."
 	stepNumber={6}
 >
-	<div class="flex flex-col gap-md">
+	<BuilderRepeatedList
+		itemsCount={entries.length}
+		emptyTitle="No certifications added yet"
+		emptyHint="Certifications provide additional evidence of your learning and expertise."
+		emptyGuidance="Include the certification name, issuing organization, date, and what you learned."
+		addLabel="Add Certification"
+		addAnotherLabel="Add Another Certification"
+		addHintComplete="Add another certification to strengthen your credentials."
+		addHintIncomplete="Add the certification name to complete this section."
+		emptyIcon={Award}
+	>
 		{
 			entries.map((_, index) => (
-				<div
-					role="group"
-					aria-label={`Certification ${index + 1}`}
-					data-list-index={index}
-					class={builderPanelClass}
-				>
-					<p
-						data-entry-label
-						data-entry-base="Certification"
-						class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle"
-					>
-						Certification {index + 1}
-					</p>
-
-					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
-						<BuilderField id={`certification-name-${index}`} label="Certification Name">
+				<BuilderEntryPanel entryBase="Certification" index={index}>
+					<BuilderField id={`certification-name-${index}`} label="Certification Name">
 							<input
 								id={`certification-name-${index}`}
 								name="certificationName"
@@ -79,13 +82,14 @@ const entries = wizardStore.getState().data.certifications;
 							id={`certification-credential-url-${index}`}
 							label="Credential URL"
 							className="md:col-span-2"
+							icon={Link2}
 						>
 							<input
 								id={`certification-credential-url-${index}`}
 								name="credentialUrl"
 								type="url"
 								placeholder="https://..."
-								class={builderInputClass}
+								class={builderInputWithIconClass}
 							/>
 						</BuilderField>
 
@@ -93,23 +97,96 @@ const entries = wizardStore.getState().data.certifications;
 							id={`certification-description-${index}`}
 							label="Description"
 							className="md:col-span-2"
+							hint="Describe what you learned or achieved."
 						>
 							<textarea
 								id={`certification-description-${index}`}
 								name="description"
 								rows="4"
 								placeholder="Describe what you learned or achieved..."
-								class={builderInputClass}
+								class={builderTextareaClass}
 							></textarea>
 						</BuilderField>
-					</div>
-				</div>
+				</BuilderEntryPanel>
 			))
 		}
-	</div>
 
-	<button type="button" data-add-entry slot="actions" class={builderButtonSecondary}>
-		<Plus size="16" aria-hidden="true" />
-		Add Another Certification
-	</button>
+		<template slot="template">
+			<BuilderEntryPanel entryBase="Certification" index={0}>
+				<BuilderField id="certification-name-template" label="Certification Name">
+						<input
+						id="certification-name-template"
+						name="certificationName"
+						type="text"
+						placeholder="Machine Learning Internship"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField
+						id="certification-issuing-organization-template"
+						label="Issuing Organization"
+					>
+						<input
+						id="certification-issuing-organization-template"
+						name="issuingOrganization"
+						type="text"
+						placeholder="APSSDC"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="certification-issue-date-template" label="Issue Date">
+						<input
+							id="certification-issue-date-template"
+							name="issueDate"
+							type="month"
+							class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="certification-credential-id-template" label="Credential ID">
+						<input
+						id="certification-credential-id-template"
+						name="credentialId"
+						type="text"
+						placeholder="ABC123XYZ"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField
+						id="certification-credential-url-template"
+						label="Credential URL"
+						className="md:col-span-2"
+						icon={Link2}
+					>
+						<input
+							id="certification-credential-url-template"
+							name="credentialUrl"
+							type="url"
+							placeholder="https://..."
+							class={builderInputWithIconClass}
+						/>
+					</BuilderField>
+
+					<BuilderField
+						id="certification-description-template"
+						label="Description"
+						className="md:col-span-2"
+						hint="Describe what you learned or achieved."
+					>
+						<textarea
+							id="certification-description-template"
+							name="description"
+							rows="4"
+							placeholder="Describe what you learned or achieved..."
+							class={builderTextareaClass}
+						></textarea>
+</BuilderField>
+				</BuilderEntryPanel>
+			</template>
+		</BuilderRepeatedList>
+
+		<BuilderSuggestions section="certifications" />
 </BuilderSection>

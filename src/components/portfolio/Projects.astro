@@ -1,9 +1,16 @@
 ---
-import { Plus } from 'lucide-astro';
+import { Folder, Link2 } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
+import BuilderEntryPanel from './BuilderEntryPanel.astro';
 import BuilderField from './BuilderField.astro';
+import BuilderRepeatedList from './BuilderRepeatedList.astro';
 import BuilderSection from './BuilderSection.astro';
-import { builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
+import BuilderSuggestions from './BuilderSuggestions.astro';
+import {
+	builderInputClass,
+	builderInputWithIconClass,
+	builderTextareaClass,
+} from './builder-ui';
 
 const entries = wizardStore.getState().data.projects;
 ---
@@ -15,25 +22,21 @@ const entries = wizardStore.getState().data.projects;
 	description="Showcase your best technical projects."
 	stepNumber={4}
 >
-	<div class="flex flex-col gap-md">
+	<BuilderRepeatedList
+		itemsCount={entries.length}
+		emptyTitle="No projects added yet"
+		emptyHint="Projects demonstrate your practical ability and problem-solving in action."
+		emptyGuidance="Start with your strongest project — include what you built, the technologies used, and the result."
+		addLabel="Add Project"
+		addAnotherLabel="Add Another Project"
+		addHintComplete="Add another project to show more of your practical work."
+		addHintIncomplete="Add a project name to complete this section."
+		emptyIcon={Folder}
+	>
 		{
 			entries.map((_, index) => (
-				<div
-					role="group"
-					aria-label={`Project ${index + 1}`}
-					data-list-index={index}
-					class={builderPanelClass}
-				>
-					<p
-						data-entry-label
-						data-entry-base="Project"
-						class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle"
-					>
-						Project {index + 1}
-					</p>
-
-					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
-						<BuilderField id={`project-name-${index}`} label="Project Name">
+				<BuilderEntryPanel entryBase="Project" index={index}>
+					<BuilderField id={`project-name-${index}`} label="Project Name">
 							<input
 								id={`project-name-${index}`}
 								name="projectName"
@@ -57,6 +60,7 @@ const entries = wizardStore.getState().data.projects;
 							id={`project-technologies-${index}`}
 							label="Technologies Used"
 							className="md:col-span-2"
+							hint="Separate multiple technologies with commas."
 						>
 							<input
 								id={`project-technologies-${index}`}
@@ -67,23 +71,31 @@ const entries = wizardStore.getState().data.projects;
 							/>
 						</BuilderField>
 
-						<BuilderField id={`project-github-url-${index}`} label="GitHub Repository">
+						<BuilderField
+							id={`project-github-url-${index}`}
+							label="GitHub Repository"
+							icon={Link2}
+						>
 							<input
 								id={`project-github-url-${index}`}
 								name="githubUrl"
 								type="url"
 								placeholder="https://github.com/username/project"
-								class={builderInputClass}
+								class={builderInputWithIconClass}
 							/>
 						</BuilderField>
 
-						<BuilderField id={`project-demo-url-${index}`} label="Live Demo URL">
+						<BuilderField
+							id={`project-demo-url-${index}`}
+							label="Live Demo URL"
+							icon={Link2}
+						>
 							<input
 								id={`project-demo-url-${index}`}
 								name="demoUrl"
 								type="url"
 								placeholder="https://project.vercel.app"
-								class={builderInputClass}
+								class={builderInputWithIconClass}
 							/>
 						</BuilderField>
 
@@ -91,13 +103,14 @@ const entries = wizardStore.getState().data.projects;
 							id={`project-description-${index}`}
 							label="Project Description"
 							className="md:col-span-2"
+							hint="Describe the project, your contributions, features, and impact."
 						>
 							<textarea
 								id={`project-description-${index}`}
 								name="description"
 								rows="6"
 								placeholder="Describe the project, your contributions, features, and impact..."
-								class={builderInputClass}
+								class={builderTextareaClass}
 							></textarea>
 						</BuilderField>
 
@@ -105,23 +118,113 @@ const entries = wizardStore.getState().data.projects;
 							id={`project-key-highlights-${index}`}
 							label="Key Highlights"
 							className="md:col-span-2"
+							hint="One highlight per line."
 						>
 							<textarea
 								id={`project-key-highlights-${index}`}
 								name="highlights"
 								rows="4"
-								placeholder="Mention important achievements or results..."
-								class={builderInputClass}
+								placeholder="Mention important achievements or results, one per line..."
+								class={builderTextareaClass}
 							></textarea>
 						</BuilderField>
-					</div>
-				</div>
+				</BuilderEntryPanel>
 			))
 		}
-	</div>
 
-	<button type="button" data-add-entry slot="actions" class={builderButtonSecondary}>
-		<Plus size="16" aria-hidden="true" />
-		Add Another Project
-	</button>
+		<template slot="template">
+			<BuilderEntryPanel entryBase="Project" index={0}>
+				<BuilderField id="project-name-template" label="Project Name">
+						<input
+						id="project-name-template"
+						name="projectName"
+						type="text"
+						placeholder="PortForge AI"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="project-role-template" label="Project Role">
+						<input
+						id="project-role-template"
+						name="projectRole"
+						type="text"
+						placeholder="Full Stack Developer"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField
+						id="project-technologies-template"
+						label="Technologies Used"
+						className="md:col-span-2"
+						hint="Separate multiple technologies with commas."
+					>
+						<input
+							id="project-technologies-template"
+							name="technologies"
+							type="text"
+							placeholder="Astro, TypeScript, Tailwind CSS, Supabase"
+							class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField
+						id="project-github-url-template"
+						label="GitHub Repository"
+						icon={Link2}
+					>
+						<input
+						id="project-github-url-template"
+						name="githubUrl"
+						type="url"
+						placeholder="https://github.com/username/project"
+						class={builderInputWithIconClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="project-demo-url-template" label="Live Demo URL" icon={Link2}>
+						<input
+							id="project-demo-url-template"
+							name="demoUrl"
+							type="url"
+							placeholder="https://project.vercel.app"
+							class={builderInputWithIconClass}
+						/>
+					</BuilderField>
+
+					<BuilderField
+						id="project-description-template"
+						label="Project Description"
+						className="md:col-span-2"
+						hint="Describe the project, your contributions, features, and impact."
+					>
+						<textarea
+							id="project-description-template"
+							name="description"
+							rows="6"
+							placeholder="Describe the project, your contributions, features, and impact..."
+							class={builderTextareaClass}
+						></textarea>
+					</BuilderField>
+
+					<BuilderField
+						id="project-key-highlights-template"
+						label="Key Highlights"
+						className="md:col-span-2"
+						hint="One highlight per line."
+					>
+						<textarea
+							id="project-key-highlights-template"
+							name="highlights"
+							rows="4"
+							placeholder="Mention important achievements or results, one per line..."
+							class={builderTextareaClass}
+						></textarea>
+					</BuilderField>
+				</BuilderEntryPanel>
+			</template>
+		</BuilderRepeatedList>
+
+		<BuilderSuggestions section="projects" />
 </BuilderSection>

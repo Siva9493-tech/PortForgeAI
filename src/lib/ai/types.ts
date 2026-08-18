@@ -1,4 +1,10 @@
-import type { PortfolioData } from '../portfolio/types';
+import type {
+	GitHubImportData,
+	LinkedInImportData,
+	PortfolioData,
+	ProfilePhotoData,
+	SocialCustomLink,
+} from '../portfolio/types';
 
 /** Identifier of a supported portfolio template. */
 export type TemplateId = 'classic' | 'modern' | 'minimal' | 'developer' | 'creative';
@@ -148,6 +154,24 @@ export interface PortfolioMetadata {
 }
 
 /**
+ * Builder-origin data that the normalized output schema does not model
+ * (contact details, custom links and import preferences). Carried through the
+ * save → edit → save round-trip so the Portfolio Builder never silently loses
+ * user-entered information. Optional, and intentionally ignored by every
+ * renderer / export / publish consumer — it exists only for data preservation.
+ */
+export interface PortfolioBuilderExtras {
+	email?: string;
+	phone?: string;
+	location?: string;
+	/** Photo metadata only (never the binary dataUrl — localStorage quota safety). */
+	profilePhoto?: ProfilePhotoData | null;
+	customLinks?: SocialCustomLink[];
+	githubImport?: GitHubImportData;
+	linkedinImport?: LinkedInImportData;
+}
+
+/**
  * The normalized portfolio output. Every future AI response and every local
  * transform must finally conform to this shape.
  */
@@ -165,4 +189,6 @@ export interface PortfolioOutput {
 	resume: PortfolioResume | null;
 	seo: PortfolioSEO | null;
 	metadata: PortfolioMetadata;
+	/** Optional builder-only data preserved across save/load (see above). */
+	builder?: PortfolioBuilderExtras;
 }

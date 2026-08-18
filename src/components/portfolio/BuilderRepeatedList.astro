@@ -1,0 +1,83 @@
+---
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
+import { Plus } from 'lucide-astro';
+import { builderButtonSecondary, builderEmptyStateClass } from './builder-ui';
+
+interface Props {
+	/** Number of entries currently in the store for this section. */
+	itemsCount: number;
+	/** Heading shown in the empty state (e.g. "No projects added yet"). */
+	emptyTitle: string;
+	/** Short explanation of why this section matters (empty state). */
+	emptyHint?: string;
+	/** One scannable line describing what a good entry looks like. */
+	emptyGuidance?: string;
+	/** Label for the empty-state add action (e.g. "Add Project"). */
+	addLabel: string;
+	/** Label for the add action shown once entries already exist. */
+	addAnotherLabel: string;
+	/** Subtle hint near the add action when the section is already complete. */
+	addHintComplete?: string;
+	/** Subtle hint near the add action when entries exist but are incomplete. */
+	addHintIncomplete?: string;
+	/** Optional icon for the empty state. */
+	emptyIcon?: AstroComponentFactory;
+}
+
+const {
+	itemsCount,
+	emptyTitle,
+	emptyHint,
+	emptyGuidance,
+	addLabel,
+	addAnotherLabel,
+	addHintComplete,
+	addHintIncomplete,
+	emptyIcon: EmptyIcon = Plus,
+} = Astro.props;
+---
+
+<div
+	data-entry-list
+	class="flex flex-col gap-md"
+	hidden={itemsCount === 0}
+>
+	<slot />
+	<template data-entry-template>
+		<slot name="template" />
+	</template>
+
+	<div class="flex flex-wrap items-center gap-sm" data-add-row>
+		<button type="button" data-add-entry class={builderButtonSecondary}>
+			<Plus size="16" aria-hidden="true" />
+			{addAnotherLabel}
+		</button>
+		<p
+			data-add-hint
+			data-add-hint-complete={addHintComplete}
+			data-add-hint-incomplete={addHintIncomplete}
+			class="text-caption text-ink-tertiary"
+			hidden
+		></p>
+	</div>
+</div>
+
+<div
+	data-empty-state
+	class={builderEmptyStateClass}
+	hidden={itemsCount > 0}
+>
+	<span
+		class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-hairline bg-surface-1 text-ink-subtle"
+		aria-hidden="true"
+	>
+		<EmptyIcon size="18" />
+	</span>
+	<p class="text-card-title text-ink">{emptyTitle}</p>
+	{emptyHint && <p class="max-w-prose text-body-sm text-ink-muted">{emptyHint}</p>}
+	{emptyGuidance && <p class="max-w-prose text-caption text-ink-subtle">{emptyGuidance}</p>}
+	<button type="button" data-add-entry class={builderButtonSecondary}>
+		<Plus size="16" aria-hidden="true" />
+		{addLabel}
+	</button>
+</div>

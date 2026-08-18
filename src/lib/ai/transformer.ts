@@ -3,6 +3,7 @@ import { getTemplate } from './templates';
 import { PORTFOLIO_SCHEMA_VERSION } from './portfolio-schema';
 import type {
 	PortfolioAchievement,
+	PortfolioBuilderExtras,
 	PortfolioCertification,
 	PortfolioEducation,
 	PortfolioExperience,
@@ -272,6 +273,78 @@ export function transformResume(input: PortfolioInput): PortfolioResume | null {
 	};
 }
 
+/**
+ * Collects builder-only data that the normalized output does not model so it
+ * survives a save → edit → save round-trip. Photo binary data (the dataUrl) is
+ * deliberately excluded: the portfolio record lives in localStorage where a
+ * multi-megabyte base64 image would risk quota corruption for every portfolio.
+ * Returns undefined when nothing needs preserving.
+ */
+function transformBuilderExtras(input: PortfolioInput): PortfolioBuilderExtras | undefined {
+	const personal = input.data.personalInformation;
+	const social = input.data.socialLinks[0];
+	const github = input.data.githubImport;
+	const linkedin = input.data.linkedinImport;
+
+	const extras: PortfolioBuilderExtras = {};
+
+	const email = normalizeText(personal.email);
+	if (email) extras.email = email;
+	const phone = normalizeText(personal.phone);
+	if (phone) extras.phone = phone;
+	const location = normalizeText(personal.location);
+	if (location) extras.location = location;
+
+	if (social?.customLinks?.length) {
+		const links = social.customLinks
+			.map((link) => ({
+				label: normalizeText(link.label),
+				url: normalizeText(link.url),
+			}))
+			.filter((link) => link.label !== '' || link.url !== '');
+		if (links.length > 0) extras.customLinks = links;
+	}
+
+	if (
+		github &&
+		(github.connected ||
+			normalizeText(github.githubUsername) !== '' ||
+			normalizeText(github.repositoryVisibility) !== '' ||
+			(github.importedRepositories ?? []).length > 0)
+	) {
+		extras.githubImport = {
+			githubUsername: normalizeText(github.githubUsername),
+			repositoryVisibility: normalizeText(github.repositoryVisibility),
+			connected: github.connected,
+			importedRepositories: (github.importedRepositories ?? [])
+				.map((repository) => ({
+					name: normalizeText(repository.name),
+					description: normalizeText(repository.description),
+					url: normalizeText(repository.url),
+					technologies: (repository.technologies ?? [])
+						.map((technology) => normalizeText(technology))
+						.filter((technology) => technology !== ''),
+				}))
+				.filter((repository) => repository.name !== '' || repository.url !== ''),
+		};
+	}
+
+	if (
+		linkedin &&
+		(linkedin.connected ||
+			normalizeText(linkedin.linkedinProfileUrl) !== '' ||
+			normalizeText(linkedin.importMode) !== '')
+	) {
+		extras.linkedinImport = {
+			linkedinProfileUrl: normalizeText(linkedin.linkedinProfileUrl),
+			importMode: normalizeText(linkedin.importMode),
+			connected: linkedin.connected,
+		};
+	}
+
+	return Object.keys(extras).length > 0 ? extras : undefined;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Section order + orchestrator                                                */
 /* -------------------------------------------------------------------------- */
@@ -359,5 +432,6 @@ export function transformPortfolio(input: PortfolioInput): PortfolioOutput {
 		resume: resume,
 		seo: generateSEO(data),
 		metadata: generateMetadata(input),
+		builder: transformBuilderExtras(input),
 	};
 }

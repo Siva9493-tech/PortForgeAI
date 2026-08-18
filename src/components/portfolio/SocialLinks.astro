@@ -1,5 +1,5 @@
 ---
-import { Plus, Trash2 } from 'lucide-astro';
+import { Link2, Plus, Trash2 } from 'lucide-astro';
 import {
 	createEmptySocialLinks,
 	type SocialCustomLink,
@@ -8,7 +8,14 @@ import {
 import { wizardStore } from '../../lib/portfolio';
 import BuilderField from './BuilderField.astro';
 import BuilderSection from './BuilderSection.astro';
-import { builderButtonDanger, builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
+import {
+	builderButtonDanger,
+	builderButtonSecondary,
+	builderEmptyStateClass,
+	builderGroupLabelClass,
+	builderInputClass,
+	builderInputWithIconClass,
+} from './builder-ui';
 
 const linkDefinitions = [
 	{
@@ -65,88 +72,123 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 	description="Connect your professional online presence."
 	stepNumber={8}
 >
-	<div
-		role="group"
-		aria-label="Predefined social links"
-		data-list-index="0"
-		class="grid grid-cols-1 gap-md md:grid-cols-2"
-	>
+	<div class="flex flex-col gap-md" data-reveal>
+		<h3 class={builderGroupLabelClass}>Standard Profiles</h3>
+		<div
+			role="group"
+			aria-label="Predefined social links"
+			data-list-index="0"
+			class="grid grid-cols-1 gap-md md:grid-cols-2"
+		>
 		{linkDefinitions.map((link) => (
-			<BuilderField id={`social-link-${link.id}`} label={link.label}>
+			<BuilderField id={`social-link-${link.id}`} label={link.label} icon={Link2}>
 				<input
 					id={`social-link-${link.id}`}
 					name={link.field}
 					type="url"
 					placeholder={link.placeholder}
-					class={builderInputClass}
+					class={builderInputWithIconClass}
 				/>
 			</BuilderField>
 		))}
 
-		<BuilderField id="social-link-other" label="Other Website">
+		<BuilderField id="social-link-other" label="Other Website" icon={Link2}>
 			<input
 				id="social-link-other"
 				name="otherWebsite"
 				type="url"
 				placeholder="https://..."
-				class={builderInputClass}
+				class={builderInputWithIconClass}
 			/>
 		</BuilderField>
 	</div>
+	</div>
 
-	<div class="flex flex-col gap-md border-t border-hairline pt-md">
-		<h3 class="text-card-title text-ink">Custom Links</h3>
+	<div class="flex flex-col gap-lg" data-reveal>
+		<h3 class={builderGroupLabelClass}>Custom Links</h3>
 
 		<div data-custom-links class="flex flex-col gap-md">
 			{
-				customLinks.map((link, index) => (
+				customLinks.length === 0 ? (
 					<div
-						data-custom-link-row
-						data-row-index={index}
-						role="group"
-						aria-labelledby={`custom-link-heading-${index}`}
-						class={builderPanelClass}
+						data-custom-links-empty
+						class={builderEmptyStateClass}
 					>
-						<p id={`custom-link-heading-${index}`} class="text-body-sm font-medium text-ink">
-							Custom Link {index + 1}
-						</p>
-						<div class="grid grid-cols-1 gap-md md:grid-cols-2">
-							<BuilderField id={`custom-link-label-${index}`} label="Label">
-								<input
-									id={`custom-link-label-${index}`}
-									data-custom-label
-									type="text"
-									placeholder="e.g. Personal Blog"
-									value={link.label}
-									class={builderInputClass}
-								/>
-							</BuilderField>
-							<BuilderField id={`custom-link-url-${index}`} label="URL">
-								<input
-									id={`custom-link-url-${index}`}
-									data-custom-url
-									type="url"
-									placeholder="https://example.com"
-									value={link.url}
-									class={builderInputClass}
-								/>
-							</BuilderField>
-						</div>
-						<button
-							type="button"
-							data-remove-custom-link
-							aria-label={`Remove custom link ${index + 1}`}
-							class={`${builderButtonDanger} self-start`}
+						<span
+							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-hairline bg-surface-1 text-ink-subtle"
+							aria-hidden="true"
 						>
-							<Trash2 size="16" aria-hidden="true" />
-							Remove
+							<Link2 size="18" />
+						</span>
+						<p class="text-card-title text-ink">No custom links yet</p>
+						<p class="max-w-prose text-body-sm text-ink-muted">
+							Share additional work — a personal blog, podcast, or profile elsewhere.
+						</p>
+						<p class="max-w-prose text-caption text-ink-subtle">
+							Add a label and URL for each link.
+						</p>
+						<button type="button" data-add-custom-link class={builderButtonSecondary}>
+							<Plus size="16" aria-hidden="true" />
+							Add Link
 						</button>
 					</div>
-				))
+				) : (
+					customLinks.map((link, index) => (
+						<div
+							data-custom-link-row
+							data-row-index={index}
+							role="group"
+							aria-labelledby={`custom-link-heading-${index}`}
+							class="flex flex-col rounded-md border border-hairline bg-surface-2"
+						>
+							<header class="flex flex-wrap items-center justify-between gap-sm border-b border-hairline px-md py-sm">
+								<p id={`custom-link-heading-${index}`} class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+									Custom Link {index + 1}
+								</p>
+								<button
+									type="button"
+									data-remove-custom-link
+									aria-label={`Remove custom link ${index + 1}`}
+									class={builderButtonDanger}
+								>
+									<Trash2 size="15" aria-hidden="true" />
+									Remove
+								</button>
+							</header>
+							<div class="grid grid-cols-1 gap-md p-md md:grid-cols-2">
+								<BuilderField id={`custom-link-label-${index}`} label="Label">
+									<input
+										id={`custom-link-label-${index}`}
+										data-custom-label
+										type="text"
+										placeholder="e.g. Personal Blog"
+										value={link.label}
+										class={builderInputClass}
+									/>
+								</BuilderField>
+								<BuilderField id={`custom-link-url-${index}`} label="URL" icon={Link2}>
+									<input
+										id={`custom-link-url-${index}`}
+										data-custom-url
+										type="url"
+										placeholder="https://example.com"
+										value={link.url}
+										class={builderInputWithIconClass}
+									/>
+								</BuilderField>
+							</div>
+						</div>
+					))
+				)
 			}
 		</div>
 
-		<button type="button" data-add-custom-link class={`${builderButtonSecondary} self-start`}>
+		<button
+			type="button"
+			data-custom-add-another
+			class={`${builderButtonSecondary} self-start`}
+			hidden={customLinks.length === 0}
+		>
 			<Plus size="16" aria-hidden="true" />
 			Add Another Link
 		</button>
@@ -160,13 +202,27 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 		type SocialCustomLink,
 	} from '../../lib/portfolio';
 	import { wizardStore } from '../../lib/portfolio';
-	import { builderInputClass, builderPanelClass } from './builder-ui';
+	import {
+		builderButtonDanger,
+		builderButtonSecondary,
+		builderEmptyStateClass,
+		builderInputClass,
+		builderInputWithIconClass,
+	} from './builder-ui';
 
 	const escapeAttr = (value: string): string =>
 		value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
+	const plusIconSvg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+
+	const linkIconSvg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>';
+	const trashIconSvg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
+
 	const section = document.getElementById('social-links');
-	const addButton = section?.querySelector<HTMLButtonElement>('[data-add-custom-link]');
+	const addAnotherButton = section?.querySelector<HTMLButtonElement>('[data-custom-add-another]');
 	const customContainer = section?.querySelector<HTMLElement>('[data-custom-links]');
 
 	const getCustomLinks = (): SocialCustomLink[] => {
@@ -183,38 +239,54 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 
 	const renderRows = (rows: SocialCustomLink[]): void => {
 		if (!customContainer) return;
-		customContainer.innerHTML = rows
-			.map((link, index) =>
-				`<div data-custom-link-row data-row-index="${index}" role="group" aria-labelledby="custom-link-heading-${index}" class="${builderPanelClass}">
-					<p id="custom-link-heading-${index}" class="text-body-sm font-medium text-ink">Custom Link ${index + 1}</p>
-					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
-						<div class="flex flex-col gap-xs">
-							<label for="custom-link-label-${index}" class="text-body-sm font-medium text-ink-muted">Label</label>
-							<input id="custom-link-label-${index}" data-custom-label type="text" placeholder="e.g. Personal Blog" value="${escapeAttr(link.label)}" class="${builderInputClass}" />
-						</div>
-						<div class="flex flex-col gap-xs">
-							<label for="custom-link-url-${index}" class="text-body-sm font-medium text-ink-muted">URL</label>
-							<input id="custom-link-url-${index}" data-custom-url type="url" placeholder="https://example.com" value="${escapeAttr(link.url)}" class="${builderInputClass}" />
-						</div>
-					</div>
-					<button type="button" data-remove-custom-link aria-label="Remove custom link ${index + 1}" class="inline-flex items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-semantic-danger transition-colors duration-200 hover:bg-surface-2 active:scale-[0.98]">Remove</button>
-				</div>`
-			)
-			.join('');
+		if (addAnotherButton) addAnotherButton.hidden = rows.length === 0;
+		customContainer.innerHTML =
+			rows.length === 0
+				? `<div data-custom-links-empty class="${builderEmptyStateClass}"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-hairline bg-surface-1 text-ink-subtle" aria-hidden="true">${linkIconSvg}</span><p class="text-card-title text-ink">No custom links yet</p><p class="max-w-prose text-body-sm text-ink-muted">Share additional work — a personal blog, podcast, or profile elsewhere.</p><p class="max-w-prose text-caption text-ink-subtle">Add a label and URL for each link.</p><button type="button" data-add-custom-link class="${builderButtonSecondary}">${plusIconSvg}<span>Add Link</span></button></div>`
+				: rows
+						.map(
+							(link, index) =>
+								`<div data-custom-link-row data-row-index="${index}" role="group" aria-labelledby="custom-link-heading-${index}" class="flex flex-col rounded-md border border-hairline bg-surface-2">
+									<header class="flex flex-wrap items-center justify-between gap-sm border-b border-hairline px-md py-sm">
+										<p id="custom-link-heading-${index}" class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">Custom Link ${index + 1}</p>
+										<button type="button" data-remove-custom-link aria-label="Remove custom link ${index + 1}" class="${builderButtonDanger}">${trashIconSvg}<span>Remove</span></button>
+									</header>
+									<div class="grid grid-cols-1 gap-md p-md md:grid-cols-2">
+										<div class="flex flex-col gap-xs">
+											<label for="custom-link-label-${index}" class="text-body-sm font-medium text-ink-muted">Label</label>
+											<input id="custom-link-label-${index}" data-custom-label type="text" placeholder="e.g. Personal Blog" value="${escapeAttr(link.label)}" class="${builderInputClass}" />
+										</div>
+										<div class="flex flex-col gap-xs">
+											<label for="custom-link-url-${index}" class="text-body-sm font-medium text-ink-muted">URL</label>
+											<div class="relative">
+												<span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-ink-tertiary" aria-hidden="true">${linkIconSvg}</span>
+												<input id="custom-link-url-${index}" data-custom-url type="url" placeholder="https://example.com" value="${escapeAttr(link.url)}" class="${builderInputWithIconClass}" />
+											</div>
+										</div>
+									</div>
+								</div>`
+						)
+						.join('');
 	};
 
-	if (section && addButton && customContainer) {
-		addButton.addEventListener('click', () => {
+	if (section && addAnotherButton && customContainer) {
+		const addLink = (): void => {
 			const rows = getCustomLinks();
 			rows.push(createEmptySocialCustomLink());
 			setCustomLinks(rows);
 			renderRows(rows);
 			const lastRow = customContainer.lastElementChild;
 			lastRow?.querySelector<HTMLInputElement>('[data-custom-label]')?.focus();
-		});
+		};
+
+		addAnotherButton.addEventListener('click', addLink);
 
 		customContainer.addEventListener('click', (event) => {
 			const target = event.target as HTMLElement;
+			if (target.closest<HTMLButtonElement>('[data-add-custom-link]')) {
+				addLink();
+				return;
+			}
 			const removeButton = target.closest<HTMLButtonElement>('[data-remove-custom-link]');
 			if (!removeButton) return;
 			const rows = getCustomLinks();
@@ -224,7 +296,12 @@ const customLinks: SocialCustomLink[] = Array.isArray(current.customLinks)
 			rows.splice(index, 1);
 			setCustomLinks(rows);
 			renderRows(rows);
-			addButton.focus();
+			const emptyAdd = customContainer.querySelector<HTMLButtonElement>('[data-add-custom-link]');
+			if (rows.length === 0) {
+				emptyAdd?.focus();
+			} else {
+				addAnotherButton.focus();
+			}
 		});
 
 		customContainer.addEventListener('input', (event) => {

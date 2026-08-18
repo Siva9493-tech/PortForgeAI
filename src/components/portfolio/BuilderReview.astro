@@ -1,0 +1,240 @@
+---
+import { Eye, X } from 'lucide-astro';
+import { builderButtonPrimary, builderButtonSecondary } from './builder-ui';
+
+interface Props {
+	/** Destination of the "Preview Portfolio" action. */
+	previewHref: string;
+}
+
+const { previewHref } = Astro.props;
+---
+
+<dialog
+	id="builder-review"
+	aria-labelledby="builder-review-title"
+	class="card m-auto w-full max-w-2xl p-lg"
+>
+	<div class="flex items-start justify-between gap-sm">
+		<div class="flex min-w-0 flex-col gap-xs">
+			<h2 id="builder-review-title" class="text-heading-sm text-ink">Final Review</h2>
+			<p
+				data-review-status
+				role="status"
+				class="text-body-sm font-medium text-ink"
+			></p>
+			<p data-review-completion class="text-caption text-ink-subtle"></p>
+			<p data-review-unsaved class="text-caption font-medium text-ink-subtle" hidden>
+				Reviewing your current unsaved changes.
+			</p>
+		</div>
+		<button
+			type="button"
+			data-review-close
+			aria-label="Close final review"
+			class="inline-flex shrink-0 items-center justify-center rounded-md border border-hairline bg-surface-2 p-xs text-ink transition-colors duration-200 hover:bg-surface-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+		>
+			<X size="16" aria-hidden="true" />
+		</button>
+	</div>
+
+	<div data-review-body class="min-w-0"></div>
+
+	<footer
+		class="mt-lg flex flex-col-reverse gap-sm border-t border-hairline pt-md sm:flex-row sm:justify-end"
+	>
+		<button type="button" data-review-close class={builderButtonSecondary}>
+			Close
+		</button>
+		<a href={previewHref} class={builderButtonPrimary}>
+			<Eye size="16" aria-hidden="true" />
+			Preview Portfolio
+		</a>
+	</footer>
+</dialog>
+
+<style>
+	#builder-review {
+		max-width: min(100%, 42rem);
+		max-height: calc(100dvh - 2rem);
+		overflow-y: auto;
+	}
+	#builder-review[open] {
+		display: flex;
+		flex-direction: column;
+	}
+	#builder-review::backdrop {
+		background-color: var(--color-semantic-overlay);
+	}
+</style>
+
+<script>
+	import { createEmptyPortfolioData, wizardStore } from '../../lib/portfolio';
+	import type { StepId } from '../../lib/portfolio';
+	import { portfolioManagerStore, portfolioOutputToData } from '../../lib/portfolio-manager';
+	import { portfolioDataEquals } from '../../lib/portfolio/builder-save-state';
+	import { getQualityReview } from '../../lib/portfolio-builder/quality-review';
+
+	const dialog = document.getElementById('builder-review') as HTMLDialogElement | null;
+
+	if (dialog) {
+		const statusEl = dialog.querySelector<HTMLElement>('[data-review-status]');
+		const completionEl = dialog.querySelector<HTMLElement>('[data-review-completion]');
+		const unsavedEl = dialog.querySelector<HTMLElement>('[data-review-unsaved]');
+		const body = dialog.querySelector<HTMLElement>('[data-review-body]');
+
+		const escapeHtml = (value: string): string =>
+			value
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;');
+
+		const triangleAlertSvg =
+			'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+		const infoSvg =
+			'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>';
+		const checkSvg =
+			'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>';
+
+		const actionButtonClass =
+			'inline-flex shrink-0 items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-sm py-xs text-caption font-medium text-ink transition-colors duration-200 hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1';
+
+		const CATEGORY_META: Record<
+			string,
+			{ label: string; headingClass: string; iconClass: string; icon: string }
+		> = {
+			attention: {
+				label: 'Needs attention',
+				headingClass: 'text-semantic-warning',
+				iconClass: 'text-semantic-warning',
+				icon: triangleAlertSvg,
+			},
+			optional: {
+				label: 'Optional improvement',
+				headingClass: 'text-ink-subtle',
+				iconClass: 'text-ink-tertiary',
+				icon: infoSvg,
+			},
+			ready: {
+				label: 'Ready',
+				headingClass: 'text-semantic-success',
+				iconClass: 'text-semantic-success',
+				icon: checkSvg,
+			},
+		};
+
+		// Baseline = the last persisted content (mirrors the WizardNavigation
+		// save tracker). Re-read on every render so a successful save flips the
+		// label back to "saved". Only used to label the review as reflecting
+		// current unsaved work — the review itself never saves anything.
+		const getBaseline = (): ReturnType<typeof createEmptyPortfolioData> => {
+			const portfolioId = new URLSearchParams(window.location.search).get('portfolio');
+			if (!portfolioId) return createEmptyPortfolioData();
+			const record = portfolioManagerStore.getPortfolio(portfolioId);
+			return record ? portfolioOutputToData(record.data) : createEmptyPortfolioData();
+		};
+
+		const render = (): void => {
+			const data = wizardStore.getState().data;
+			const result = getQualityReview(data);
+
+			const statusText = result.readyForReview
+				? 'Your portfolio is ready for review.'
+				: result.attentionCount > 0
+					? 'A few important things need attention before sharing.'
+					: 'Looking good — consider the optional suggestions below.';
+
+			if (statusEl) {
+				// role="status" live region — only announce when the text changes.
+				if (statusEl.textContent !== statusText) {
+					statusEl.textContent = statusText;
+				}
+				statusEl.classList.remove('text-semantic-success', 'text-semantic-warning', 'text-ink');
+				statusEl.classList.add(
+					result.readyForReview
+						? 'text-semantic-success'
+						: result.attentionCount > 0
+							? 'text-semantic-warning'
+							: 'text-ink'
+				);
+			}
+
+			if (completionEl) {
+				completionEl.textContent =
+					`${result.completion.completed} of ${result.completion.total} sections complete ` +
+					`(${result.completion.percent}%)`;
+			}
+
+			if (unsavedEl) {
+				unsavedEl.hidden = portfolioDataEquals(getBaseline(), data);
+			}
+
+			if (body) {
+				let html = '';
+				for (const category of ['attention', 'optional', 'ready']) {
+					const items = result.findings.filter(
+						(finding) => finding.category === category
+					);
+					if (items.length === 0) continue;
+					const meta = CATEGORY_META[category];
+					html += `<section aria-labelledby="builder-review-${category}-heading" class="mt-lg">
+						<h3 id="builder-review-${category}-heading" class="text-eyebrow font-medium uppercase tracking-tight ${meta.headingClass}">${meta.label}</h3>
+						<ul class="mt-sm flex flex-col gap-xs">`;
+					for (const finding of items) {
+						html += `<li class="flex flex-col gap-sm rounded-md border border-hairline bg-surface-2 p-md sm:flex-row sm:items-center sm:justify-between sm:gap-md">
+							<div class="flex min-w-0 items-start gap-sm">
+								<span class="mt-0.5 shrink-0 ${meta.iconClass}" aria-hidden="true">${meta.icon}</span>
+								<div class="min-w-0">
+									<p class="text-body-sm font-medium text-ink">${escapeHtml(finding.title)}</p>
+									<p class="text-caption text-ink-subtle">${escapeHtml(finding.message)}</p>
+								</div>
+							</div>
+							${finding.action
+								? `<button type="button" data-review-goto="${finding.section}" class="${actionButtonClass}">${escapeHtml(finding.action)}</button>`
+								: ''}
+						</li>`;
+					}
+					html += '</ul></section>';
+				}
+				body.innerHTML =
+					html ||
+					'<p class="mt-lg text-body-sm text-ink-subtle">No findings for the current portfolio.</p>';
+			}
+		};
+
+		const openReview = (): void => {
+			render();
+			if (!dialog.open) dialog.showModal();
+		};
+
+		const closeReview = (): void => {
+			if (dialog.open) dialog.close();
+		};
+
+		document.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement | null;
+			const opener = target?.closest<HTMLElement>('[data-open-review]');
+			if (opener) {
+				openReview();
+				return;
+			}
+			if (!dialog.open) return;
+			if (target?.closest('[data-review-close]')) {
+				closeReview();
+				return;
+			}
+			const goto = target?.closest<HTMLElement>('[data-review-goto]');
+			if (goto) {
+				const section = goto.dataset.reviewGoto as StepId | undefined;
+				closeReview();
+				if (section) wizardStore.goToStep(section);
+			}
+		});
+
+		wizardStore.subscribe(() => {
+			if (dialog.open) render();
+		});
+	}
+</script>

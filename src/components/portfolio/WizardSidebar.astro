@@ -1,8 +1,8 @@
 ---
 import { Check } from 'lucide-astro';
-import { WIZARD_STEPS, isSectionCompleted, wizardStore } from '../../lib/portfolio';
+import { WIZARD_STEPS, getSectionStatus, isSectionCompleted, wizardStore } from '../../lib/portfolio';
 import { SECTION_META } from './section-meta';
-import type { StepId } from '../../lib/portfolio';
+import type { SectionStatus, StepId } from '../../lib/portfolio';
 
 const state = wizardStore.getState();
 
@@ -15,12 +15,14 @@ interface StepDisplay {
 	isActive: boolean;
 	isCompleted: boolean;
 	isVisited: boolean;
+	status: SectionStatus;
 }
 
 const stepsWithState: StepDisplay[] = SECTION_META.map((meta) => {
 	const isActive = state.currentStep === meta.stepId;
 	const isCompleted = isSectionCompleted(state.data, meta.stepId);
 	const isVisited = state.visitedSteps.includes(meta.stepId);
+	const status = getSectionStatus(state.data, state.visitedSteps, meta.stepId);
 	return {
 		stepId: meta.stepId,
 		number: meta.number,
@@ -30,6 +32,7 @@ const stepsWithState: StepDisplay[] = SECTION_META.map((meta) => {
 		isActive,
 		isCompleted,
 		isVisited,
+		status,
 	};
 });
 
@@ -51,14 +54,15 @@ function itemClasses({ isActive, isCompleted, isVisited }: StepDisplay): string 
 
 	function stateLabel(item: StepDisplay): string {
 		if (item.isActive) return 'current section';
-		return item.isCompleted ? 'complete' : 'incomplete';
+		if (item.status === 'complete') return 'complete';
+		return item.status === 'in-progress' ? 'in progress' : 'not started';
 	}
 ---
 
 <aside
 	id="wizard-sidebar"
 	aria-label="Portfolio Builder Steps"
-	class="card min-w-0 self-start p-md lg:sticky lg:top-0"
+	class="card edge-highlight shadow-sm min-w-0 self-start p-md lg:sticky lg:top-0"
 >
 	<div class="mb-md flex items-center justify-between gap-sm">
 		<h2 class="text-card-title text-ink">Portfolio Builder</h2>
@@ -109,8 +113,8 @@ function itemClasses({ isActive, isCompleted, isVisited }: StepDisplay): string 
 </aside>
 
 <script>
-	import { isSectionCompleted, wizardStore } from '../../lib/portfolio';
-	import type { StepId } from '../../lib/portfolio';
+	import { getSectionStatus, isSectionCompleted, wizardStore } from '../../lib/portfolio';
+	import type { SectionStatus, StepId } from '../../lib/portfolio';
 
 	const sidebar = document.getElementById('wizard-sidebar');
 
@@ -121,8 +125,11 @@ function itemClasses({ isActive, isCompleted, isVisited }: StepDisplay): string 
 		const list = sidebar.querySelector('ol');
 		const stepsComplete = sidebar.querySelector<HTMLElement>('[data-steps-complete]');
 
-		const stateLabel = (info: { isActive: boolean; isCompleted: boolean }): string =>
-			info.isActive ? 'current section' : info.isCompleted ? 'complete' : 'incomplete';
+		const stateLabel = (info: { isActive: boolean; status: SectionStatus }): string => {
+			if (info.isActive) return 'current section';
+			if (info.status === 'complete') return 'complete';
+			return info.status === 'in-progress' ? 'in progress' : 'not started';
+		};
 
 		const stepState = (button: HTMLButtonElement) => {
 			const stepId = button.dataset.stepId as StepId | undefined;
@@ -134,6 +141,7 @@ function itemClasses({ isActive, isCompleted, isVisited }: StepDisplay): string 
 				isActive: state.currentStep === stepId,
 				isCompleted: isSectionCompleted(state.data, stepId),
 				isVisited: state.visitedSteps.includes(stepId),
+				status: getSectionStatus(state.data, state.visitedSteps, stepId),
 			};
 		};
 

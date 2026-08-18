@@ -1,9 +1,12 @@
 ---
-import { Plus } from 'lucide-astro';
+import { GraduationCap } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
+import BuilderEntryPanel from './BuilderEntryPanel.astro';
 import BuilderField from './BuilderField.astro';
+import BuilderRepeatedList from './BuilderRepeatedList.astro';
 import BuilderSection from './BuilderSection.astro';
-import { builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
+import BuilderSuggestions from './BuilderSuggestions.astro';
+import { builderInputClass, builderTextareaClass } from './builder-ui';
 
 const entries = wizardStore.getState().data.education;
 ---
@@ -15,25 +18,21 @@ const entries = wizardStore.getState().data.education;
 	description="Tell us about your academic background."
 	stepNumber={2}
 >
-	<div class="flex flex-col gap-md">
+	<BuilderRepeatedList
+		itemsCount={entries.length}
+		emptyTitle="No education added yet"
+		emptyHint="Education shows the academic background and formal training behind your skills."
+		emptyGuidance="Include the degree, institution, dates attended, and any relevant coursework or highlights."
+		addLabel="Add Education"
+		addAnotherLabel="Add Another Education"
+		addHintComplete="Add another entry to show more of your academic background."
+		addHintIncomplete="Add the degree and institution to complete this section."
+		emptyIcon={GraduationCap}
+	>
 		{
 			entries.map((_, index) => (
-				<div
-					role="group"
-					aria-label={`Education ${index + 1}`}
-					data-list-index={index}
-					class={builderPanelClass}
-				>
-					<p
-						data-entry-label
-						data-entry-base="Education"
-						class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle"
-					>
-						Education {index + 1}
-					</p>
-
-					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
-						<BuilderField id={`education-degree-${index}`} label="Degree">
+				<BuilderEntryPanel entryBase="Education" index={index}>
+					<BuilderField id={`education-degree-${index}`} label="Degree">
 							<input
 								id={`education-degree-${index}`}
 								name="degree"
@@ -63,25 +62,27 @@ const entries = wizardStore.getState().data.education;
 							/>
 						</BuilderField>
 
-						<BuilderField id={`education-start-year-${index}`} label="Start Year">
-							<input
-								id={`education-start-year-${index}`}
-								name="startYear"
-								type="number"
-								placeholder="2023"
-								class={builderInputClass}
-							/>
-						</BuilderField>
+						<div class="grid grid-cols-2 gap-md">
+							<BuilderField id={`education-start-year-${index}`} label="Start Year">
+								<input
+									id={`education-start-year-${index}`}
+									name="startYear"
+									type="number"
+									placeholder="2023"
+									class={builderInputClass}
+								/>
+							</BuilderField>
 
-						<BuilderField id={`education-end-year-${index}`} label="End Year">
-							<input
-								id={`education-end-year-${index}`}
-								name="endYear"
-								type="number"
-								placeholder="2027"
-								class={builderInputClass}
-							/>
-						</BuilderField>
+							<BuilderField id={`education-end-year-${index}`} label="End Year">
+								<input
+									id={`education-end-year-${index}`}
+									name="endYear"
+									type="number"
+									placeholder="2027"
+									class={builderInputClass}
+								/>
+							</BuilderField>
+						</div>
 
 						<BuilderField id={`education-cgpa-${index}`} label="CGPA / Percentage">
 							<input
@@ -97,23 +98,101 @@ const entries = wizardStore.getState().data.education;
 							id={`education-description-${index}`}
 							label="Description"
 							className="md:col-span-2"
+							hint="Mention achievements, coursework or academic highlights."
 						>
 							<textarea
 								id={`education-description-${index}`}
 								name="description"
 								rows="4"
-								placeholder="Write achievements, coursework or academic highlights..."
-								class={builderInputClass}
+								placeholder="Describe coursework, projects or academic highlights..."
+								class={builderTextareaClass}
 							></textarea>
 						</BuilderField>
-					</div>
-				</div>
+				</BuilderEntryPanel>
 			))
 		}
-	</div>
 
-	<button type="button" data-add-entry slot="actions" class={builderButtonSecondary}>
-		<Plus size="16" aria-hidden="true" />
-		Add Another Education
-	</button>
+		<template slot="template">
+			<BuilderEntryPanel entryBase="Education" index={0}>
+				<BuilderField id="education-degree-template" label="Degree">
+						<input
+						id="education-degree-template"
+						name="degree"
+						type="text"
+						placeholder="Bachelor of Technology"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="education-institution-template" label="Institution">
+						<input
+						id="education-institution-template"
+						name="institution"
+						type="text"
+						placeholder="Vasireddy Venkatadri Institute of Technology"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="education-field-of-study-template" label="Field of Study">
+						<input
+						id="education-field-of-study-template"
+						name="fieldOfStudy"
+						type="text"
+						placeholder="Computer Science and Engineering (AI & ML)"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<div class="grid grid-cols-2 gap-md">
+						<BuilderField id="education-start-year-template" label="Start Year">
+							<input
+						id="education-start-year-template"
+						name="startYear"
+						type="number"
+						placeholder="2023"
+						class={builderInputClass}
+							/>
+						</BuilderField>
+
+						<BuilderField id="education-end-year-template" label="End Year">
+							<input
+						id="education-end-year-template"
+						name="endYear"
+						type="number"
+						placeholder="2027"
+						class={builderInputClass}
+							/>
+						</BuilderField>
+					</div>
+
+					<BuilderField id="education-cgpa-template" label="CGPA / Percentage">
+						<input
+							id="education-cgpa-template"
+							name="cgpa"
+							type="text"
+							placeholder="8.9 CGPA"
+							class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField
+						id="education-description-template"
+						label="Description"
+						className="md:col-span-2"
+						hint="Mention achievements, coursework or academic highlights."
+					>
+						<textarea
+							id="education-description-template"
+							name="description"
+							rows="4"
+							placeholder="Describe coursework, projects or academic highlights..."
+							class={builderTextareaClass}
+						></textarea>
+</BuilderField>
+				</BuilderEntryPanel>
+			</template>
+		</BuilderRepeatedList>
+
+		<BuilderSuggestions section="education" />
 </BuilderSection>

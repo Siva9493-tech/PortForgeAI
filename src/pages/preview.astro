@@ -1,5 +1,6 @@
 ---
 import '../styles/globals.css';
+import { ArrowLeft, FolderOpen, PenLine } from 'lucide-astro';
 import { generatePortfolio } from '../lib/portfolio';
 import { previewSwatchClass, themeStore, type PortfolioTheme } from '../lib/themes';
 import { PortfolioRenderer } from '../components/portfolio-renderer';
@@ -9,6 +10,9 @@ const generated = generatePortfolio();
 const ssrPortfolio = generated.portfolio;
 const currentTheme: PortfolioTheme = generated.theme;
 const availableThemes: readonly PortfolioTheme[] = themeStore.getAvailableThemes();
+
+const previewParams = new URL(Astro.url).searchParams;
+const isBuilderPreview = previewParams.get('from') === 'builder';
 
 const themeButtonBase =
 	'inline-flex items-center gap-xs rounded-md border px-md py-sm text-button font-medium transition duration-200';
@@ -25,7 +29,7 @@ const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
 		<meta name="color-scheme" content="dark" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Portfolio Preview</title>
+		<title>{isBuilderPreview ? 'Portfolio Builder Preview' : 'Portfolio Preview'}</title>
 		<meta name="description" content={ssrPortfolio.seo?.description} />
 	</head>
 	<body>
@@ -38,6 +42,32 @@ const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
 
 		<header class="border-b border-hairline" aria-label="Preview controls">
 			<div class="mx-auto flex w-full max-w-page flex-wrap items-center gap-md px-md py-md md:px-xl">
+				<div class="mr-auto flex min-w-0 flex-wrap items-center gap-xs">
+					<a
+						data-back-to-builder
+						class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+						hidden
+					>
+						<ArrowLeft size="16" aria-hidden="true" />
+						Back to Builder
+					</a>
+					<a
+						data-edit-portfolio
+						class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+						hidden
+					>
+						<PenLine size="16" aria-hidden="true" />
+						Edit Portfolio
+					</a>
+					<a
+						data-back-to-portfolios
+						class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+						hidden
+					>
+						<FolderOpen size="16" aria-hidden="true" />
+						My Portfolios
+					</a>
+				</div>
 				<label id="theme-selector-label" class="text-body-sm font-medium text-ink-muted">
 					Theme
 				</label>
@@ -65,6 +95,12 @@ const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
 					}
 				</div>
 			</div>
+			<p
+				id="preview-status"
+				role="status"
+				class="mx-auto flex w-full max-w-page items-start gap-xs px-md pb-md text-caption text-ink-subtle md:px-xl"
+				hidden
+			></p>
 		</header>
 
 		<div id="live-preview-root">
@@ -76,15 +112,106 @@ const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
 		</div>
 
 		<script>
+			import { transformPortfolio } from '../lib/ai';
+			import { wizardStore } from '../lib/portfolio';
 			import { initLivePreview, startManagedPortfolioPreview } from '../lib/portfolio/live-preview';
 			import { themeStore, isThemeId, type PortfolioTheme } from '../lib/themes';
-			import { portfolioManagerStore } from '../lib/portfolio-manager';
+			import { portfolioManagerStore, portfolioOutputEquals } from '../lib/portfolio-manager';
 import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 
 			const params = new URLSearchParams(window.location.search);
 			const portfolioId = params.get('portfolio');
+			const isBuilderPreview = params.get('from') === 'builder';
+			const backToBuilderHref = portfolioId
+				? `/portfolio-builder?portfolio=${encodeURIComponent(portfolioId)}&resume=1`
+				: '/portfolio-builder';
+			const backToPortfoliosHref = '/portfolios';
+			const editPortfolioHref = portfolioId
+				? `/portfolio-builder?portfolio=${encodeURIComponent(portfolioId)}`
+				: '';
 
-			if (portfolioId) {
+			const backLink = document.querySelector<HTMLAnchorElement>('[data-back-to-builder]');
+			const editLink = document.querySelector<HTMLAnchorElement>('[data-edit-portfolio]');
+			const portfoliosLink = document.querySelector<HTMLAnchorElement>('[data-back-to-portfolios]');
+			const statusLine = document.getElementById('preview-status');
+
+			const setStatus = (message: string): void => {
+				if (statusLine) {
+					statusLine.textContent = message;
+					statusLine.hidden = false;
+				}
+			};
+
+			if (isBuilderPreview) {
+				if (backLink) {
+					backLink.href = backToBuilderHref;
+					backLink.hidden = false;
+				}
+				if (portfoliosLink) {
+					portfoliosLink.href = backToPortfoliosHref;
+					portfoliosLink.hidden = false;
+				}
+				if (editLink) editLink.href = editPortfolioHref;
+				document.title = 'Portfolio Builder Preview';
+			} else if (portfolioId) {
+				if (portfoliosLink) {
+					portfoliosLink.href = backToPortfoliosHref;
+					portfoliosLink.hidden = false;
+				}
+				if (editLink) {
+					editLink.href = editPortfolioHref;
+					editLink.hidden = false;
+				}
+				if (backLink) backLink.hidden = true;
+			}
+
+			if (isBuilderPreview) {
+				// Creator preview of the CURRENT builder state (including unsaved
+				// changes). Reuses the existing live-preview pipeline — it never
+				// creates/updates a portfolio, never publishes, and never records
+				// analytics. The selected theme is preserved from the builder.
+				// The status line makes the current-vs-saved state explicit so the
+				// preview never silently pretends unsaved work is persisted.
+				if (portfolioId) {
+					const record = portfolioManagerStore.getPortfolio(portfolioId);
+					const templateId = record?.data.theme?.templateId ?? record?.data.metadata?.templateId;
+					if (templateId && isThemeId(templateId)) {
+						themeStore.setTheme(templateId);
+					}
+					if (record) {
+						const compareTemplate =
+							templateId && isThemeId(templateId) ? templateId : themeStore.getTheme().id;
+						const current = transformPortfolio({
+							data: wizardStore.getState().data,
+							templateId: compareTemplate,
+							mode: 'balanced',
+						});
+						if (portfolioOutputEquals(current, record.data)) {
+							setStatus('Showing the last saved version of this portfolio.');
+						} else {
+							setStatus('Previewing your current unsaved changes. Use Save Changes in the Builder to keep them.');
+						}
+					}
+				} else {
+					setStatus('Previewing your new draft — it is not saved yet. Use Save Portfolio in the Builder to keep it.');
+				}
+				try {
+					initLivePreview();
+				} catch {
+					const root = document.getElementById('live-preview-root');
+					if (root) {
+						root.innerHTML = `
+							<div class="card mx-auto mt-xl flex w-full max-w-md flex-col items-center gap-sm p-xl text-center">
+								<span class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-subtle" aria-hidden="true">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+								</span>
+								<h1 class="text-heading-sm text-ink">Preview unavailable</h1>
+								<p class="text-body-sm text-ink-subtle">We could not generate a preview of your portfolio right now. Your work is still safe in the builder.</p>
+								<a href="${backToBuilderHref}" class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover">Back to Builder</a>
+							</div>`;
+					}
+				}
+			} else if (portfolioId) {
 				const record = portfolioManagerStore.getPortfolio(portfolioId);
 				if (record) {
 					const output = record.data;
@@ -92,6 +219,7 @@ import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 					if (templateId && isThemeId(templateId)) {
 						themeStore.setTheme(templateId);
 					}
+					document.title = record.title;
 					startManagedPortfolioPreview(output);
 					analyticsStore.recordPortfolioView(record.id);
 					trackPortfolioClicks(record.id, document.getElementById('live-preview-root'));

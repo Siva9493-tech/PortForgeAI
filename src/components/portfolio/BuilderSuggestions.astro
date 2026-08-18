@@ -1,0 +1,125 @@
+---
+import type { StepId } from '../../lib/portfolio';
+
+interface Props {
+	/** The builder section whose suggestions this instance renders. */
+	section: StepId;
+}
+
+const { section } = Astro.props;
+---
+
+<div
+	data-builder-suggestions={section}
+	role="group"
+	aria-label="Suggestions for this section"
+	tabindex="-1"
+	class="flex flex-col gap-sm"
+	hidden
+>
+	<p class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+		Suggestions
+	</p>
+	<div role="list" data-builder-suggestions-list class="flex flex-col gap-sm"></div>
+</div>
+
+<script>
+	import { wizardStore } from '../../lib/portfolio';
+	import type { StepId } from '../../lib/portfolio';
+	import { getSuggestionsForSection } from '../../lib/portfolio-builder/suggestions';
+	import type { BuilderSuggestion } from '../../lib/portfolio-builder/suggestions';
+	import { builderSuggestionClass, builderSuggestionDismissClass } from './builder-ui';
+
+	const lightbulbSvg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>';
+	const closeSvg =
+		'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
+	interface SuggestionListState {
+		root: HTMLElement;
+		list: HTMLElement;
+		section: StepId;
+		dismissed: Set<string>;
+		lastKey: string;
+	}
+
+	const roots = Array.from(
+		document.querySelectorAll<HTMLElement>('[data-builder-suggestions]')
+	);
+
+	const states: SuggestionListState[] = roots.map((root) => {
+		const list =
+			root.querySelector<HTMLElement>('[data-builder-suggestions-list]') ?? root;
+		return {
+			root,
+			list,
+			section: root.dataset.builderSuggestions as StepId,
+			dismissed: new Set<string>(),
+			lastKey: '',
+		};
+	});
+
+	if (states.length > 0) {
+		const createRow = (state: SuggestionListState, suggestion: BuilderSuggestion): HTMLElement => {
+		const row = document.createElement('li');
+		row.className = builderSuggestionClass;
+		row.dataset.suggestion = suggestion.id;
+
+		const content = document.createElement('div');
+		content.className = 'flex min-w-0 items-start gap-xs';
+		const icon = document.createElement('span');
+		icon.className = 'mt-0.5 shrink-0 text-primary';
+		icon.setAttribute('aria-hidden', 'true');
+		icon.innerHTML = lightbulbSvg;
+		const text = document.createElement('p');
+		text.className = 'text-caption text-ink-muted';
+		text.textContent = suggestion.message;
+		content.append(icon, text);
+
+		const dismiss = document.createElement('button');
+		dismiss.type = 'button';
+		dismiss.className = builderSuggestionDismissClass;
+		dismiss.dataset.dismissSuggestion = '';
+		dismiss.setAttribute('aria-label', `Dismiss suggestion: ${suggestion.message}`);
+		dismiss.innerHTML = closeSvg;
+		dismiss.addEventListener('click', () => {
+			state.dismissed.add(suggestion.id);
+			row.remove();
+			state.root.hidden =
+				state.root.querySelectorAll('[data-suggestion]').length === 0;
+			const next = state.root.querySelector<HTMLButtonElement>('[data-dismiss-suggestion]');
+			if (next) {
+				next.focus();
+			} else {
+				state.root.focus();
+			}
+		});
+
+		row.append(content, dismiss);
+		return row;
+	};
+
+	const render = (state: SuggestionListState): void => {
+		const suggestions = getSuggestionsForSection(wizardStore.getState().data, state.section).filter(
+			(suggestion) => !state.dismissed.has(suggestion.id)
+		);
+
+		// Skip all DOM work when nothing changed for this section (e.g. the user
+		// is typing in another section and this one's suggestions are unchanged).
+		const key = suggestions.map((s) => `${s.id}\u0001${s.message}`).join('\u0002');
+		if (key === state.lastKey) return;
+		state.lastKey = key;
+
+		state.list.replaceChildren();
+		for (const suggestion of suggestions) {
+			state.list.append(createRow(state, suggestion));
+		}
+		state.root.hidden = suggestions.length === 0;
+	};
+
+	wizardStore.subscribe(() => {
+		for (const state of states) render(state);
+	});
+	for (const state of states) render(state);
+	}
+</script>

@@ -1,4 +1,6 @@
 ---
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
+
 interface Props {
 	/** Id of the labelled control (used for `<label for>`). */
 	id?: string;
@@ -6,16 +8,23 @@ interface Props {
 	label: string;
 	/** Renders the required asterisk (decorative, aria-hidden). */
 	required?: boolean;
+	/** Force the "Optional" marker (defaults to `!required`). */
+	optional?: boolean;
 	/** Helper text shown under the control. */
 	hint?: string;
 	/** Extra classes applied to the field wrapper (e.g. `md:col-span-2`). */
 	className?: string;
+	/** Optional leading icon (e.g. Link2 for URL fields). Pair with `builderInputWithIconClass`. */
+	icon?: AstroComponentFactory;
 }
 
-const { id, label, required = false, hint, className = '' } = Astro.props;
+const { id, label, required = false, optional, hint, className = '', icon: Icon } = Astro.props;
 
-const rootClass = ['flex flex-col gap-xs', className].filter(Boolean).join(' ');
+const isOptional = optional ?? !required;
+
+const rootClass = ['flex min-w-0 flex-col gap-xs', className].filter(Boolean).join(' ');
 const labelClass = 'text-body-sm font-medium text-ink-muted';
+const markerClass = 'ml-1 text-caption font-normal text-ink-tertiary';
 ---
 ---
 
@@ -24,15 +33,29 @@ const labelClass = 'text-body-sm font-medium text-ink-muted';
 		<label for={id} class={labelClass}>
 			{label}
 			{required && <span class="text-semantic-danger" aria-hidden="true">*</span>}
+			{isOptional && <span class={markerClass}>(Optional)</span>}
 		</label>
 	) : (
 		<p class={labelClass}>
 			{label}
 			{required && <span class="text-semantic-danger" aria-hidden="true">*</span>}
+			{isOptional && <span class={markerClass}>(Optional)</span>}
 		</p>
 	)}
 
-	<slot />
+	{Icon ? (
+		<div class="relative">
+			<span
+				class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-ink-tertiary"
+				aria-hidden="true"
+			>
+				<Icon size="16" />
+			</span>
+			<slot />
+		</div>
+	) : (
+		<slot />
+	)}
 
 	{hint && <p class="text-caption text-ink-tertiary">{hint}</p>}
 </div>

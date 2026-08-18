@@ -1,8 +1,8 @@
 ---
-import { Plus } from 'lucide-astro';
 import BuilderField from './BuilderField.astro';
 import BuilderSection from './BuilderSection.astro';
-import { builderButtonSecondary, builderInputClass } from './builder-ui';
+import BuilderSuggestions from './BuilderSuggestions.astro';
+import { builderGroupLabelClass, builderInfoBlockClass, builderInputClass, builderTextareaClass } from './builder-ui';
 ---
 
 <BuilderSection
@@ -12,80 +12,122 @@ import { builderButtonSecondary, builderInputClass } from './builder-ui';
 	description="Highlight your technical and professional expertise."
 	stepNumber={5}
 >
-	<form novalidate class="grid grid-cols-1 gap-md md:grid-cols-2">
-		<BuilderField id="programming-languages" label="Programming Languages">
-			<input
-				id="programming-languages"
-				name="programmingLanguages"
-				type="text"
-				placeholder="Python, Java, C++, JavaScript"
-				class={builderInputClass}
-			/>
-		</BuilderField>
+	<form novalidate class="flex flex-col gap-lg">
+		<div class="flex flex-col gap-md">
+			<h3 class={builderGroupLabelClass}>Technical Skills</h3>
+			<div class="grid grid-cols-1 gap-md md:grid-cols-2">
+				<BuilderField
+					id="programming-languages"
+					label="Programming Languages"
+					hint="Separate multiple languages with commas."
+				>
+					<input
+						id="programming-languages"
+						name="programmingLanguages"
+						type="text"
+						placeholder="Python, Java, C++, JavaScript"
+						class={builderInputClass}
+					/>
+				</BuilderField>
 
-		<BuilderField id="frameworks" label="Frameworks & Libraries">
-			<input
-				id="frameworks"
-				name="frameworks"
-				type="text"
-				placeholder="React, Astro, Tailwind CSS, TensorFlow"
-				class={builderInputClass}
-			/>
-		</BuilderField>
+				<BuilderField
+					id="frameworks"
+					label="Frameworks & Libraries"
+					hint="Separate multiple frameworks with commas."
+				>
+					<input
+						id="frameworks"
+						name="frameworks"
+						type="text"
+						placeholder="React, Astro, Tailwind CSS, TensorFlow"
+						class={builderInputClass}
+					/>
+				</BuilderField>
 
-		<BuilderField id="databases" label="Databases">
-			<input
-				id="databases"
-				name="databases"
-				type="text"
-				placeholder="MySQL, PostgreSQL, MongoDB"
-				class={builderInputClass}
-			/>
-		</BuilderField>
+				<BuilderField id="databases" label="Databases" hint="Separate multiple databases with commas.">
+					<input
+						id="databases"
+						name="databases"
+						type="text"
+						placeholder="MySQL, PostgreSQL, MongoDB"
+						class={builderInputClass}
+					/>
+				</BuilderField>
 
-		<BuilderField id="dev-tools" label="Developer Tools">
-			<input
-				id="dev-tools"
-				name="devTools"
-				type="text"
-				placeholder="Git, GitHub, VS Code, Docker"
-				class={builderInputClass}
-			/>
-		</BuilderField>
+				<BuilderField
+					id="dev-tools"
+					label="Developer Tools"
+					hint="Separate multiple tools with commas."
+				>
+					<input
+						id="dev-tools"
+						name="devTools"
+						type="text"
+						placeholder="Git, GitHub, VS Code, Docker"
+						class={builderInputClass}
+					/>
+				</BuilderField>
 
-		<BuilderField id="cloud-platforms" label="Cloud & Platforms" className="md:col-span-2">
-			<input
-				id="cloud-platforms"
-				name="cloudPlatforms"
-				type="text"
-				placeholder="Vercel, Google Cloud, Firebase"
-				class={builderInputClass}
-			/>
-		</BuilderField>
+				<BuilderField
+					id="cloud-platforms"
+					label="Cloud & Platforms"
+					className="md:col-span-2"
+					hint="Separate multiple platforms with commas."
+				>
+					<input
+						id="cloud-platforms"
+						name="cloudPlatforms"
+						type="text"
+						placeholder="Vercel, Google Cloud, Firebase"
+						class={builderInputClass}
+					/>
+				</BuilderField>
+			</div>
+		</div>
 
-		<BuilderField id="soft-skills" label="Soft Skills" className="md:col-span-2">
-			<textarea
-				id="soft-skills"
-				name="softSkills"
-				rows="4"
-				placeholder="Leadership, Communication, Teamwork, Problem Solving..."
-				class={builderInputClass}
-			></textarea>
-		</BuilderField>
+		<div class="flex flex-col gap-md">
+			<h3 class={builderGroupLabelClass}>Professional & Additional Skills</h3>
+			<div class="grid grid-cols-1 gap-md md:grid-cols-2">
+				<BuilderField
+					id="soft-skills"
+					label="Soft Skills"
+					className="md:col-span-2"
+					hint="One skill per line."
+				>
+					<textarea
+						id="soft-skills"
+						name="softSkills"
+						rows="4"
+						placeholder="Leadership, Communication, Teamwork, Problem Solving..."
+						class={builderTextareaClass}
+					></textarea>
+				</BuilderField>
 
-		<BuilderField id="additional-skills" label="Additional Skills" className="md:col-span-2">
-			<textarea
-				id="additional-skills"
-				name="additionalSkills"
-				rows="4"
-				placeholder="Mention any additional skills or technologies..."
-				class={builderInputClass}
-			></textarea>
-		</BuilderField>
+				<BuilderField
+					id="additional-skills"
+					label="Additional Skills"
+					className="md:col-span-2"
+					hint="Mention any other skills or technologies you know."
+				>
+					<textarea
+						id="additional-skills"
+						name="additionalSkills"
+						rows="4"
+						placeholder="Mention any additional skills or technologies..."
+						class={builderTextareaClass}
+					></textarea>
+				</BuilderField>
+			</div>
+		</div>
 	</form>
 
-	<button type="button" disabled aria-disabled="true" slot="actions" class={builderButtonSecondary}>
-		<Plus size="16" aria-hidden="true" />
-		Add More Skills
-	</button>
+	<BuilderSuggestions section="skills" />
+
+	<div class={builderInfoBlockClass} data-reveal>
+		<h3 class={builderGroupLabelClass}>Skill guidance</h3>
+		<p class="text-body-sm text-ink-muted">
+			List genuine skills you can confidently support. Focus on the languages, frameworks and
+			tools you use regularly — quality matters more than quantity.
+		</p>
+	</div>
 </BuilderSection>

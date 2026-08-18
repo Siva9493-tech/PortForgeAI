@@ -1,9 +1,12 @@
 ---
-import { Plus } from 'lucide-astro';
+import { Briefcase } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
+import BuilderEntryPanel from './BuilderEntryPanel.astro';
 import BuilderField from './BuilderField.astro';
+import BuilderRepeatedList from './BuilderRepeatedList.astro';
 import BuilderSection from './BuilderSection.astro';
-import { builderButtonSecondary, builderInputClass, builderPanelClass } from './builder-ui';
+import BuilderSuggestions from './BuilderSuggestions.astro';
+import { builderInputClass, builderTextareaClass } from './builder-ui';
 
 const employmentTypes = ['Full Time', 'Part Time', 'Internship', 'Freelance'];
 
@@ -17,25 +20,21 @@ const entries = wizardStore.getState().data.experience;
 	description="Show your internships, jobs and professional experience."
 	stepNumber={3}
 >
-	<div class="flex flex-col gap-md">
+	<BuilderRepeatedList
+		itemsCount={entries.length}
+		emptyTitle="No experience added yet"
+		emptyHint="Experience shows how you've applied your skills in real roles."
+		emptyGuidance="Include the job title, organization, dates, your responsibilities, and the results you delivered."
+		addLabel="Add Experience"
+		addAnotherLabel="Add Another Experience"
+		addHintComplete="Add another role to show the full range of your work."
+		addHintIncomplete="Add the job title and company to complete this section."
+		emptyIcon={Briefcase}
+	>
 		{
 			entries.map((_, index) => (
-				<div
-					role="group"
-					aria-label={`Experience ${index + 1}`}
-					data-list-index={index}
-					class={builderPanelClass}
-				>
-					<p
-						data-entry-label
-						data-entry-base="Experience"
-						class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle"
-					>
-						Experience {index + 1}
-					</p>
-
-					<div class="grid grid-cols-1 gap-md md:grid-cols-2">
-						<BuilderField id={`experience-job-title-${index}`} label="Job Title">
+				<BuilderEntryPanel entryBase="Experience" index={index}>
+					<BuilderField id={`experience-job-title-${index}`} label="Job Title">
 							<input
 								id={`experience-job-title-${index}`}
 								name="jobTitle"
@@ -78,23 +77,25 @@ const entries = wizardStore.getState().data.experience;
 							/>
 						</BuilderField>
 
-						<BuilderField id={`experience-start-date-${index}`} label="Start Date">
-							<input
-								id={`experience-start-date-${index}`}
-								name="startDate"
-								type="month"
-								class={builderInputClass}
-							/>
-						</BuilderField>
+						<div class="grid grid-cols-2 gap-md">
+							<BuilderField id={`experience-start-date-${index}`} label="Start Date">
+								<input
+									id={`experience-start-date-${index}`}
+									name="startDate"
+									type="month"
+									class={builderInputClass}
+								/>
+							</BuilderField>
 
-						<BuilderField id={`experience-end-date-${index}`} label="End Date">
-							<input
-								id={`experience-end-date-${index}`}
-								name="endDate"
-								type="month"
-								class={builderInputClass}
-							/>
-						</BuilderField>
+							<BuilderField id={`experience-end-date-${index}`} label="End Date">
+								<input
+									id={`experience-end-date-${index}`}
+									name="endDate"
+									type="month"
+									class={builderInputClass}
+								/>
+							</BuilderField>
+						</div>
 
 						<label
 							for={`experience-currently-working-${index}`}
@@ -104,7 +105,7 @@ const entries = wizardStore.getState().data.experience;
 								id={`experience-currently-working-${index}`}
 								name="currentlyWorking"
 								type="checkbox"
-								class="h-4 w-4 shrink-0 rounded accent-primary"
+								class="h-4 w-4 shrink-0 rounded accent-primary focus:ring-2 focus:ring-primary-focus/40 focus:ring-offset-2 focus:ring-offset-surface-2"
 							/>
 							<span>Currently Working Here</span>
 						</label>
@@ -113,23 +114,115 @@ const entries = wizardStore.getState().data.experience;
 							id={`experience-description-${index}`}
 							label="Description"
 							className="md:col-span-2"
+							hint="Describe your responsibilities, achievements and technologies used."
 						>
 							<textarea
 								id={`experience-description-${index}`}
 								name="description"
 								rows="5"
 								placeholder="Describe your responsibilities, achievements and technologies used..."
-								class={builderInputClass}
+								class={builderTextareaClass}
 							></textarea>
 						</BuilderField>
-					</div>
-				</div>
+				</BuilderEntryPanel>
 			))
 		}
-	</div>
 
-	<button type="button" data-add-entry slot="actions" class={builderButtonSecondary}>
-		<Plus size="16" aria-hidden="true" />
-		Add Another Experience
-	</button>
+		<template slot="template">
+			<BuilderEntryPanel entryBase="Experience" index={0}>
+				<BuilderField id="experience-job-title-template" label="Job Title">
+						<input
+						id="experience-job-title-template"
+						name="jobTitle"
+						type="text"
+						placeholder="Machine Learning Intern"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="experience-company-template" label="Company">
+						<input
+						id="experience-company-template"
+						name="company"
+						type="text"
+						placeholder="APSSDC"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<BuilderField id="experience-employment-type-template" label="Employment Type">
+						<select
+							id="experience-employment-type-template"
+							name="employmentType"
+							class={builderInputClass}
+						>
+							<option value="" disabled selected>
+								Select an option
+							</option>
+							{employmentTypes.map((type) => <option value={type}>{type}</option>)}
+						</select>
+					</BuilderField>
+
+					<BuilderField id="experience-location-template" label="Location">
+						<input
+						id="experience-location-template"
+						name="location"
+						type="text"
+						placeholder="Guntur, Andhra Pradesh"
+						class={builderInputClass}
+						/>
+					</BuilderField>
+
+					<div class="grid grid-cols-2 gap-md">
+						<BuilderField id="experience-start-date-template" label="Start Date">
+							<input
+								id="experience-start-date-template"
+								name="startDate"
+								type="month"
+								class={builderInputClass}
+							/>
+						</BuilderField>
+
+						<BuilderField id="experience-end-date-template" label="End Date">
+							<input
+								id="experience-end-date-template"
+								name="endDate"
+								type="month"
+								class={builderInputClass}
+							/>
+						</BuilderField>
+					</div>
+
+					<label
+						for="experience-currently-working-template"
+						class="flex items-center gap-sm text-body-sm text-ink md:col-span-2"
+					>
+						<input
+							id="experience-currently-working-template"
+							name="currentlyWorking"
+							type="checkbox"
+							class="h-4 w-4 shrink-0 rounded accent-primary focus:ring-2 focus:ring-primary-focus/40 focus:ring-offset-2 focus:ring-offset-surface-2"
+						/>
+						<span>Currently Working Here</span>
+					</label>
+
+					<BuilderField
+						id="experience-description-template"
+						label="Description"
+						className="md:col-span-2"
+						hint="Describe your responsibilities, achievements and technologies used."
+					>
+						<textarea
+							id="experience-description-template"
+							name="description"
+							rows="5"
+							placeholder="Describe your responsibilities, achievements and technologies used..."
+							class={builderTextareaClass}
+						></textarea>
+</BuilderField>
+				</BuilderEntryPanel>
+			</template>
+		</BuilderRepeatedList>
+
+		<BuilderSuggestions section="experience" />
 </BuilderSection>

@@ -19,8 +19,35 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 <nav
 	id="wizard-navigation"
 	aria-label="Portfolio wizard navigation"
-	class="card mt-md flex flex-col gap-md p-md"
+	class="card edge-highlight shadow-sm mt-md flex flex-col gap-md p-md"
 >
+	<div class="flex flex-col gap-sm border-b border-hairline pb-md sm:flex-row sm:items-center sm:justify-between sm:gap-md">
+		<div class="flex min-w-0 items-center gap-xs">
+			<span
+				data-save-dot
+				class="size-2 animate-pop-in shrink-0 rounded-full bg-semantic-warning"
+				aria-hidden="true"
+				hidden
+			></span>
+			<p
+				id="wizard-save-status"
+				data-save-status
+				role="status"
+				class="min-w-0 break-words text-caption font-medium text-ink-subtle"
+				hidden
+			></p>
+		</div>
+
+		<button
+			type="button"
+			data-save-button
+			aria-label={finalLabel}
+			class="inline-flex w-full items-center justify-center gap-xs whitespace-nowrap rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+		>
+			<span data-save-button-label>{finalLabel}</span>
+		</button>
+	</div>
+
 	<div class="flex flex-col gap-sm">
 		<div class="flex items-center justify-center gap-xs">
 			<span class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
@@ -50,18 +77,11 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 	</div>
 
 	<p
-		id="wizard-save-status"
-		data-save-status
-		role="status"
-		class="text-caption font-medium text-semantic-success"
-		hidden
-	></p>
-	<p
 		id="wizard-save-error"
 		data-save-error
 		role="alert"
 		tabindex="-1"
-		class="text-caption font-medium text-semantic-danger"
+		class="break-words rounded-md border border-semantic-danger/30 bg-surface-2 px-md py-sm text-caption font-medium text-semantic-danger"
 		hidden
 	></p>
 
@@ -120,10 +140,15 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 </nav>
 
 <script>
-	import { TOTAL_STEPS, WIZARD_STEPS, getBuilderProgress, wizardStore } from '../../lib/portfolio';
+	import { TOTAL_STEPS, WIZARD_STEPS, getBuilderProgress, wizardStore, createEmptyPortfolioData } from '../../lib/portfolio';
+	import type { BuilderSaveSnapshot } from '../../lib/portfolio/builder-save-state';
+	import { BuilderSaveTracker } from '../../lib/portfolio/builder-save-state';
+	import { builderRecovery } from '../../lib/portfolio-builder/recovery';
 	import {
 		createPortfolioFromBuilder,
 		portfolioManagerStore,
+		portfolioOutputEquals,
+		portfolioOutputToData,
 		savePortfolioFromBuilder,
 	} from '../../lib/portfolio-manager';
 
@@ -133,6 +158,14 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 	const isEditMode = Boolean(editRecord);
 	const finalLabel = isEditMode ? 'Save Changes' : 'Save Portfolio';
 	let targetId = editParamId ?? '';
+
+	// Baseline = the last persisted content. Edit mode uses the stored record
+	// (so nothing is "unsaved" on a clean load, even when returning from a
+	// builder preview), create mode starts from an empty portfolio.
+	const saveState = new BuilderSaveTracker(
+		editRecord ? portfolioOutputToData(editRecord.data) : createEmptyPortfolioData(),
+		editRecord ? 'saved' : 'idle'
+	);
 
 	if (nav) {
 		const prev = nav.querySelector<HTMLButtonElement>('[data-nav="previous"]');
@@ -146,40 +179,154 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 		const progressbar = nav.querySelector<HTMLElement>('[role="progressbar"]');
 		const fill = nav.querySelector<HTMLElement>('[data-progress-fill]');
 		const saveStatus = nav.querySelector<HTMLElement>('[data-save-status]');
+		const saveDot = nav.querySelector<HTMLElement>('[data-save-dot]');
 		const saveError = nav.querySelector<HTMLElement>('[data-save-error]');
-		let saving = false;
+		const saveButton = nav.querySelector<HTMLButtonElement>('[data-save-button]');
+		const saveButtonLabel = nav.querySelector<HTMLElement>('[data-save-button-label]');
 
 		const showStatus = (message: string): void => {
-			if (saveError) {
-				saveError.hidden = true;
-				saveError.textContent = '';
-			}
 			if (saveStatus) {
 				saveStatus.textContent = message;
 				saveStatus.hidden = false;
 			}
 		};
 
-		const showError = (message: string): void => {
+		const hideStatus = (): void => {
 			if (saveStatus) {
-				saveStatus.hidden = true;
 				saveStatus.textContent = '';
+				saveStatus.hidden = true;
 			}
+		};
+
+		const showError = (message: string): void => {
 			if (saveError) {
 				saveError.textContent = message;
 				saveError.hidden = false;
-				saveError.focus();
+			}
+		};
+
+		const hideError = (): void => {
+			if (saveError) {
+				saveError.textContent = '';
+				saveError.hidden = true;
 			}
 		};
 
 		const navigateToSavedPortfolio = (): void => {
 			window.setTimeout(() => {
-				window.location.assign(`/preview?portfolio=${encodeURIComponent(targetId)}`);
+				window.location.assign(
+					`/preview?from=builder&portfolio=${encodeURIComponent(targetId)}`
+				);
 			}, 400);
+		};
+
+		/**
+		 * The existing store persists synchronously but swallows storage write
+		 * failures (a blocked/quota-exceeded localStorage still returns the
+		 * in-memory record). Before reporting "Saved" we read the persisted
+		 * collection back and confirm the current content actually landed, so
+		 * a success message is never shown for a save that did not persist.
+		 */
+		const isSavePersisted = (id: string): boolean => {
+			try {
+				const raw = localStorage.getItem('portforge:portfolios:v1');
+				if (!raw) return false;
+				const parsed = JSON.parse(raw) as {
+					records?: Array<{ id?: string; data?: unknown }>;
+				};
+				const current = portfolioManagerStore.getPortfolio(id);
+				if (!current || !Array.isArray(parsed.records)) return false;
+				const persisted = parsed.records.find((record) => record.id === id);
+				if (!persisted) return false;
+				return portfolioOutputEquals(
+					current.data,
+					persisted.data as Parameters<typeof portfolioOutputEquals>[0]
+				);
+			} catch {
+				return false;
+			}
+		};
+
+		/**
+		 * Browser-level unsaved-change protection. Only armed while genuinely
+		 * unsaved changes exist and no save is in flight; removed after a
+		 * successful save so normal navigation is never blocked. Uses the
+		 * native `beforeunload` prompt — no custom dialogs.
+		 */
+		const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+			event.preventDefault();
+		};
+
+		const syncBeforeUnload = (snapshot: Readonly<BuilderSaveSnapshot>): void => {
+			if (snapshot.dirty && snapshot.status !== 'saving') {
+				window.addEventListener('beforeunload', handleBeforeUnload);
+			} else {
+				window.removeEventListener('beforeunload', handleBeforeUnload);
+			}
+		};
+
+		const saveButtonLabelFor = (snapshot: Readonly<BuilderSaveSnapshot>): string => {
+			if (snapshot.status === 'saving') return 'Saving…';
+			if (snapshot.status === 'error') return 'Retry';
+			if (snapshot.status === 'saved' && snapshot.message) return 'Saved';
+			return finalLabel;
+		};
+
+		const saveButtonAriaFor = (snapshot: Readonly<BuilderSaveSnapshot>): string => {
+			if (snapshot.status === 'saving') return 'Saving portfolio';
+			if (snapshot.status === 'error') return 'Retry saving the portfolio';
+			if (snapshot.status === 'saved' && snapshot.message) return 'Portfolio saved';
+			return finalLabel;
+		};
+
+		/**
+		 * Renders the save experience: an inline status line (role="status"),
+		 * an amber dot for unsaved changes, a danger alert box for failures,
+		 * and a single Save / Saving… / Saved / Retry button. Announcements
+		 * only fire when the text actually changes, never on every keystroke.
+		 */
+		const renderSaveState = (): void => {
+			const snapshot = saveState.getSnapshot();
+			const isSaving = snapshot.status === 'saving';
+
+			if (saveStatus) saveStatus.classList.remove('text-semantic-success');
+
+			if (snapshot.status === 'error') {
+				hideStatus();
+				if (saveDot) saveDot.hidden = true;
+				showError(snapshot.message ?? 'Could not save the portfolio. Please try again.');
+			} else {
+				hideError();
+				if (isSaving) {
+					showStatus('Saving…');
+					if (saveDot) saveDot.hidden = true;
+				} else if (snapshot.dirty) {
+					showStatus('Unsaved changes');
+					if (saveDot) saveDot.hidden = false;
+				} else if (snapshot.status === 'saved') {
+					showStatus(snapshot.message ?? 'No unsaved changes.');
+					if (snapshot.message) saveStatus?.classList.add('text-semantic-success');
+					if (saveDot) saveDot.hidden = true;
+				} else {
+					hideStatus();
+					if (saveDot) saveDot.hidden = true;
+				}
+			}
+
+			if (saveButton && saveButtonLabel) {
+				saveButtonLabel.textContent = saveButtonLabelFor(snapshot);
+				saveButton.setAttribute('aria-label', saveButtonAriaFor(snapshot));
+				saveButton.disabled = isSaving;
+				saveButton.setAttribute('aria-busy', String(isSaving));
+			}
+
+			syncBeforeUnload(snapshot);
 		};
 
 		const applyState = () => {
 			const state = wizardStore.getState();
+			const snapshot = saveState.getSnapshot();
+			const isSaving = snapshot.status === 'saving';
 			const index = WIZARD_STEPS.findIndex((step) => step.id === state.currentStep);
 			const step = WIZARD_STEPS[Math.max(0, index)];
 			const previousStep = WIZARD_STEPS[index - 1];
@@ -200,11 +347,11 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 			if (prevTitle) prevTitle.textContent = previousStep?.title ?? '';
 			if (next) {
 				next.dataset.nav = isLast ? 'save' : 'next';
-				next.disabled = saving;
+				next.disabled = isSaving;
 				if (followingStep) {
 					next.setAttribute('aria-label', `Go to ${followingStep.title}`);
 				} else {
-					next.setAttribute('aria-label', finalLabel);
+					next.setAttribute('aria-label', saveButtonAriaFor(snapshot));
 				}
 			}
 			if (nextTitle) {
@@ -212,8 +359,11 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 				nextTitle.hidden = isLast;
 			}
 			if (navLabel) {
-				navLabel.textContent = isLast ? (saving ? 'Saving…' : finalLabel) : 'Next';
+				navLabel.textContent = isLast
+					? saveButtonLabelFor(snapshot)
+					: 'Next';
 			}
+			if (saveButton) saveButton.hidden = isLast;
 			if (stepNumber) stepNumber.textContent = `Step ${index + 1} of ${TOTAL_STEPS}`;
 			if (stepTitle) stepTitle.textContent = step.title;
 			if (percentText) percentText.textContent = `${percent}%`;
@@ -225,18 +375,41 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 		};
 
 		const performSave = (): void => {
-			if (saving) return;
-			saving = true;
-			applyState();
+			const snapshot = saveState.getSnapshot();
+			if (snapshot.status === 'saving') return;
+
+			// Once a portfolio exists (edit mode, or after the first create),
+			// a save with no changes is a no-op: no update, no new version.
+			if (targetId && !snapshot.dirty && snapshot.status !== 'error') {
+				builderRecovery.markSaved(wizardStore.getState().data);
+				saveState.note('No changes to save.');
+				renderSaveState();
+				return;
+			}
+
+			saveState.beginSave();
+			renderSaveState();
 
 			const fail = (message: string): void => {
-				saving = false;
-				applyState();
-				showError(message);
+				saveState.fail(message);
+				renderSaveState();
+				if (saveError) {
+					// Re-announce a repeated failure to assistive tech.
+					const wasSame = saveError.textContent === message;
+					if (wasSame) {
+						saveError.textContent = '';
+						window.setTimeout(() => {
+							if (saveError) saveError.textContent = message;
+						}, 0);
+					}
+					saveError.focus();
+				}
 			};
 
 			try {
-				if (isEditMode) {
+				// Once a portfolio exists, saving always UPDATES it in place
+				// (stable id preserved) — it never creates a duplicate.
+				if (targetId) {
 					const saved = savePortfolioFromBuilder(targetId, wizardStore.getState().data);
 					if (!saved) {
 						fail('Could not save changes. This portfolio may no longer exist.');
@@ -246,7 +419,16 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 					const created = createPortfolioFromBuilder(wizardStore.getState().data);
 					targetId = created.id;
 				}
-				showStatus('Portfolio saved.');
+				if (!isSavePersisted(targetId)) {
+					fail('Could not save the portfolio right now. Please try again.');
+					return;
+				}
+saveState.completeSave(
+					wizardStore.getState().data,
+					isEditMode ? 'Changes saved.' : 'Portfolio saved.'
+				);
+				renderSaveState();
+				builderRecovery.markSaved(wizardStore.getState().data);
 				navigateToSavedPortfolio();
 			} catch {
 				fail('Could not save the portfolio. Please try again.');
@@ -261,8 +443,15 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 			}
 			wizardStore.next();
 		});
+		saveButton?.addEventListener('click', performSave);
 
-		wizardStore.subscribe(applyState);
-		applyState();
+		const onWizardChange = () => {
+			saveState.sync(wizardStore.getState().data);
+			applyState();
+			renderSaveState();
+		};
+
+		wizardStore.subscribe(onWizardChange);
+		onWizardChange();
 	}
 </script>

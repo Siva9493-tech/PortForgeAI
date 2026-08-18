@@ -1,6 +1,7 @@
 ---
 import Achievements from '../components/portfolio/Achievements.astro';
 import BuilderProgress from '../components/portfolio/BuilderProgress.astro';
+import BuilderReview from '../components/portfolio/BuilderReview.astro';
 import Certifications from '../components/portfolio/Certifications.astro';
 import Education from '../components/portfolio/Education.astro';
 import Experience from '../components/portfolio/Experience.astro';
@@ -14,14 +15,18 @@ import SocialLinks from '../components/portfolio/SocialLinks.astro';
 import Skills from '../components/portfolio/Skills.astro';
 import WizardNavigation from '../components/portfolio/WizardNavigation.astro';
 import WizardSidebar from '../components/portfolio/WizardSidebar.astro';
-import { PenLine } from 'lucide-astro';
+import { Clock, Eye, PenLine } from 'lucide-astro';
 import { WIZARD_STEPS, wizardStore } from '../lib/portfolio';
 
 const title = 'Portfolio Builder — PortForge AI';
 const description = 'Create your professional portfolio with the PortForge AI guided builder.';
 
 const activeStepId = wizardStore.getState().currentStep;
-const isEdit = Boolean(new URL(Astro.url).searchParams.get('portfolio'));
+const editPortfolioId = new URL(Astro.url).searchParams.get('portfolio');
+const isEdit = Boolean(editPortfolioId);
+const previewHref = isEdit
+	? `/preview?from=builder&portfolio=${encodeURIComponent(editPortfolioId ?? '')}`
+	: '/preview?from=builder';
 
 const sectionsByStep = {
 	personalInformation: PersonalInformation,
@@ -41,12 +46,23 @@ const sectionsByStep = {
 <PortfolioLayout title={title} description={description}>
 	<div class="flex w-full flex-col gap-lg">
 		<header class="flex flex-col gap-md border-b border-hairline pb-lg">
-			<div class="flex flex-col gap-xxs">
-				<p class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
-					{isEdit ? 'Edit Portfolio' : 'New Portfolio'}
-				</p>
-				<h1 class="text-headline text-ink">Build your professional portfolio</h1>
-				<p class="max-w-narrow text-body-sm text-ink-subtle">{description}</p>
+			<div class="flex flex-col gap-md sm:flex-row sm:items-start sm:justify-between">
+				<div class="flex flex-col gap-xxs">
+					<p class="text-eyebrow font-medium uppercase tracking-tight text-ink-subtle">
+						{isEdit ? 'Edit Portfolio' : 'New Portfolio'}
+					</p>
+					<h1 class="text-headline text-ink">Build your professional portfolio</h1>
+					<p class="max-w-narrow text-body-sm text-ink-subtle">{description}</p>
+				</div>
+
+				<a
+					data-preview-link
+					href={previewHref}
+					class="inline-flex w-full shrink-0 items-center justify-center gap-xs self-start rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1 sm:w-auto"
+				>
+					<Eye size="16" aria-hidden="true" />
+					Preview Portfolio
+				</a>
 			</div>
 
 			<div
@@ -61,7 +77,46 @@ const sectionsByStep = {
 			</div>
 		</header>
 
-		<BuilderProgress />
+		<div
+			id="builder-recovery"
+			role="region"
+			aria-labelledby="builder-recovery-title"
+			aria-describedby="builder-recovery-description"
+			tabindex="-1"
+			hidden
+			class="flex flex-col gap-sm rounded-md border border-semantic-warning/40 bg-surface-2 px-md py-sm sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex min-w-0 items-start gap-sm">
+				<Clock size="16" class="mt-0.5 shrink-0 text-semantic-warning" aria-hidden="true" />
+				<div class="flex min-w-0 flex-col gap-xxs">
+					<p id="builder-recovery-title" class="text-body-sm font-medium text-ink">
+						We recovered your unsaved work
+					</p>
+					<p id="builder-recovery-description" class="text-caption text-ink-subtle">
+						From your last editing session. Continue with it to bring your work back, or
+						discard it to start from your saved content.
+					</p>
+				</div>
+			</div>
+			<div class="flex w-full flex-col-reverse gap-xs sm:w-auto sm:flex-row sm:items-center sm:gap-xs">
+				<button
+					type="button"
+					data-recovery-discard
+					class="inline-flex w-full items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1 sm:w-auto"
+				>
+					Discard
+				</button>
+				<button
+					type="button"
+					data-recovery-restore
+					class="inline-flex w-full items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1 sm:w-auto"
+				>
+					Continue with recovered work
+				</button>
+			</div>
+		</div>
+
+		<BuilderProgress previewHref={previewHref} />
 
 		<div class="grid grid-cols-1 gap-md lg:grid-cols-[15rem_1fr]">
 			<WizardSidebar />
@@ -86,14 +141,18 @@ const sectionsByStep = {
 				<WizardNavigation />
 			</div>
 		</div>
+
+		<BuilderReview previewHref={previewHref} />
 	</div>
 </PortfolioLayout>
 
 <script>
 	import { wizardStore } from '../lib/portfolio';
-	import { addRepeatEntry, applySectionValues, collectSectionData, syncRepeatableRows } from '../lib/portfolio';
-	import { scrollToActiveStep } from '../lib/portfolio';
-	import type { PortfolioData } from '../lib/portfolio';
+	import { addRepeatEntry, applySectionValues, collectSectionData, removeRepeatEntry, syncRepeatableRows } from '../lib/portfolio';
+	import { isMeaningful, isSectionCompleted, scrollToActiveStep } from '../lib/portfolio';
+	import { createEmptyPortfolioData, type PortfolioData } from '../lib/portfolio';
+	import type { BuilderRecoveryContext } from '../lib/portfolio-builder/recovery';
+	import { builderRecovery } from '../lib/portfolio-builder/recovery';
 	import { portfolioManagerStore, portfolioOutputToData } from '../lib/portfolio-manager';
 	import { themeStore, isThemeId } from '../lib/themes';
 
@@ -105,11 +164,25 @@ const sectionsByStep = {
 		? portfolioManagerStore.getPortfolio(editPortfolioId)
 		: undefined;
 
+	const resumeFromPreview = editParams.get('resume') === '1';
+
+	const previewLink = document.querySelector<HTMLAnchorElement>('[data-preview-link]');
+	if (previewLink) {
+		previewLink.href = editPortfolioId
+			? `/preview?from=builder&portfolio=${encodeURIComponent(editPortfolioId)}`
+			: '/preview?from=builder';
+	}
+
 	if (editRecord) {
-		wizardStore.reset();
-		const editData = portfolioOutputToData(editRecord.data);
-		for (const stepId of Object.keys(editData) as (keyof PortfolioData)[]) {
-			wizardStore.setSectionData(stepId, editData[stepId]);
+		// Returning from a builder preview keeps the persisted (possibly unsaved)
+		// wizard state so the user's changes are never silently discarded.
+		const resumed = resumeFromPreview && isMeaningful(wizardStore.getState().data);
+		if (!resumed) {
+			wizardStore.reset();
+			const editData = portfolioOutputToData(editRecord.data);
+			for (const stepId of Object.keys(editData) as (keyof PortfolioData)[]) {
+				wizardStore.setSectionData(stepId, editData[stepId]);
+			}
 		}
 		const templateId = editRecord.data.theme?.templateId ?? editRecord.data.metadata?.templateId;
 		if (templateId && isThemeId(templateId)) {
@@ -124,32 +197,162 @@ const sectionsByStep = {
 	}
 
 	/**
-	 * Keeps repeatable-entry labels ("Education 2", "Project 3", …) accurate
-	 * after the store-driven row sync clones templates. Each entry panel marks
-	 * its label with `[data-entry-label]` and `data-entry-base`.
+	 * Scroll-reveal for progressive entrance of section cards and contextual
+	 * blocks. Content is NEVER removed from the document — only faded in.
+	 * The `js-reveal` class is added to <html> only by JS, so without
+	 * scripting, with reduced motion, or without IntersectionObserver support
+	 * every block is fully visible immediately. Reveal is one-shot: once a
+	 * block has appeared it stays visible and is no longer observed.
 	 */
-	const renumberEntryLabels = (section: HTMLElement): void => {
-		for (const group of Array.from(section.querySelectorAll<HTMLElement>('[data-list-index]'))) {
-			const label = group.querySelector<HTMLElement>('[data-entry-label]');
-			if (!label) continue;
-			const base = label.dataset.entryBase ?? '';
-			label.textContent = base ? `${base} ${Number(group.dataset.listIndex) + 1}` : '';
+	const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const supportsIntersection = typeof IntersectionObserver !== 'undefined';
+
+	let revealObserver: IntersectionObserver | null = null;
+
+	const revealElement = (element: HTMLElement): void => {
+		if (!revealObserver) return;
+		element.classList.add('is-revealed');
+		revealObserver.unobserve(element);
+	};
+
+	/**
+	 * Observes reveal targets in `scope` (whole document on init, the affected
+	 * section after an entry is added). Idempotent: already-revealed or
+	 * already-hidden targets are skipped so nothing is ever animated twice.
+	 */
+	const observeRevealTargets = (scope: ParentNode = document): void => {
+		if (!revealObserver) return;
+		for (const target of scope.querySelectorAll<HTMLElement>(
+			'[data-reveal]:not(.is-revealed):not(.is-hidden)'
+		)) {
+			target.classList.add('is-hidden');
+			revealObserver.observe(target);
 		}
 	};
 
-	if (container) {
-		const sections = Array.from(
-			container.querySelectorAll<HTMLElement>('[data-step-section-id]')
+	if (!reduceMotion && supportsIntersection) {
+		document.documentElement.classList.add('js-reveal');
+		revealObserver = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						revealElement(entry.target as HTMLElement);
+					}
+				}
+			},
+			{ threshold: 0.08, rootMargin: '0px 0px -6% 0px' }
 		);
 
-		for (const section of sections) {
+		/**
+		 * Keyboard safety: if focus moves into an as-yet-hidden block (via Tab
+		 * or the section navigation focus step), reveal it immediately so no
+		 * interactive element is ever focused while invisible.
+		 */
+		document.addEventListener(
+			'focusin',
+			(event) => {
+				const focusTarget = event.target as HTMLElement | null;
+				const revealRoot = focusTarget?.closest<HTMLElement>('[data-reveal]');
+				if (revealRoot) revealElement(revealRoot);
+			},
+			true
+		);
+	}
+
+	/**
+	 * Keeps repeatable entries consistent after add/remove: `data-list-index`,
+	 * the visible entry label, the group/remove `aria-label`s, and every field
+	 * `id`/`for`/`aria-labelledby` (renumbered to match the entry index so
+	 * cloned panels never produce duplicate ids).
+	 */
+	const renumberEntryGroups = (section: HTMLElement): void => {
+		for (const [index, group] of Array.from(
+			section.querySelectorAll<HTMLElement>('[data-list-index]')
+		).entries()) {
+			group.dataset.listIndex = String(index);
+
+			const label = group.querySelector<HTMLElement>('[data-entry-label]');
+			const base = label?.dataset.entryBase ?? '';
+			if (label) label.textContent = base ? `${base} ${index + 1}` : '';
+			if (base) group.setAttribute('aria-label', `${base} ${index + 1}`);
+
+			const removeButton = group.querySelector<HTMLButtonElement>('[data-remove-entry]');
+			if (removeButton && base) {
+				removeButton.setAttribute('aria-label', `Remove ${base.toLowerCase()} ${index + 1}`);
+			}
+
+			for (const el of group.querySelectorAll<HTMLElement>('[id]')) {
+				const id = el.id;
+				const match = id.match(/-(?:\d+|template)$/);
+				if (match) el.id = `${id.slice(0, match.index)}-${index}`;
+			}
+			for (const el of group.querySelectorAll<HTMLElement>('[for]')) {
+				const target = el.getAttribute('for') ?? '';
+				const match = target.match(/-(?:\d+|template)$/);
+				if (match) el.setAttribute('for', `${target.slice(0, match.index)}-${index}`);
+			}
+			for (const el of group.querySelectorAll<HTMLElement>('[aria-labelledby]')) {
+				const target = el.getAttribute('aria-labelledby') ?? '';
+				const match = target.match(/-(?:\d+|template)$/);
+				if (match) el.setAttribute('aria-labelledby', `${target.slice(0, match.index)}-${index}`);
+			}
+		}
+	};
+
+	/**
+	 * Shows the entry list or the empty state based on how many groups remain,
+	 * and keeps the contextual hint near the add action in sync with the
+	 * existing completion logic: incomplete sections get a "finish this entry"
+	 * hint, complete sections get a "strengthen" hint. Non-list sections return
+	 * early so this stays cheap on every store update.
+	 */
+	const syncEmptyState = (section: HTMLElement): void => {
+		const list = section.querySelector<HTMLElement>('[data-entry-list]');
+		const empty = section.querySelector<HTMLElement>('[data-empty-state]');
+		const hint = section.querySelector<HTMLElement>('[data-add-hint]');
+		const stepId = section.dataset.stepSectionId as keyof PortfolioData | undefined;
+		if (!list && !empty) return;
+		const hasGroups = section.querySelectorAll<HTMLElement>('[data-list-index]').length > 0;
+		if (list) list.hidden = !hasGroups;
+		if (empty) empty.hidden = hasGroups;
+		for (const button of section.querySelectorAll<HTMLButtonElement>('[data-add-entry]')) {
+			const inEmptyState = Boolean(button.closest('[data-empty-state]'));
+			button.hidden = inEmptyState ? hasGroups : !hasGroups;
+		}
+		if (hint && stepId) {
+			if (!hasGroups) {
+				hint.hidden = true;
+			} else {
+				const complete = isSectionCompleted(wizardStore.getState().data, stepId);
+				const text = complete
+					? hint.dataset.addHintComplete
+					: hint.dataset.addHintIncomplete;
+				hint.hidden = !text;
+				if (text) hint.textContent = text;
+			}
+		}
+	};
+
+	/**
+	 * Re-applies the current wizard data to every section in the DOM. Used at
+	 * init and again after a recovery restore/discard, because the store→DOM
+	 * bindings (rows, field values, indices, empty states) only run here.
+	 */
+	const refreshSections = (): void => {
+		const scope = container ?? document;
+		for (const section of scope.querySelectorAll<HTMLElement>('[data-step-section-id]')) {
 			const stepId = section.dataset.stepSectionId as keyof PortfolioData | undefined;
 			if (stepId) {
 				syncRepeatableRows(section, stepId);
 				applySectionValues(section, stepId);
-				renumberEntryLabels(section);
+				renumberEntryGroups(section);
+				syncEmptyState(section);
 			}
 		}
+	};
+
+	if (container) {
+		refreshSections();
 
 		const persistTarget = (event: Event) => {
 			const target = event.target as Element | null;
@@ -167,13 +370,45 @@ const sectionsByStep = {
 
 		container.addEventListener('click', (event) => {
 			const target = event.target as Element | null;
-			const button = target?.closest<HTMLButtonElement>('[data-add-entry]');
-			if (!button) return;
-			const section = button.closest<HTMLElement>('[data-step-section-id]');
+			const section = target?.closest<HTMLElement>('[data-step-section-id]');
 			const stepId = section?.dataset.stepSectionId as keyof PortfolioData | undefined;
-			if (section && stepId) {
+			if (!section || !stepId) return;
+
+			const addButton = target?.closest<HTMLButtonElement>('[data-add-entry]');
+			if (addButton) {
 				addRepeatEntry(section, stepId);
-				renumberEntryLabels(section);
+				renumberEntryGroups(section);
+				syncEmptyState(section);
+				const groups = Array.from(section.querySelectorAll<HTMLElement>('[data-list-index]'));
+				const newest = groups[groups.length - 1];
+				if (newest) {
+					newest.classList.remove('is-hidden', 'is-revealed');
+					observeRevealTargets(newest);
+				}
+				return;
+			}
+
+			const removeButton = target?.closest<HTMLButtonElement>('[data-remove-entry]');
+			if (removeButton) {
+				const group = removeButton.closest<HTMLElement>('[data-list-index]');
+				const index = group ? Number(group.dataset.listIndex) : -1;
+				if (index < 0) return;
+				if (revealObserver && group) {
+					revealObserver.unobserve(group);
+					for (const el of group.querySelectorAll<HTMLElement>('[data-reveal]')) {
+						revealObserver.unobserve(el);
+					}
+				}
+				if (!removeRepeatEntry(section, stepId, index)) return;
+				renumberEntryGroups(section);
+				syncEmptyState(section);
+				const groups = Array.from(section.querySelectorAll<HTMLElement>('[data-list-index]'));
+				const nextGroup = groups[Math.min(index, groups.length - 1)];
+				if (nextGroup) {
+					nextGroup.querySelector<HTMLElement>('input, select, textarea')?.focus();
+				} else {
+					section.querySelector<HTMLButtonElement>('[data-add-entry]')?.focus();
+				}
 			}
 		});
 
@@ -183,9 +418,10 @@ const sectionsByStep = {
 			const { currentStep } = wizardStore.getState();
 			const changed = currentStep !== lastStep;
 
-			for (const section of sections) {
+			for (const section of container.querySelectorAll<HTMLElement>('[data-step-section-id]')) {
 				section.hidden = section.dataset.stepSectionId !== currentStep;
 				section.classList.toggle('animate-step-in', changed && !section.hidden);
+				syncEmptyState(section);
 			}
 
 			if (changed) {
@@ -196,5 +432,72 @@ const sectionsByStep = {
 
 		wizardStore.subscribe(applyState);
 		applyState();
+
+		observeRevealTargets();
 	}
+
+	// --- Builder auto-save & recovery ---
+	const recoveryContext: BuilderRecoveryContext = editPortfolioId
+		? { type: 'edit', portfolioId: editPortfolioId }
+		: { type: 'new' };
+	const recoveryBaseline = editRecord
+		? portfolioOutputToData(editRecord.data)
+		: createEmptyPortfolioData();
+
+	const recovered = builderRecovery.readRecoveryFor(recoveryContext);
+
+	const recoveryBanner = document.getElementById('builder-recovery');
+	const recoveryRestore = recoveryBanner?.querySelector<HTMLButtonElement>('[data-recovery-restore]');
+	const recoveryDiscard = recoveryBanner?.querySelector<HTMLButtonElement>('[data-recovery-discard]');
+
+	const focusActiveField = (): void => {
+		const activeSection = container?.querySelector<HTMLElement>(
+			'[data-step-section-id]:not([hidden])'
+		);
+		const field = activeSection?.querySelector<HTMLElement>('input, select, textarea');
+		if (field) {
+			field.focus();
+		} else {
+			recoveryBanner?.focus();
+		}
+	};
+
+	// Coming back from a builder preview already restores the persisted (possibly
+	// unsaved) wizard state, so no recovery prompt is shown on top of it.
+	const resumeWithWork = resumeFromPreview && isMeaningful(wizardStore.getState().data);
+
+	if (recovered && !resumeWithWork) {
+		recoveryBanner?.removeAttribute('hidden');
+		recoveryBanner?.focus();
+	}
+
+	recoveryRestore?.addEventListener('click', () => {
+		if (!recovered) return;
+		builderRecovery.restoreSnapshot(recovered);
+		refreshSections();
+		if (recoveryBanner) recoveryBanner.hidden = true;
+		focusActiveField();
+	});
+
+	recoveryDiscard?.addEventListener('click', () => {
+		builderRecovery.clearRecoveryFor(recoveryContext);
+		for (const stepId of Object.keys(recoveryBaseline) as (keyof PortfolioData)[]) {
+			wizardStore.setSectionData(stepId, recoveryBaseline[stepId]);
+		}
+		refreshSections();
+		if (recoveryBanner) recoveryBanner.hidden = true;
+		focusActiveField();
+	});
+
+	if (recoveryBanner) {
+		recoveryBanner.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				recoveryBanner.hidden = true;
+				focusActiveField();
+			}
+		});
+	}
+
+	builderRecovery.enable(recoveryContext, recoveryBaseline);
 </script>
