@@ -37,6 +37,7 @@ const presentation = theme.presentation;
 const hero: string = portfolio.seo?.title ?? portfolio.theme?.name ?? 'My Portfolio';
 const heroTagline: string = portfolio.seo?.description ?? '';
 const heroKeywords: string[] = portfolio.seo?.keywords ?? [];
+const heroPhoto = portfolio.builder?.profilePhoto ?? null;
 
 const about: string = heroTagline;
 
@@ -54,7 +55,7 @@ const resume: PortfolioResume | null = portfolio.resume;
 	id="portfolio-preview"
 	class={`mx-auto w-full ${presentation.layout} px-md py-section md:px-xl ${presentation.font}`}
 >
-	<HeroSection title={hero} tagline={heroTagline} keywords={heroKeywords} theme={theme} />
+	<HeroSection title={hero} tagline={heroTagline} keywords={heroKeywords} theme={theme} photo={heroPhoto} />
 	<AboutSection about={about} theme={theme} />
 	<ProjectsSection projects={projects} theme={theme} />
 	<ExperienceSection experience={experience} theme={theme} />

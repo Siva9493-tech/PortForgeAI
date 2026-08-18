@@ -70,7 +70,12 @@ function heroHtml(output: PortfolioOutput): string {
 	const chips = keywords.length
 		? `<ul class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">${keywords.map(chip).join('')}</ul>`
 		: '';
+	const profilePhoto = output.builder?.profilePhoto;
+	const photoHtml = profilePhoto?.dataUrl
+		? `<img src="${escapeHtml(profilePhoto.dataUrl)}" alt="${escapeHtml(profilePhoto.name || 'Profile photo')}" class="size-28 rounded-full border border-hairline bg-surface-2 object-cover" />`
+		: '';
 	return `<section id="hero" aria-labelledby="hero-heading" class="flex flex-col gap-lg ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
+		${photoHtml}
 		<p class="text-eyebrow ${currentPresentation.accent}" data-theme="accent">Portfolio</p>
 		<h1 id="hero-heading" class="${currentPresentation.display} text-display-lg ${currentPresentation.heading}" data-theme="display heading">${title}</h1>
 		${tagline ? `<p class="max-w-narrow text-body-lg text-ink-muted">${tagline}</p>` : ''}

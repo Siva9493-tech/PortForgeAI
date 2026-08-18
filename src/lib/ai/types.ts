@@ -164,7 +164,10 @@ export interface PortfolioBuilderExtras {
 	email?: string;
 	phone?: string;
 	location?: string;
-	/** Photo metadata only (never the binary dataUrl — localStorage quota safety). */
+	/**
+	 * Photo metadata plus its data URL, preserved so the saved portfolio keeps
+	 * the user's uploaded profile image across save → edit → save round-trips.
+	 */
 	profilePhoto?: ProfilePhotoData | null;
 	customLinks?: SocialCustomLink[];
 	githubImport?: GitHubImportData;

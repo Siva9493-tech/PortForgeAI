@@ -57,7 +57,7 @@ export function portfolioOutputToData(output: PortfolioOutput): PortfolioData {
 		phone: builder?.phone ?? '',
 		location: builder?.location ?? '',
 		about: seo?.description ?? '',
-		profilePhoto: null,
+		profilePhoto: builder?.profilePhoto ?? null,
 	};
 
 	base.education = output.education.map((entry) => ({

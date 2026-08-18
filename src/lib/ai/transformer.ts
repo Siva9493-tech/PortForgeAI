@@ -275,10 +275,10 @@ export function transformResume(input: PortfolioInput): PortfolioResume | null {
 
 /**
  * Collects builder-only data that the normalized output does not model so it
- * survives a save → edit → save round-trip. Photo binary data (the dataUrl) is
- * deliberately excluded: the portfolio record lives in localStorage where a
- * multi-megabyte base64 image would risk quota corruption for every portfolio.
- * Returns undefined when nothing needs preserving.
+ * survives a save → edit → save round-trip. The profile photo (name, type,
+ * size and its data URL) is preserved so the stored portfolio can keep and
+ * re-render the user's uploaded image. Returns undefined when nothing needs
+ * preserving.
  */
 function transformBuilderExtras(input: PortfolioInput): PortfolioBuilderExtras | undefined {
 	const personal = input.data.personalInformation;
@@ -294,6 +294,16 @@ function transformBuilderExtras(input: PortfolioInput): PortfolioBuilderExtras |
 	if (phone) extras.phone = phone;
 	const location = normalizeText(personal.location);
 	if (location) extras.location = location;
+
+	const profilePhoto = personal.profilePhoto;
+	if (profilePhoto && profilePhoto.dataUrl) {
+		extras.profilePhoto = {
+			name: profilePhoto.name,
+			type: profilePhoto.type,
+			size: profilePhoto.size,
+			dataUrl: profilePhoto.dataUrl,
+		};
+	}
 
 	if (social?.customLinks?.length) {
 		const links = social.customLinks

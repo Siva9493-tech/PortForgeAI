@@ -52,7 +52,6 @@ const nextMeta = nextStep ? getSectionMetaByNumber(nextStep.number) : undefined;
 const nextLabel = nextMeta ? `Continue to ${nextMeta.shortLabel}` : '';
 const showNextFooter = isActiveSection && status === 'complete' && nextStep !== undefined && nextStep.id !== stepId;
 ---
----
 
 <section
 	id={id}

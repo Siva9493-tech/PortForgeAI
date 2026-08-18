@@ -1,19 +1,31 @@
 ---
 import { Sparkles } from 'lucide-astro';
 import type { PortfolioTheme } from '../../lib/themes';
+import type { ProfilePhotoData } from '../../lib/portfolio';
 
 interface Props {
 	title: string;
 	tagline: string;
 	keywords: string[];
 	theme: PortfolioTheme;
+	/** Optional uploaded profile photo shown as the hero avatar. */
+	photo?: ProfilePhotoData | null;
 }
 
-const { title, tagline, keywords, theme } = Astro.props;
+const { title, tagline, keywords, theme, photo } = Astro.props;
 const presentation = theme.presentation;
 ---
 
 <section id="hero" aria-labelledby="hero-heading" class={`flex flex-col gap-lg ${presentation.sectionSpacing}`}>
+	{
+		photo?.dataUrl && (
+			<img
+				src={photo.dataUrl}
+				alt={photo.name ? `${photo.name} — profile photo` : 'Profile photo'}
+				class="size-28 rounded-full border border-hairline bg-surface-2 object-cover"
+			/>
+		)
+	}
 	<div class="flex items-center gap-sm">
 		<Sparkles size="18" class={presentation.accent} aria-hidden="true" />
 		<p class={`text-eyebrow ${presentation.accent}`}>Portfolio</p>

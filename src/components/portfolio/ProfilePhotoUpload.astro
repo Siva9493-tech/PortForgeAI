@@ -153,8 +153,6 @@ const inputId = `${name}-input`;
 		dataUrl?: string;
 	}
 
-	let objectUrl: string | null = null;
-
 	const acceptedMimes = accept.split(',').map((m) => m.trim()).filter(Boolean);
 	const acceptedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
 
@@ -190,17 +188,6 @@ const inputId = `${name}-input`;
 		errorEl.hidden = !message;
 	}
 
-	function releaseUrl(): void {
-		if (objectUrl) {
-			try {
-				URL.revokeObjectURL(objectUrl);
-			} catch {
-				/* ignore */
-			}
-			objectUrl = null;
-		}
-	}
-
 	function render(photo: StoredPhoto | null | undefined): void {
 		const show = Boolean(photo?.name && photo?.dataUrl);
 		if (dropzone) dropzone.hidden = show;
@@ -215,8 +202,9 @@ const inputId = `${name}-input`;
 			image.src = photo.dataUrl ?? '';
 			image.alt = photo.name ? `${photo.name} preview` : 'Profile photo preview';
 			image.onerror = () => {
-				// The stored blob URL can be stale after a page reload restored it; fall back to the placeholder.
-				releaseUrl();
+				// A stored URL can be stale after a page reload restored it (e.g.
+				// legacy blob URLs saved before data-URL persistence); fall back
+				// to the empty state rather than showing a broken image.
 				commit(null);
 				render(readPhoto());
 			};
@@ -243,13 +231,23 @@ const inputId = `${name}-input`;
 			return;
 		}
 
-		releaseUrl();
-		const url = URL.createObjectURL(file);
-		objectUrl = url;
-
-		const next = { name: file.name, type: file.type, size: file.size, dataUrl: url };
-		commit(next);
-		render(next);
+		// Read as a durable data URL rather than a session-scoped blob URL so the
+		// image survives reloads and can be persisted with the portfolio.
+		const reader = new FileReader();
+		reader.onload = () => {
+			const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+			if (!dataUrl) {
+				setError('Could not read the selected image. Please try again.');
+				return;
+			}
+			const next = { name: file.name, type: file.type, size: file.size, dataUrl };
+			commit(next);
+			render(next);
+		};
+		reader.onerror = () => {
+			setError('Could not read the selected image. Please try again.');
+		};
+		reader.readAsDataURL(file);
 	}
 
 	if (input) {
@@ -291,7 +289,6 @@ const inputId = `${name}-input`;
 
 	if (removeBtn) {
 		removeBtn.addEventListener('click', () => {
-			releaseUrl();
 			commit(null);
 			render(null);
 		});
