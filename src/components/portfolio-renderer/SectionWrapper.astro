@@ -31,7 +31,7 @@ const headingId = `${id}-heading`;
 const sectionClass = className ?? presentation.sectionSpacing;
 ---
 
-<section id={id} aria-labelledby={headingId} class={sectionClass}>
+<section id={id} aria-labelledby={headingId} data-reveal class={sectionClass}>
 	<div class="flex items-center gap-sm">
 		<slot name="icon" />
 		<HeadingTag id={headingId} class={`${presentation.display} text-headline ${presentation.heading}`}>

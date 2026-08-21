@@ -155,15 +155,23 @@ export interface PortfolioMetadata {
 
 /**
  * Builder-origin data that the normalized output schema does not model
- * (contact details, custom links and import preferences). Carried through the
- * save → edit → save round-trip so the Portfolio Builder never silently loses
- * user-entered information. Optional, and intentionally ignored by every
- * renderer / export / publish consumer — it exists only for data preservation.
+ * (contact details, full About text, custom links and import preferences).
+ * Carried through the save → edit → save round-trip so the Portfolio Builder
+ * never silently loses user-entered information. Optional. Renderers may read
+ * select fields for presentation (the profile photo and the full About text
+ * in the public Hero/Introduction sections); export/publish consumers ignore
+ * the rest.
  */
 export interface PortfolioBuilderExtras {
 	email?: string;
 	phone?: string;
 	location?: string;
+	/**
+	 * The full "About Me" text, preserved so the public Introduction section
+	 * can render the complete profile narrative (the normalized SEO
+	 * description used by the Hero is truncated to a short teaser).
+	 */
+	about?: string;
 	/**
 	 * Photo metadata plus its data URL, preserved so the saved portfolio keeps
 	 * the user's uploaded profile image across save → edit → save round-trips.

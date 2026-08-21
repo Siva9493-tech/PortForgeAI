@@ -1,0 +1,31 @@
+---
+import type { PublicSectionNavItem } from '../../lib/portfolio';
+
+interface Props {
+	/** Resolved navigation items; only sections that actually render. */
+	items: PublicSectionNavItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav
+	aria-label="Portfolio sections"
+	class="sticky top-0 z-40 mb-lg border-b border-hairline surface-glass shadow-sm"
+>
+	<ul class="flex flex-nowrap items-center gap-x-lg overflow-x-auto py-xs">
+		{
+			items.map((item) => (
+				<li class="shrink-0">
+					<a
+						href={`#${item.id}`}
+						data-section-nav={item.id}
+						class="inline-flex items-center py-xs text-body-sm font-medium text-ink-muted transition-colors duration-200 hover:text-ink"
+					>
+						{item.label}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</nav>

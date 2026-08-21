@@ -109,7 +109,7 @@ export function normalizePortfolioOutput(raw: unknown): PortfolioOutput {
 	};
 }
 
-/** Normalizes builder-only data (preserved, never rendered) into known fields. */
+/** Normalizes builder-only data (preserved for save → edit → save round-trips). */
 function normalizeBuilderExtras(value: unknown): PortfolioOutput['builder'] {
 	if (!isRecord(value)) {
 		return undefined;
@@ -119,6 +119,7 @@ function normalizeBuilderExtras(value: unknown): PortfolioOutput['builder'] {
 	if (isString(value.email)) extras.email = value.email;
 	if (isString(value.phone)) extras.phone = value.phone;
 	if (isString(value.location)) extras.location = value.location;
+	if (isString(value.about)) extras.about = value.about;
 
 	if (isRecord(value.profilePhoto)) {
 		extras.profilePhoto = {

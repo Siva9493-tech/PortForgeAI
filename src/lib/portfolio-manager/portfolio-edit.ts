@@ -56,7 +56,7 @@ export function portfolioOutputToData(output: PortfolioOutput): PortfolioData {
 		email: builder?.email ?? '',
 		phone: builder?.phone ?? '',
 		location: builder?.location ?? '',
-		about: seo?.description ?? '',
+		about: builder?.about ?? seo?.description ?? '',
 		profilePhoto: builder?.profilePhoto ?? null,
 	};
 

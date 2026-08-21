@@ -1,34 +1,44 @@
 ---
-import { Mail, Download, Github, Linkedin } from 'lucide-astro';
-import type { PortfolioResume, PortfolioSocial } from '../../lib/ai';
+import { Download, Github, Linkedin, Mail } from 'lucide-astro';
+import type { PortfolioOutput, PortfolioResume } from '../../lib/ai';
+import { resolveIdentityLinks } from '../../lib/portfolio';
 import type { PortfolioTheme } from '../../lib/themes';
 import SectionWrapper from './SectionWrapper.astro';
 
 interface Props {
-	social: PortfolioSocial | null;
+	/** The normalized output driving every action in this section. */
+	portfolio: PortfolioOutput;
 	resume: PortfolioResume | null;
 	theme: PortfolioTheme;
 }
 
-const { social, resume, theme } = Astro.props;
+const { portfolio, resume, theme } = Astro.props;
 const presentation = theme.presentation;
+
+const ICONS: Record<'linkedin' | 'github' | 'email', typeof Mail> = {
+	linkedin: Linkedin,
+	github: Github,
+	email: Mail,
+};
 
 interface ContactAction {
 	label: string;
 	href: string;
 	icon: typeof Mail;
+	trackType: string;
 }
+
+const links = resolveIdentityLinks(portfolio);
 
 const actions: ContactAction[] = [];
-
-if (social?.linkedin) {
-	actions.push({ label: 'LinkedIn', href: social.linkedin, icon: Linkedin });
-}
-if (social?.github) {
-	actions.push({ label: 'GitHub', href: social.github, icon: Github });
+for (const kind of ['linkedin', 'github', 'email'] as const) {
+	const link = links.find((entry) => entry.kind === kind);
+	if (link) {
+		actions.push({ label: link.label, href: link.href, icon: ICONS[kind], trackType: 'contact_click' });
+	}
 }
 if (resume?.fileUrl) {
-	actions.push({ label: 'Download Resume', href: resume.fileUrl, icon: Download });
+	actions.push({ label: 'Download Resume', href: resume.fileUrl, icon: Download, trackType: 'resume_click' });
 }
 ---
 
@@ -41,7 +51,10 @@ if (resume?.fileUrl) {
 					<a
 						class={presentation.button}
 						href={action.href}
-						{...(action.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+						data-analytics-click={action.trackType}
+						{...(action.href.startsWith('http')
+							? { target: '_blank', rel: 'noopener noreferrer' }
+							: {})}
 					>
 						<action.icon size="16" aria-hidden="true" />
 						{action.label}

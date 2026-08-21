@@ -295,6 +295,9 @@ function transformBuilderExtras(input: PortfolioInput): PortfolioBuilderExtras |
 	const location = normalizeText(personal.location);
 	if (location) extras.location = location;
 
+	const about = normalizeText(personal.about);
+	if (about) extras.about = about;
+
 	const profilePhoto = personal.profilePhoto;
 	if (profilePhoto && profilePhoto.dataUrl) {
 		extras.profilePhoto = {

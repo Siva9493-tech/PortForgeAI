@@ -8,9 +8,9 @@ import type {
 	PortfolioProject,
 	PortfolioResume,
 	PortfolioSkill,
-	PortfolioSocial,
 } from '../../lib/ai';
 import type { PortfolioTheme } from '../../lib/themes';
+import { resolveSectionNav } from '../../lib/portfolio';
 
 import HeroSection from './HeroSection.astro';
 import AboutSection from './AboutSection.astro';
@@ -22,6 +22,8 @@ import CertificationsSection from './CertificationsSection.astro';
 import AchievementsSection from './AchievementsSection.astro';
 import SocialLinksSection from './SocialLinksSection.astro';
 import ContactSection from './ContactSection.astro';
+import SectionNav from './SectionNav.astro';
+import FooterSection from './FooterSection.astro';
 
 interface Props {
 	/** The single source of truth for this render. */
@@ -33,36 +35,30 @@ interface Props {
 const { portfolio, theme } = Astro.props;
 const presentation = theme.presentation;
 
-/** Resolved preview SEO values derived from the normalized output. */
-const hero: string = portfolio.seo?.title ?? portfolio.theme?.name ?? 'My Portfolio';
-const heroTagline: string = portfolio.seo?.description ?? '';
-const heroKeywords: string[] = portfolio.seo?.keywords ?? [];
-const heroPhoto = portfolio.builder?.profilePhoto ?? null;
-
-const about: string = heroTagline;
-
 const projects: PortfolioProject[] = portfolio.projects;
 const experience: PortfolioExperience[] = portfolio.experience;
 const education: PortfolioEducation[] = portfolio.education;
 const skills: PortfolioSkill[] = portfolio.skills;
 const certifications: PortfolioCertification[] = portfolio.certifications;
 const achievements: PortfolioAchievement[] = portfolio.achievements;
-const social: PortfolioSocial | null = portfolio.social;
 const resume: PortfolioResume | null = portfolio.resume;
+const sectionNav = resolveSectionNav(portfolio);
 ---
 
 <main
 	id="portfolio-preview"
-	class={`mx-auto w-full ${presentation.layout} px-md py-section md:px-xl ${presentation.font}`}
+	class={`mx-auto w-full ${presentation.layout} px-md py-xl md:px-xl md:py-section ${presentation.font}`}
 >
-	<HeroSection title={hero} tagline={heroTagline} keywords={heroKeywords} theme={theme} photo={heroPhoto} />
-	<AboutSection about={about} theme={theme} />
+	{sectionNav.length > 0 && <SectionNav items={sectionNav} />}
+	<HeroSection portfolio={portfolio} theme={theme} />
+	<AboutSection portfolio={portfolio} theme={theme} />
 	<ProjectsSection projects={projects} theme={theme} />
 	<ExperienceSection experience={experience} theme={theme} />
 	<EducationSection education={education} theme={theme} />
 	<SkillsSection skills={skills} theme={theme} />
 	<CertificationsSection certifications={certifications} theme={theme} />
 	<AchievementsSection achievements={achievements} theme={theme} />
-	<SocialLinksSection social={social} theme={theme} />
-	<ContactSection social={social} resume={resume} theme={theme} />
+	<SocialLinksSection portfolio={portfolio} theme={theme} />
+	<ContactSection portfolio={portfolio} resume={resume} theme={theme} />
+	<FooterSection portfolio={portfolio} theme={theme} />
 </main>

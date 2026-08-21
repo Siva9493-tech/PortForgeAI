@@ -10,3 +10,4 @@ export { default as CertificationsSection } from './CertificationsSection.astro'
 export { default as AchievementsSection } from './AchievementsSection.astro';
 export { default as SocialLinksSection } from './SocialLinksSection.astro';
 export { default as ContactSection } from './ContactSection.astro';
+export { default as FooterSection } from './FooterSection.astro';

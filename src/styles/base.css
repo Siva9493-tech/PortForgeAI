@@ -19,6 +19,21 @@
 		text-rendering: optimizeLegibility;
 	}
 
+	/* Sticky section navigation clearance — anchored jumps land below the bar. */
+	main section[id] {
+		scroll-margin-top: calc(var(--spacing-xl) * 2);
+	}
+
+	/*
+	 * Portfolio text must never break the layout at narrow widths. `anywhere`
+	 * (unlike `break-word`) also shrinks the min-content size of flex/grid
+	 * children, so long unbroken words, URLs, names, and descriptions wrap
+	 * inside their card/column instead of overflowing it.
+	 */
+	#portfolio-preview {
+		overflow-wrap: anywhere;
+	}
+
 	body {
 		background-color: var(--color-canvas);
 		color: var(--color-ink);

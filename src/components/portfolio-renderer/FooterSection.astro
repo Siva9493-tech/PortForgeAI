@@ -1,0 +1,119 @@
+---
+import { Download, Github, Globe, Instagram, Link2, Linkedin, Mail, Twitter, Youtube } from 'lucide-astro';
+import type { PortfolioOutput } from '../../lib/ai';
+import { resolveFooter, type PublicSocialKind } from '../../lib/portfolio';
+import type { PortfolioTheme } from '../../lib/themes';
+
+interface Props {
+	/** The normalized output driving every value in this footer. */
+	portfolio: PortfolioOutput;
+	theme: PortfolioTheme;
+}
+
+const { portfolio, theme } = Astro.props;
+const presentation = theme.presentation;
+const footer = resolveFooter(portfolio);
+const year = new Date().getFullYear();
+
+const ICONS: Record<PublicSocialKind, typeof Mail> = {
+	linkedin: Linkedin,
+	github: Github,
+	email: Mail,
+	website: Globe,
+	twitter: Twitter,
+	instagram: Instagram,
+	youtube: Youtube,
+	other: Link2,
+};
+---
+
+<footer id="portfolio-footer" aria-label="Portfolio footer" class="border-t border-hairline pt-xl">
+	<div class="flex flex-col gap-lg">
+		<div class="flex flex-col gap-xs">
+			<p class="text-headline font-medium text-ink">{footer.name || 'Portfolio'}</p>
+			{
+				footer.headline && <p class="text-body-sm text-ink-muted">{footer.headline}</p>
+			}
+		</div>
+		{
+			footer.nav.length > 0 && (
+				<nav aria-label="Footer sections">
+					<ul class="flex flex-wrap gap-x-lg gap-y-xs">
+						{footer.nav.map((item) => (
+							<li>
+								<a
+									href={`#${item.id}`}
+									class="inline-flex items-center py-xxs text-body-sm font-medium text-ink-muted transition-colors duration-200 hover:text-ink"
+								>
+									{item.label}
+								</a>
+							</li>
+						))}
+					</ul>
+				</nav>
+			)
+		}
+		{
+			footer.links.length > 0 && (
+				<ul class="flex flex-wrap gap-sm" aria-label="Contact and social links">
+					{footer.links.map((link) => {
+						const Icon = ICONS[link.kind];
+						const trackType =
+							link.kind === 'linkedin'
+								? 'linkedin_click'
+								: link.kind === 'github'
+									? 'github_click'
+									: null;
+						const external = link.href.startsWith('http');
+						return (
+							<li>
+								<a
+									href={link.href}
+									{...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+									{...(trackType ? { 'data-analytics-click': trackType } : {})}
+									class="inline-flex items-center gap-xs py-xxs text-body-sm text-ink-muted transition-colors duration-200 hover:text-ink"
+								>
+									<Icon size="16" aria-hidden="true" />
+									{link.label}
+								</a>
+							</li>
+						);
+					})}
+				</ul>
+			)
+		}
+		{
+			(footer.contactHref || footer.resumeHref) && (
+				<div class="flex flex-wrap items-center gap-sm">
+					{footer.contactHref && (
+						<a
+							href={footer.contactHref}
+							class={presentation.ghostButton}
+							data-analytics-click="contact_click"
+							{...(footer.contactHref.startsWith('http')
+								? { target: '_blank', rel: 'noopener noreferrer' }
+								: {})}
+						>
+							<Mail size="16" aria-hidden="true" />
+							Get in Touch
+						</a>
+					)}
+					{footer.resumeHref && (
+						<a
+							href={footer.resumeHref}
+							class={presentation.ghostButton}
+							data-analytics-click="resume_click"
+							{...(footer.resumeHref.startsWith('http')
+								? { target: '_blank', rel: 'noopener noreferrer' }
+								: {})}
+						>
+							<Download size="16" aria-hidden="true" />
+							Download Resume
+						</a>
+					)}
+				</div>
+			)
+		}
+		{footer.name && <p class="text-caption text-ink-subtle">© {year} {footer.name}</p>}
+	</div>
+</footer>

@@ -1,56 +1,123 @@
 ---
-import { Sparkles } from 'lucide-astro';
+import { ArrowRight, Download, Github, Globe, Linkedin, Mail, MapPin, Sparkles } from 'lucide-astro';
+import type { PortfolioOutput } from '../../lib/ai';
+import { resolveHero } from '../../lib/portfolio';
 import type { PortfolioTheme } from '../../lib/themes';
-import type { ProfilePhotoData } from '../../lib/portfolio';
 
 interface Props {
-	title: string;
-	tagline: string;
-	keywords: string[];
+	/** The normalized output driving every value in this Hero. */
+	portfolio: PortfolioOutput;
 	theme: PortfolioTheme;
-	/** Optional uploaded profile photo shown as the hero avatar. */
-	photo?: ProfilePhotoData | null;
 }
 
-const { title, tagline, keywords, theme, photo } = Astro.props;
+const { portfolio, theme } = Astro.props;
 const presentation = theme.presentation;
+const hero = resolveHero(portfolio);
+const hasPhoto = Boolean(hero.photo?.dataUrl);
 ---
 
-<section id="hero" aria-labelledby="hero-heading" class={`flex flex-col gap-lg ${presentation.sectionSpacing}`}>
-	{
-		photo?.dataUrl && (
-			<img
-				src={photo.dataUrl}
-				alt={photo.name ? `${photo.name} — profile photo` : 'Profile photo'}
-				class="size-28 rounded-full border border-hairline bg-surface-2 object-cover"
-			/>
-		)
-	}
-	<div class="flex items-center gap-sm">
-		<Sparkles size="18" class={presentation.accent} aria-hidden="true" />
-		<p class={`text-eyebrow ${presentation.accent}`}>Portfolio</p>
+<section
+	id="hero"
+	aria-labelledby="hero-heading"
+	class={`grid grid-cols-1 gap-lg ${hasPhoto ? 'md:grid-cols-2 md:items-center md:gap-xl' : ''} ${presentation.sectionSpacing}`}
+>
+	<div class="flex flex-col gap-md">
+		<div class="flex items-center gap-sm">
+			<Sparkles size="16" class={presentation.accent} aria-hidden="true" />
+			<p class={`text-eyebrow ${presentation.accent}`}>Portfolio</p>
+		</div>
+		<h1
+			id="hero-heading"
+			class={`text-balance break-words ${presentation.display} text-display-lg ${presentation.heading}`}
+		>
+			{hero.name || 'Portfolio'}
+		</h1>
+		{
+			hero.headline && (
+				<p
+					class={`max-w-narrow break-words text-balance ${presentation.display} text-headline font-medium ${presentation.heading}`}
+				>
+					{hero.headline}
+				</p>
+			)
+		}
+		{
+			hero.introduction && (
+				<p class="max-w-narrow text-body-lg text-ink-muted">{hero.introduction}</p>
+			)
+		}
+		{
+			hero.location && (
+				<p class="flex items-center gap-xs text-caption text-ink-subtle">
+					<MapPin size="14" aria-hidden="true" />
+					Based in {hero.location}
+				</p>
+			)
+		}
+		{
+			hero.keywords.length > 0 && (
+				<ul class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">
+					{hero.keywords.map((keyword) => (
+						<li class="rounded-md border border-hairline bg-surface-2 px-sm py-xxs text-caption text-ink-muted">
+							{keyword}
+						</li>
+					))}
+				</ul>
+			)
+		}
+		{
+			hero.links.length > 0 && (
+				<ul class="flex flex-wrap items-center gap-md" aria-label="Profile links">
+					{hero.links.map((link) => (
+						<li>
+							<a
+								href={link.href}
+								{...(link.href.startsWith('http')
+									? { target: '_blank', rel: 'noopener noreferrer' }
+									: {})}
+								class="inline-flex items-center gap-xs py-xxs text-body-sm text-ink-muted transition-colors duration-200 hover:text-ink"
+							>
+								{link.kind === 'linkedin' && <Linkedin size="16" aria-hidden="true" />}
+								{link.kind === 'github' && <Github size="16" aria-hidden="true" />}
+								{link.kind === 'email' && <Mail size="16" aria-hidden="true" />}
+								{link.kind === 'website' && <Globe size="16" aria-hidden="true" />}
+								{link.label}
+							</a>
+						</li>
+					))}
+				</ul>
+			)
+		}
+		{
+			hero.ctas.length > 0 && (
+				<div class="flex flex-wrap items-center gap-sm">
+					{hero.ctas.map((cta) => (
+						<a
+							href={cta.href}
+							class={cta.variant === 'primary' ? presentation.button : presentation.ghostButton}
+							{...(cta.analytics ? { 'data-analytics-click': cta.analytics } : {})}
+							{...(cta.href.startsWith('http')
+								? { target: '_blank', rel: 'noopener noreferrer' }
+								: {})}
+						>
+							{cta.label}
+							{cta.icon === 'arrow' && <ArrowRight size="16" aria-hidden="true" />}
+							{cta.icon === 'download' && <Download size="16" aria-hidden="true" />}
+						</a>
+					))}
+				</div>
+			)
+		}
 	</div>
-	<h1 id="hero-heading" class={`${presentation.display} text-display-lg ${presentation.heading}`}>
-		{title}
-	</h1>
 	{
-		tagline && (
-			<p class="max-w-narrow text-body-lg text-ink-muted">
-				{tagline}
-			</p>
-		)
-	}
-	{
-		keywords.length > 0 && (
-			<ul class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">
-				{keywords.map((keyword) => (
-					<li
-						class="rounded-md border border-hairline bg-surface-2 px-sm py-xxs text-caption text-ink-muted"
-					>
-						{keyword}
-					</li>
-				))}
-			</ul>
+		hasPhoto && (
+			<div class="flex justify-center md:justify-end">
+				<img
+					src={hero.photo?.dataUrl}
+					alt={hero.name ? `${hero.name} profile photo` : 'Profile photo'}
+					class="size-40 rounded-full border border-hairline bg-surface-2 object-cover md:size-52"
+				/>
+			</div>
 		)
 	}
 </section>

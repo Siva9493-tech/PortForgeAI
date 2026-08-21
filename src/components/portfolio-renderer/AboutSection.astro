@@ -1,35 +1,50 @@
 ---
 import { User } from 'lucide-astro';
+import type { PortfolioOutput } from '../../lib/ai';
+import { resolveAbout } from '../../lib/portfolio';
 import type { PortfolioTheme } from '../../lib/themes';
 
 interface Props {
-	about: string;
+	/** The normalized output driving every value in this section. */
+	portfolio: PortfolioOutput;
 	theme: PortfolioTheme;
 }
 
-const { about, theme } = Astro.props;
+const { portfolio, theme } = Astro.props;
 const presentation = theme.presentation;
+const about = resolveAbout(portfolio);
 
-const paragraphs: string[] = about
+const paragraphs: string[] = about.introduction
 	.split(/\n+/)
 	.map((paragraph) => paragraph.trim())
 	.filter(Boolean);
+
+const hasContent = paragraphs.length > 0;
 ---
 
-<section id="about" aria-labelledby="about-heading" class={presentation.sectionSpacing}>
-	<div class="flex items-center gap-sm">
-		<User size="20" class={presentation.accent} aria-hidden="true" />
-		<h2 id="about-heading" class={`${presentation.display} text-headline ${presentation.heading}`}>
-			About
-		</h2>
-	</div>
-	{
-		paragraphs.length > 0 && (
-			<div class="mt-lg flex flex-col gap-md">
-				{paragraphs.map((paragraph) => (
-					<p class="max-w-narrow text-body text-ink-muted">{paragraph}</p>
-				))}
+{
+	hasContent && (
+		<section
+			id="about"
+			aria-labelledby="about-heading"
+			data-reveal
+			class={`grid grid-cols-1 gap-md md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:gap-xl ${presentation.sectionSpacing}`}
+		>
+			<div class="flex flex-col gap-xs">
+				<div class="flex items-center gap-sm">
+					<User size="20" class={presentation.accent} aria-hidden="true" />
+					<h2 id="about-heading" class={`${presentation.display} text-headline ${presentation.heading}`}>
+						About
+					</h2>
+				</div>
 			</div>
-		)
-	}
-</section>
+			<div class="flex flex-col gap-md">
+				{
+					paragraphs.map((paragraph) => (
+						<p class="max-w-narrow text-body text-ink-muted">{paragraph}</p>
+					))
+				}
+			</div>
+		</section>
+	)
+}
