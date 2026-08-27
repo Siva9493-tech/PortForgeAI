@@ -1,5 +1,6 @@
 ---
 import '../../styles/globals.css';
+import ProtectedRoute from '../ProtectedRoute.astro';
 
 interface Props {
 	title?: string;
@@ -33,35 +34,37 @@ const {
 			Skip to content
 		</a>
 
-		<div class="flex h-dvh flex-col overflow-hidden">
-			<header
-				class="flex h-14 shrink-0 items-center justify-between gap-md border-b border-hairline px-md md:px-xl"
-				aria-label="Portfolio builder header"
-			>
-				<div class="flex min-w-0 flex-col">
-					<span class="truncate text-body font-semibold text-ink">Portfolio Builder</span>
-					<span class="hidden truncate text-caption text-ink-tertiary sm:block">
-						Create your professional portfolio
-					</span>
-				</div>
-				<a
-					href="/portfolios"
-					class="inline-flex shrink-0 items-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-xs text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+		<ProtectedRoute>
+			<div class="flex h-dvh flex-col overflow-hidden">
+				<header
+					class="flex h-14 shrink-0 items-center justify-between gap-md border-b border-hairline px-md md:px-xl"
+					aria-label="Portfolio builder header"
 				>
-					My Portfolios
-				</a>
-			</header>
+					<div class="flex min-w-0 flex-col">
+						<span class="truncate text-body font-semibold text-ink">Portfolio Builder</span>
+						<span class="hidden truncate text-caption text-ink-tertiary sm:block">
+							Create your professional portfolio
+						</span>
+					</div>
+					<a
+						href="/portfolios"
+						class="inline-flex shrink-0 items-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-xs text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+					>
+						My Portfolios
+					</a>
+				</header>
 
-			<main
-				id="portfolio-builder-main"
-				tabindex="-1"
-				aria-label="Portfolio builder workspace"
-				class="flex-1 overflow-y-auto"
-			>
-				<div class="mx-auto w-full max-w-page p-md md:p-xl">
-					<slot />
-				</div>
-			</main>
-		</div>
+				<main
+					id="portfolio-builder-main"
+					tabindex="-1"
+					aria-label="Portfolio builder workspace"
+					class="flex-1 overflow-y-auto"
+				>
+					<div class="mx-auto w-full max-w-page p-md md:p-xl">
+						<slot />
+					</div>
+				</main>
+			</div>
+		</ProtectedRoute>
 	</body>
 </html>

@@ -39,3 +39,35 @@ export function formatPortfolioDateTime(iso: string): string {
 		minute: '2-digit',
 	}).format(date);
 }
+
+/**
+ * Selects the most-recently-updated portfolios for a compact "recent" view,
+ * newest first. Pure and non-mutating — the input is copied before sorting, so
+ * the caller's array (e.g. the store's collection) is never reordered.
+ *
+ * ISO-8601 UTC timestamps compare lexicographically, so string comparison
+ * orders them correctly without parsing; ties break on the stable id so the
+ * order is deterministic across renders (never dependent on input order). A
+ * non-positive limit yields an empty list. Generic over any record carrying an
+ * `id` and `updatedAt`, so it stays free of DOM/store dependencies and is unit
+ * testable in isolation.
+ */
+export function selectRecentPortfolios<T extends { id: string; updatedAt: string }>(
+	records: ReadonlyArray<T>,
+	limit: number
+): T[] {
+	if (limit <= 0) {
+		return [];
+	}
+	return [...records]
+		.sort((a, b) => {
+			if (a.updatedAt !== b.updatedAt) {
+				return a.updatedAt < b.updatedAt ? 1 : -1;
+			}
+			if (a.id === b.id) {
+				return 0;
+			}
+			return a.id < b.id ? -1 : 1;
+		})
+		.slice(0, limit);
+}

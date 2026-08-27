@@ -1,4 +1,8 @@
 ---
+// STEP 10: authenticated preview page stays statically generated. The
+// client-side rendering pipeline is preserved as-is.
+export const prerender = true;
+
 import '../styles/globals.css';
 import { ArrowLeft, FolderOpen, PenLine } from 'lucide-astro';
 import { generatePortfolio } from '../lib/portfolio';
@@ -121,6 +125,14 @@ import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 
 			const params = new URLSearchParams(window.location.search);
 			const portfolioId = params.get('portfolio');
+
+			// Only a portfolio-scoped preview reads a stored record; make sure the
+			// store is hydrated first so a reloaded URL never shows a false
+			// "Portfolio not found". A plain generated preview needs no record.
+			if (portfolioId) {
+				await portfolioManagerStore.ensureHydrated();
+			}
+
 			const isBuilderPreview = params.get('from') === 'builder';
 			const backToBuilderHref = portfolioId
 				? `/portfolio-builder?portfolio=${encodeURIComponent(portfolioId)}&resume=1`

@@ -1,58 +1,28 @@
 ---
 import { Clock3, ExternalLink, FolderOpen, Palette } from 'lucide-astro';
+import { portfolioManagerStore } from '../../lib/portfolio-manager';
 
-interface Portfolio {
-	id: string;
-	name: string;
-	theme: string;
-	updated: string;
-	status: 'Draft' | 'Published';
-	statusTone: 'neutral' | 'success';
-}
-
-const portfolios: Portfolio[] = [
-	{
-		id: 'rp-developer',
-		name: 'Developer Portfolio',
-		theme: 'Modern Dark',
-		updated: '2 hours ago',
-		status: 'Draft',
-		statusTone: 'neutral',
-	},
-	{
-		id: 'rp-student',
-		name: 'Student Portfolio',
-		theme: 'Minimal',
-		updated: 'Yesterday',
-		status: 'Published',
-		statusTone: 'success',
-	},
-	{
-		id: 'rp-designer',
-		name: 'Designer Portfolio',
-		theme: 'Creative',
-		updated: '3 days ago',
-		status: 'Draft',
-		statusTone: 'neutral',
-	},
-];
-
-const statusTones = {
-	neutral: {
-		dot: 'bg-ink-tertiary',
-		label: 'text-ink-subtle',
-	},
-	success: {
-		dot: 'bg-semantic-success',
-		label: 'text-semantic-success',
-	},
-};
+/**
+ * Recent portfolios — a compact "continue editing" view of the signed-in
+ * user's most-recently-updated portfolios.
+ *
+ * Data comes exclusively from the shared `portfolioManagerStore` (which is
+ * Supabase-authoritative for the authenticated user); there is no mock data and
+ * no second data-fetching layer here. At build/SSR time the store is empty, so
+ * this section renders hidden and its card grid is populated client-side from
+ * the store — mirroring every other store-driven dashboard section. The card
+ * markup lives once in a <template> so the client render reuses the exact same
+ * design (icons, spacing, status pill) rather than re-describing it.
+ */
+const records = portfolioManagerStore.getPortfolios();
+const hasPortfolios = records.length > 0;
 ---
 
 <section
 	id="recent-portfolios"
 	aria-labelledby="recent-portfolios-heading"
 	class="mt-xl"
+	hidden={!hasPortfolios}
 >
 	<div class="mb-md">
 		<h2 id="recent-portfolios-heading" class="text-heading-md text-ink">
@@ -63,59 +33,142 @@ const statusTones = {
 		</p>
 	</div>
 
-	<div class="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3">
-		{
-			portfolios.map((portfolio) => {
-				const tone = statusTones[portfolio.statusTone];
-				return (
-					<article
-						class="card card-hover flex flex-col p-md"
-						aria-labelledby={portfolio.id}
-					>
-						<div class="flex items-center justify-between gap-sm">
-							<span
-								class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-1 text-primary"
-								aria-hidden="true"
-							>
-								<FolderOpen size="18" />
-							</span>
-
-							<span
-								class="inline-flex items-center gap-xs rounded-pill border border-hairline bg-surface-2 px-sm py-xs"
-							>
-								<span class={`h-1.5 w-1.5 rounded-full ${tone.dot}`} aria-hidden="true"></span>
-								<span class={`text-caption font-medium ${tone.label}`}>
-									{portfolio.status}
-								</span>
-							</span>
-						</div>
-
-						<div class="mt-md flex flex-col gap-sm">
-							<h3 id={portfolio.id} class="text-body font-medium text-ink">
-								{portfolio.name}
-							</h3>
-
-							<p class="flex items-center gap-xs text-caption text-ink-subtle">
-								<Palette size="13" aria-hidden="true" />
-								{portfolio.theme}
-							</p>
-
-							<p class="flex items-center gap-xs text-caption text-ink-subtle">
-								<Clock3 size="13" aria-hidden="true" />
-								Updated {portfolio.updated}
-							</p>
-						</div>
-
-						<button
-							type="button"
-							class="mt-md inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
-						>
-							Open
-							<ExternalLink size="14" class="text-ink-subtle" aria-hidden="true" />
-						</button>
-					</article>
-				);
-			})
-		}
+	<div
+		id="recent-portfolios-list"
+		class="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-3"
+	>
 	</div>
+
+	<template id="recent-portfolio-card-template">
+		<article class="card card-hover flex flex-col p-md">
+			<div class="flex items-center justify-between gap-sm">
+				<span
+					class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-1 text-primary"
+					aria-hidden="true"
+				>
+					<FolderOpen size="18" />
+				</span>
+
+				<span
+					class="inline-flex items-center gap-xs rounded-pill border border-hairline bg-surface-2 px-sm py-xs"
+				>
+					<span class="h-1.5 w-1.5 rounded-full bg-ink-tertiary" data-status-dot aria-hidden="true"></span>
+					<span class="text-caption font-medium text-ink-subtle" data-status-label>Draft</span>
+				</span>
+			</div>
+
+			<div class="mt-md flex flex-col gap-sm">
+				<h3 class="text-body font-medium text-ink" data-title></h3>
+
+				<p class="flex items-center gap-xs text-caption text-ink-subtle" data-theme-row>
+					<Palette size="13" aria-hidden="true" />
+					<span data-theme></span>
+				</p>
+
+				<p class="flex items-center gap-xs text-caption text-ink-subtle">
+					<Clock3 size="13" aria-hidden="true" />
+					Updated <span data-updated></span>
+				</p>
+			</div>
+
+			<a
+				data-open
+				class="mt-md inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+			>
+				Open
+				<ExternalLink size="14" class="text-ink-subtle" aria-hidden="true" />
+			</a>
+		</article>
+	</template>
 </section>
+
+<script>
+	import {
+		formatPortfolioDate,
+		portfolioManagerStore,
+		portfolioStatusText,
+		portfolioStatusTone,
+		selectRecentPortfolios,
+	} from '../../lib/portfolio-manager';
+
+	/** How many recent portfolios the dashboard summarizes (the full list lives on /portfolios). */
+	const RECENT_LIMIT = 3;
+
+	const section = document.getElementById('recent-portfolios');
+	const list = document.getElementById('recent-portfolios-list');
+	const template = document.getElementById('recent-portfolio-card-template');
+
+	if (section && list && template instanceof HTMLTemplateElement) {
+		const base = template.content.firstElementChild;
+
+		const render = (): void => {
+			const recent = selectRecentPortfolios(portfolioManagerStore.getPortfolios(), RECENT_LIMIT);
+
+			// Empty (or not yet hydrated): hide the section entirely so the
+			// dashboard's own empty state is the only thing shown for a new user.
+			if (recent.length === 0 || !(base instanceof HTMLElement)) {
+				list.replaceChildren();
+				section.hidden = true;
+				return;
+			}
+
+			const fragment = document.createDocumentFragment();
+			for (const record of recent) {
+				const card = base.cloneNode(true) as HTMLElement;
+				const headingId = `recent-portfolio-${record.id}`;
+				card.setAttribute('aria-labelledby', headingId);
+
+				const title = card.querySelector('[data-title]');
+				if (title) {
+					title.id = headingId;
+					title.textContent = record.title;
+				}
+
+				const tone = portfolioStatusTone(record.status);
+				const dot = card.querySelector('[data-status-dot]');
+				if (dot) {
+					dot.className = `h-1.5 w-1.5 rounded-full ${tone.dot}`;
+				}
+				const label = card.querySelector('[data-status-label]');
+				if (label) {
+					label.className = `text-caption font-medium ${tone.label}`;
+					label.textContent = portfolioStatusText(record.status);
+				}
+
+				// Theme is optional metadata — show the real theme name when the
+				// portfolio has one, otherwise drop the row rather than invent a value.
+				const themeName = record.data.theme?.name?.trim();
+				const themeRow = card.querySelector('[data-theme-row]');
+				const themeValue = card.querySelector('[data-theme]');
+				if (themeName && themeValue) {
+					themeValue.textContent = themeName;
+				} else {
+					themeRow?.remove();
+				}
+
+				const updated = card.querySelector('[data-updated]');
+				if (updated) {
+					updated.textContent = formatPortfolioDate(record.updatedAt);
+				}
+
+				const open = card.querySelector('[data-open]');
+				if (open instanceof HTMLAnchorElement) {
+					open.href = `/preview?portfolio=${record.id}`;
+					open.setAttribute('aria-label', `Open ${record.title}`);
+				}
+
+				fragment.append(card);
+			}
+
+			list.replaceChildren(fragment);
+			section.hidden = false;
+		};
+
+		// Render immediately from the synchronously-restored cache, keep in sync
+		// with every later change, and ensure the collection is reconciled with
+		// Supabase (this read path awaits hydration via the store's own guard).
+		portfolioManagerStore.subscribe(render);
+		render();
+		void portfolioManagerStore.ensureHydrated();
+	}
+</script>

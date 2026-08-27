@@ -1,4 +1,7 @@
 ---
+// STEP 10: auth pages stay statically generated.
+export const prerender = true;
+
 import Layout from '../layouts/Layout.astro';
 import { Check, Sparkles } from 'lucide-astro';
 
@@ -248,7 +251,7 @@ const description =
 </style>
 
 <script>
-	import { signUp, signInWithGoogle } from '../lib/auth';
+	import { signUp, signInWithGoogle, upsertProfile } from '../lib/auth';
 
 	const form = document.getElementById('signup-form') as HTMLFormElement | null;
 	const submitButton = document.getElementById('signup-submit') as HTMLButtonElement | null;
@@ -381,6 +384,7 @@ const description =
 
 		setBusy(true);
 
+		const fullNameValue = fullName?.value.trim() ?? '';
 		const { data, error } = await signUp(email?.value.trim() ?? '', password?.value ?? '');
 
 		setBusy(false);
@@ -390,7 +394,20 @@ const description =
 			return;
 		}
 
-		if (data.session) {
+		if (data.session?.user) {
+			// A real authenticated user exists, so create their profile row using
+			// the name collected by the form before heading to the dashboard. The
+			// "check your email" flow is preserved below for confirmation-only
+			// signups that return no session.
+			const { error: profileError } = await upsertProfile(data.session.user, {
+				full_name: fullNameValue,
+				avatar_url: null,
+			});
+			if (profileError) {
+				// Authentication already succeeded; never block the redirect just
+				// because an optional profile write failed.
+				console.error('[auth] Signup succeeded but profile creation failed:', profileError);
+			}
 			window.location.assign('/dashboard');
 			return;
 		}

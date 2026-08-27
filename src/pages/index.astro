@@ -1,4 +1,8 @@
 ---
+// STEP 10: marketing page stays statically generated. The runtime is
+// intentionally restricted to the public portfolio slug route.
+export const prerender = true;
+
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/sections/Hero.astro';
 import Features from '../components/sections/Features.astro';

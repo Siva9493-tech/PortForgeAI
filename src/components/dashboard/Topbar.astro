@@ -1,5 +1,5 @@
 ---
-import { Bell, ChevronDown, LayoutDashboard, Search, Sun } from 'lucide-astro';
+import { Bell, ChevronDown, LayoutDashboard, LogOut, Search, Sun } from 'lucide-astro';
 
 interface Props {
 	title?: string;
@@ -57,18 +57,127 @@ const { title = 'Dashboard', subtitle = 'Manage your portfolios and workspace' }
 			<Sun size="16" aria-hidden="true" />
 		</button>
 
-		<button
-			type="button"
-			aria-label="Profile menu"
-			class="inline-flex items-center gap-xs rounded-md border border-transparent py-xs pl-1 pr-xs transition-colors duration-200 hover:bg-surface-2"
-		>
-			<span
-				class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-caption font-semibold text-on-primary"
-				aria-hidden="true"
+		<div class="relative" data-profile-menu>
+			<button
+				type="button"
+				id="profile-menu-button"
+				aria-label="Profile menu"
+				aria-haspopup="menu"
+				aria-expanded="false"
+				aria-controls="profile-menu-panel"
+				class="inline-flex items-center gap-xs rounded-md border border-transparent py-xs pl-1 pr-xs transition-colors duration-200 hover:bg-surface-2"
 			>
-				PF
-			</span>
-			<ChevronDown size="14" class="hidden text-ink-subtle sm:block" aria-hidden="true" />
-		</button>
+				<span
+					class="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-caption font-semibold text-on-primary"
+					aria-hidden="true"
+				>
+					PF
+				</span>
+				<ChevronDown size="14" class="hidden text-ink-subtle sm:block" aria-hidden="true" />
+			</button>
+
+			<div
+				id="profile-menu-panel"
+				role="menu"
+				aria-labelledby="profile-menu-button"
+				class="absolute right-0 top-[calc(100%_+_0.5rem)] z-50 flex w-52 flex-col gap-xs rounded-md border border-hairline bg-surface-1 p-xs shadow-md"
+				hidden
+			>
+				<p
+					data-logout-error
+					class="rounded-md bg-surface-2 px-sm py-xs text-caption text-semantic-danger"
+					role="alert"
+					hidden
+				>
+				</p>
+				<button
+					type="button"
+					role="menuitem"
+					data-logout
+					class="inline-flex items-center gap-sm rounded-md px-sm py-xs text-body-sm text-ink transition-colors duration-200 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
+				>
+					<LogOut size="16" class="text-ink-subtle" aria-hidden="true" />
+					Sign out
+				</button>
+			</div>
+		</div>
 	</div>
 </header>
+
+<script>
+	import { signOut } from '../../lib/auth';
+	import { portfolioManagerStore } from '../../lib/portfolio-manager';
+
+	const container = document.querySelector<HTMLElement>('[data-profile-menu]');
+	const button = document.getElementById('profile-menu-button');
+	const panel = document.getElementById('profile-menu-panel');
+	const logoutButton = container?.querySelector<HTMLButtonElement>('[data-logout]');
+	const logoutError = container?.querySelector<HTMLElement>('[data-logout-error]');
+
+	if (container && button && panel && logoutButton) {
+		const isOpen = (): boolean => !panel.hidden;
+
+		const setOpen = (open: boolean): void => {
+			panel.hidden = !open;
+			button.setAttribute('aria-expanded', String(open));
+			if (open) {
+				logoutButton.focus();
+			}
+		};
+
+		button.addEventListener('click', (event) => {
+			event.stopPropagation();
+			setOpen(!isOpen());
+		});
+
+		// Behave like a real menu: dismiss on an outside click or Escape.
+		document.addEventListener('click', (event) => {
+			if (isOpen() && !container.contains(event.target as Node)) {
+				setOpen(false);
+			}
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && isOpen()) {
+				setOpen(false);
+				button.focus();
+			}
+		});
+
+		logoutButton.addEventListener('click', async () => {
+			if (logoutError) logoutError.hidden = true;
+			logoutButton.disabled = true;
+			logoutButton.setAttribute('aria-busy', 'true');
+
+			// The Supabase session is the source of truth: sign out through the
+			// shared browser client and only redirect when it actually succeeded,
+			// so a failed logout is never reported to the user as a success.
+			const { error } = await signOut();
+
+			if (error) {
+				logoutButton.disabled = false;
+				logoutButton.removeAttribute('aria-busy');
+				if (logoutError) {
+					logoutError.textContent = 'Could not sign out. Please try again.';
+					logoutError.hidden = false;
+				}
+				console.error('[auth] Sign-out failed:', error);
+				return;
+			}
+
+			// Session cleared. The store's own auth listener drops the authenticated
+			// records; the fresh /login load starts from an unauthenticated store.
+			// Wait for that SIGNED_OUT cleanup to finish BEFORE navigating, so the
+			// `last-user` cache pointer is cleared and a previous account's user-scoped
+			// cache can never be restored for the next account that signs in here.
+			try {
+				await portfolioManagerStore.hydrate();
+			} catch (cleanupError) {
+				// The Supabase session is already gone; never let a cleanup hiccup
+				// trap the user on a protected page — redirect regardless.
+				console.error('[auth] Store cleanup after sign-out failed:', cleanupError);
+			}
+
+			window.location.assign('/login');
+		});
+	}
+</script>

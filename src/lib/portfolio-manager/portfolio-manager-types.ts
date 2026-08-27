@@ -32,6 +32,11 @@ export interface PortfolioRecord {
 	id: string;
 	title: string;
 	status: PortfolioStatus;
+	/**
+	 * The public URL slug. Null while unpublished/no slug has been assigned.
+	 * Stays stable across republishes so the public URL never changes.
+	 */
+	slug: string | null;
 	/** ISO-8601 timestamp. Set once and never mutated after creation. */
 	createdAt: string;
 	/** ISO-8601 timestamp. Bumped on every successful update. */
@@ -58,4 +63,6 @@ export interface UpdatePortfolioInput {
 	title?: string;
 	data?: PortfolioOutput;
 	status?: PortfolioStatus;
+	/** The public slug. Set by the publish flow; null clears it. */
+	slug?: string | null;
 }

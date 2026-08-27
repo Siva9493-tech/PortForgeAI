@@ -1,4 +1,7 @@
 ---
+// STEP 10: authenticated app pages stay statically generated.
+export const prerender = true;
+
 import Achievements from '../components/portfolio/Achievements.astro';
 import BuilderProgress from '../components/portfolio/BuilderProgress.astro';
 import BuilderReview from '../components/portfolio/BuilderReview.astro';
@@ -160,6 +163,15 @@ const sectionsByStep = {
 
 	const editParams = new URLSearchParams(window.location.search);
 	const editPortfolioId = editParams.get('portfolio');
+
+	// Resolve an edit only after the store has reconciled with Supabase. Without
+	// this, a direct load or reload of an edit URL can read the record before
+	// hydration and drop out of edit mode — risking an accidental duplicate on
+	// save. Create mode needs no record, so we skip the wait there.
+	if (editPortfolioId) {
+		await portfolioManagerStore.ensureHydrated();
+	}
+
 	const editRecord = editPortfolioId
 		? portfolioManagerStore.getPortfolio(editPortfolioId)
 		: undefined;

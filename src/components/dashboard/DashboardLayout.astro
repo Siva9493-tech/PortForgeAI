@@ -1,5 +1,6 @@
 ---
 import '../../styles/globals.css';
+import ProtectedRoute from '../ProtectedRoute.astro';
 import Sidebar from './Sidebar.astro';
 import Topbar from './Topbar.astro';
 
@@ -37,17 +38,19 @@ const {
 			Skip to content
 		</a>
 
-		<div class="shell flex h-dvh overflow-hidden">
-			<Sidebar active={pageLabel} />
+		<ProtectedRoute>
+			<div class="shell flex h-dvh overflow-hidden">
+				<Sidebar active={pageLabel} />
 
-			<div class="flex min-w-0 flex-1 flex-col">
-				<Topbar title={pageLabel} />
+				<div class="flex min-w-0 flex-1 flex-col">
+					<Topbar title={pageLabel} />
 
-				<main id="dashboard-main" tabindex="-1" class="flex-1 overflow-y-auto p-md md:p-xl">
-					<slot />
-				</main>
+					<main id="dashboard-main" tabindex="-1" class="flex-1 overflow-y-auto p-md md:p-xl">
+						<slot />
+					</main>
+				</div>
 			</div>
-		</div>
+		</ProtectedRoute>
 	</body>
 </html>
 

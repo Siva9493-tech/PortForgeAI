@@ -154,6 +154,13 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 
 	const nav = document.getElementById('wizard-navigation');
 	const editParamId = new URLSearchParams(window.location.search).get('portfolio');
+
+	// Resolve edit mode only once the store has hydrated, so a direct edit URL
+	// never misreads an un-hydrated store as create mode (see the page script).
+	if (editParamId) {
+		await portfolioManagerStore.ensureHydrated();
+	}
+
 	const editRecord = editParamId ? portfolioManagerStore.getPortfolio(editParamId) : undefined;
 	const isEditMode = Boolean(editRecord);
 	const finalLabel = isEditMode ? 'Save Changes' : 'Save Portfolio';
@@ -226,10 +233,11 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 		 * in-memory record). Before reporting "Saved" we read the persisted
 		 * collection back and confirm the current content actually landed, so
 		 * a success message is never shown for a save that did not persist.
+		 * The key is the store's active key (user-scoped when authenticated).
 		 */
 		const isSavePersisted = (id: string): boolean => {
 			try {
-				const raw = localStorage.getItem('portforge:portfolios:v1');
+				const raw = localStorage.getItem(portfolioManagerStore.getPersistKey());
 				if (!raw) return false;
 				const parsed = JSON.parse(raw) as {
 					records?: Array<{ id?: string; data?: unknown }>;
@@ -374,7 +382,7 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 			if (fill) fill.style.width = `${percent}%`;
 		};
 
-		const performSave = (): void => {
+		const performSave = async (): Promise<void> => {
 			const snapshot = saveState.getSnapshot();
 			if (snapshot.status === 'saving') return;
 
@@ -410,20 +418,20 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 				// Once a portfolio exists, saving always UPDATES it in place
 				// (stable id preserved) — it never creates a duplicate.
 				if (targetId) {
-					const saved = savePortfolioFromBuilder(targetId, wizardStore.getState().data);
+					const saved = await savePortfolioFromBuilder(targetId, wizardStore.getState().data);
 					if (!saved) {
 						fail('Could not save changes. This portfolio may no longer exist.');
 						return;
 					}
 				} else {
-					const created = createPortfolioFromBuilder(wizardStore.getState().data);
+					const created = await createPortfolioFromBuilder(wizardStore.getState().data);
 					targetId = created.id;
 				}
 				if (!isSavePersisted(targetId)) {
 					fail('Could not save the portfolio right now. Please try again.');
 					return;
 				}
-saveState.completeSave(
+				saveState.completeSave(
 					wizardStore.getState().data,
 					isEditMode ? 'Changes saved.' : 'Portfolio saved.'
 				);

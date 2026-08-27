@@ -188,8 +188,9 @@ function transformBuilderData(data: PortfolioData): PortfolioOutput {
  * wizard data is transformed into the normalized `PortfolioOutput` exactly
  * once via the existing transformer, then the existing store create operation
  * assigns a stable unique id, a default draft status and fresh timestamps.
+ * Resolves after Supabase (for an authenticated user) has confirmed the insert.
  */
-export function createPortfolioFromBuilder(data: PortfolioData): PortfolioRecord {
+export async function createPortfolioFromBuilder(data: PortfolioData): Promise<PortfolioRecord> {
 	const output = transformBuilderData(data);
 	const fullName = data.personalInformation.fullName.trim();
 	const professionalTitle = data.personalInformation.professionalTitle.trim();
@@ -204,9 +205,13 @@ export function createPortfolioFromBuilder(data: PortfolioData): PortfolioRecord
  * the existing transformer (no AI call, no duplicate pipeline), then the
  * existing store update mechanism replaces the stored data while preserving
  * the portfolio id, createdAt, status and version behavior. Identical data is
- * detected structurally and left untouched.
+ * detected structurally and left untouched. Resolves after Supabase (for an
+ * authenticated user) has confirmed the update.
  */
-export function savePortfolioFromBuilder(id: string, data: PortfolioData): PortfolioRecord | undefined {
+export async function savePortfolioFromBuilder(
+	id: string,
+	data: PortfolioData,
+): Promise<PortfolioRecord | undefined> {
 	const output = transformBuilderData(data);
 	return portfolioManagerStore.updatePortfolio(id, { data: output });
 }

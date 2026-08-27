@@ -1,4 +1,7 @@
 ---
+// STEP 10: auth pages stay statically generated.
+export const prerender = true;
+
 import Layout from '../layouts/Layout.astro';
 import { LogIn } from 'lucide-astro';
 
@@ -158,7 +161,7 @@ const description = 'Sign in to your PortForge AI account and pick up where you 
 </style>
 
 <script>
-	import { signIn, signInWithGoogle } from '../lib/auth';
+	import { signIn, signInWithGoogle, ensureUserProfile } from '../lib/auth';
 
 	const form = document.getElementById('login-form') as HTMLFormElement | null;
 	const submitButton = document.getElementById('login-submit') as HTMLButtonElement | null;
@@ -252,7 +255,7 @@ const description = 'Sign in to your PortForge AI account and pick up where you 
 
 		setBusy(true);
 
-		const { error } = await signIn(
+		const { data, error } = await signIn(
 			email?.value.trim() ?? '',
 			password?.value ?? '',
 		);
@@ -262,6 +265,18 @@ const description = 'Sign in to your PortForge AI account and pick up where you 
 		if (error) {
 			showFormError(error.message);
 			return;
+		}
+
+		if (data.session?.user) {
+			// Ensure a profile row exists for the authenticated user. This reads
+			// first and only writes when the row is missing, so any stored
+			// full_name is preserved and never overwritten with blank data.
+			const { error: profileError } = await ensureUserProfile(data.session.user);
+			if (profileError) {
+				// Login already succeeded; never block the redirect because an
+				// optional profile write failed.
+				console.error('[auth] Login succeeded but profile ensure failed:', profileError);
+			}
 		}
 
 		window.location.assign('/dashboard');

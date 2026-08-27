@@ -1,4 +1,7 @@
 ---
+// STEP 10: authenticated app pages stay statically generated.
+export const prerender = true;
+
 import { Download, FolderPlus, History, Plus, Search, SearchX, Trash2, X } from 'lucide-astro';
 import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
 import PortfolioCard from '../components/portfolio/PortfolioCard.astro';
@@ -387,14 +390,14 @@ const fieldClass =
 
 	deleteCancel?.addEventListener('click', closeDeleteDialog);
 
-	deleteConfirm?.addEventListener('click', () => {
+	deleteConfirm?.addEventListener('click', async () => {
 		const id = pendingDeleteId;
 		closeDeleteDialog();
 		if (!id) {
 			showError('Could not delete the portfolio. The portfolio may have been removed.');
 			return;
 		}
-		const removed = portfolioManagerStore.removePortfolio(id);
+		const removed = await portfolioManagerStore.removePortfolio(id);
 		if (!removed) {
 			showError('Could not delete the portfolio. The portfolio may have been removed.');
 			return;
@@ -572,13 +575,13 @@ const fieldClass =
 
 	restoreCancel?.addEventListener('click', closeRestoreDialog);
 
-	restoreConfirm?.addEventListener('click', () => {
+	restoreConfirm?.addEventListener('click', async () => {
 		const pending = pendingRestore;
 		closeRestoreDialog();
 		if (!pending) {
 			return;
 		}
-		const result = restorePortfolio(pending.id, pending.version);
+		const result = await restorePortfolio(pending.id, pending.version);
 		if (!result.ok) {
 			showError(result.message);
 			return;
@@ -712,13 +715,13 @@ const fieldClass =
 		}
 	};
 
-	const publish = (button: HTMLButtonElement): void => {
+	const publish = async (button: HTMLButtonElement): Promise<void> => {
 		const id = button.dataset.publishPortfolio;
 		if (!id) {
 			return;
 		}
 		button.disabled = true;
-		const result = publishPortfolio(id);
+		const result = await publishPortfolio(id);
 		if (!result.ok) {
 			button.disabled = false;
 			if (publishStatus) {
@@ -733,13 +736,14 @@ const fieldClass =
 		}
 		hideFeedback();
 		if (publishStatus) {
+			const urlText = result.alreadyPublished ? '' : result.publicUrl ? ` Public at ${result.publicUrl}.` : '';
 			publishStatus.textContent = result.alreadyPublished
 				? result.record?.title
 					? `"${result.record.title}" is already published.`
 					: 'Portfolio is already published.'
 				: result.record?.title
-					? `"${result.record.title}" was published.`
-					: 'Portfolio published.';
+					? `"${result.record.title}" was published.${urlText}`
+					: `Portfolio published.${urlText}`;
 			publishStatus.hidden = false;
 		}
 		if (publishError) {
@@ -748,13 +752,13 @@ const fieldClass =
 		}
 	};
 
-	const duplicate = (button: HTMLButtonElement): void => {
+	const duplicate = async (button: HTMLButtonElement): Promise<void> => {
 		const id = button.dataset.duplicatePortfolio;
 		if (!id) {
 			return;
 		}
 		button.disabled = true;
-		const record = portfolioManagerStore.duplicatePortfolio(id);
+		const record = await portfolioManagerStore.duplicatePortfolio(id);
 		if (!record) {
 			button.disabled = false;
 			if (publishStatus) {

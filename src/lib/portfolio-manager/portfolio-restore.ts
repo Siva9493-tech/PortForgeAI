@@ -23,9 +23,13 @@ export interface RestorePortfolioResult {
  *   2. Look up the snapshot by its portfolio-scoped version number.
  *   3. Guard: only an older version may be restored — never the current one.
  *   4. The store deep-clones the snapshot, appends a new version, bumps the
- *      version number and updates the live data + updatedAt.
+ *      version number and updates the live data + updatedAt. For an
+ *      authenticated user the restored snapshot is also persisted to Supabase.
  */
-export function restorePortfolio(id: string, versionNumber: number): RestorePortfolioResult {
+export async function restorePortfolio(
+	id: string,
+	versionNumber: number,
+): Promise<RestorePortfolioResult> {
 	const record = portfolioManagerStore.getPortfolio(id);
 	if (!record) {
 		return {
@@ -55,7 +59,7 @@ export function restorePortfolio(id: string, versionNumber: number): RestorePort
 		};
 	}
 
-	const updated = portfolioManagerStore.restorePortfolioVersion(id, versionNumber);
+	const updated = await portfolioManagerStore.restorePortfolioVersion(id, versionNumber);
 	if (!updated) {
 		return {
 			ok: false,

@@ -1,11 +1,22 @@
 ---
 import { FileUp, FolderPlus, Plus } from 'lucide-astro';
+
+/**
+ * Dashboard empty state — shown only when the signed-in user genuinely has no
+ * portfolios. It is SSR-hidden and revealed client-side once the shared
+ * `portfolioManagerStore` has reconciled with Supabase and confirmed an empty
+ * collection, so a user who does have portfolios (or is still loading) never
+ * sees a false "No portfolios yet" flash. It never fabricates counts — it only
+ * reflects the real store, and is the exact counterpart of RecentPortfolios
+ * (one and only one of the two is ever visible).
+ */
 ---
 
 <section
 	id="empty-state"
 	aria-labelledby="empty-state-heading"
 	class="mt-xl flex items-center justify-center"
+	hidden
 >
 	<div class="card flex w-full max-w-[28rem] flex-col items-center gap-sm p-lg text-center">
 		<span
@@ -43,3 +54,26 @@ import { FileUp, FolderPlus, Plus } from 'lucide-astro';
 		</div>
 	</div>
 </section>
+
+<script>
+	import { portfolioManagerStore } from '../../lib/portfolio-manager';
+
+	const section = document.getElementById('empty-state');
+	if (section) {
+		// Stay hidden until Supabase has answered once: only then can "no
+		// portfolios" be distinguished from "still loading".
+		let resolved = false;
+
+		const render = (): void => {
+			const isEmpty = portfolioManagerStore.getPortfolios().length === 0;
+			section.hidden = !(resolved && isEmpty);
+		};
+
+		portfolioManagerStore.subscribe(render);
+		render();
+		void portfolioManagerStore.ensureHydrated().then(() => {
+			resolved = true;
+			render();
+		});
+	}
+</script>

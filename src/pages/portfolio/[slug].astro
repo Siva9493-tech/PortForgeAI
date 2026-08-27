@@ -1,0 +1,134 @@
+---
+import '../../styles/globals.css';
+import { PortfolioRenderer } from '../../components/portfolio-renderer';
+import { DEFAULT_THEME_ID, getThemeById, isThemeId } from '../../lib/themes';
+import { publicUrlForSlug } from '../../lib/portfolio-manager/portfolio-slug';
+import { getPublishedBySlug } from '../../lib/portfolio-manager/portfolio-repository';
+import type { PortfolioRecord } from '../../lib/portfolio-manager';
+
+/**
+ * Public portfolio route — `/portfolio/<slug>`.
+ *
+ * STEP 10. This is the canonical public page for a published portfolio. The
+ * deployed (STEP 6) public URL points here, and the slug that identifies the
+ * portfolio is ALWAYS the database `record.slug`, never `data.seo.slug`, which
+ * is an SEO input and may be absent. Only rows that satisfy the existing RLS
+ * gate (`status = 'published'` AND `slug IS NOT NULL`) can ever be rendered.
+ *
+ * The page runs at request time (`prerender = false`, see below). The lookup
+ * hits Supabase directly via the existing repository — `getPublishedBySlug`
+ * is the single source of truth and the ONLY place that ever issues
+ * `.from('portfolios')` for this route. The published-only filter is enforced
+ * by the repository query (and reinforced by the existing RLS policy), so a
+ * slug for an unpublished portfolio is never returned.
+ *
+ * No authentication is required: the query relies solely on the existing RLS
+ * policy and the publishable (anon) key. No `user_id` is read from the URL and
+ * no service-role key is used.
+ */
+
+/** Runtime lookup. New publishes resolve immediately, no rebuild required. */
+export const prerender = false;
+
+/**
+ * In `server` output mode Astro serves every non-prerendered page on each
+ * request. A slug we have never published — and a slug we have unpublished —
+ * must both surface as a real HTTP 404, never as a stale or fabricated page.
+ */
+const slug = Astro.params.slug ?? '';
+
+/**
+ * Single repository call. The `.from('portfolios')` call lives in
+ * `portfolio-repository.ts`; this page never imports the Supabase client. The
+ * repository filters on `status = 'published'` and an exact `slug` match, so
+ * an unpublished or un-slugged row is indistinguishable from a non-existent
+ * one. A real Supabase failure is caught and surfaces as 404 too, because
+ * revealing database error detail to a public visitor would be worse than a
+ * not-found page.
+ */
+const record: PortfolioRecord | null = await getPublishedBySlug(slug).catch(() => null);
+
+if (record === null) {
+	/**
+	 * Astro sets a real HTTP 404 status when `Astro.response.status = 404` is
+	 * set before the page body is rendered. The custom not-found card is still
+	 * drawn so the page is recognisable, but search engines and crawlers see a
+	 * correct 404 response code.
+	 */
+	Astro.response.status = 404;
+}
+
+const themeId = record?.data.theme?.templateId ?? record?.data.metadata?.templateId;
+const theme = themeId && isThemeId(themeId) ? getThemeById(themeId) : getThemeById(DEFAULT_THEME_ID);
+
+const pageTitle = record?.data.seo?.title?.trim() || record?.title || 'Portfolio';
+const description = record?.data.seo?.description || '';
+/**
+ * Canonical URL uses the DATABASE slug (`record.slug`), not the URL parameter
+ * or `data.seo.slug`. Even though the public route was hit with `Astro.params
+ * .slug`, those two are intentionally the same string after the 200 path; the
+ * canonical link is built from the row to stay correct if the parameter is
+ * ever empty or re-routed.
+ */
+const publicPath = publicUrlForSlug(record?.slug ?? slug);
+const canonicalHref = Astro.site ? new URL(publicPath, Astro.site).href : publicPath;
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#010102" />
+		<meta name="color-scheme" content="dark" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{pageTitle}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonicalHref} />
+
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:type" content="profile" />
+		{record?.data.seo?.ogImage && <meta property="og:image" content={record.data.seo.ogImage} />}
+		<meta name="twitter:card" content="summary_large_image" />
+	</head>
+	<body>
+		<a
+			href="#portfolio-preview"
+			class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface-2 focus:px-sm focus:py-xs focus:text-body-sm focus:text-ink"
+		>
+			Skip to content
+		</a>
+
+		{
+			record === null ? (
+				<div class="card mx-auto mt-xl flex w-full max-w-md flex-col items-center gap-sm p-xl text-center">
+					<span
+						class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-subtle"
+						aria-hidden="true"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="size-6"
+						>
+							<circle cx="11" cy="11" r="8" />
+							<path d="m21 21-4.3-4.3" />
+							<path d="m8 11 2 2 4-4" />
+						</svg>
+					</span>
+					<h1 class="text-heading-sm text-ink">Portfolio not found</h1>
+					<p class="text-body-sm text-ink-subtle">The portfolio you requested does not exist.</p>
+				</div>
+			) : (
+				<PortfolioRenderer portfolio={record.data} theme={theme} />
+			)
+		}
+	</body>
+</html>

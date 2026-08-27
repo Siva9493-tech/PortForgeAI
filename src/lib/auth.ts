@@ -1,4 +1,4 @@
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
 export async function signUp(email: string, password: string) {
@@ -69,4 +69,88 @@ export function waitForInitialAuth(): Promise<Session | null> {
       }
     });
   });
+}
+
+/**
+ * Fields a caller may set when writing a `public.profiles` row. Omitted fields
+ * are left out of the write entirely (never forced to null), so a caller that
+ * has no name to supply cannot clobber a stored `full_name`.
+ */
+export type ProfileInput = {
+	full_name?: string | null;
+	avatar_url?: string | null;
+};
+
+/**
+ * Writes (upserts) the authenticated user's `public.profiles` row through the
+ * browser Supabase client — never a service-role key. The user id always comes
+ * from the authenticated `User`, so it can never be spoofed from a form field or
+ * localStorage.
+ */
+export async function upsertProfile(
+	user: Pick<User, 'id'>,
+	input: ProfileInput,
+): Promise<{ error: Error | null }> {
+	const row: Record<string, unknown> = { id: user.id };
+	if (input.full_name !== undefined) {
+		row.full_name = input.full_name;
+	}
+	if (input.avatar_url !== undefined) {
+		row.avatar_url = input.avatar_url;
+	}
+
+	const { error } = await supabase.from('profiles').upsert(row, { onConflict: 'id' });
+
+	if (error) {
+		console.error(`[auth] Failed to upsert profile for user ${user.id}:`, error.message);
+	}
+
+	return { error };
+}
+
+/**
+ * Resolves a display name from Auth user metadata (used for OAuth accounts where
+ * Google may supply one). Returns null when no real string name is present, so
+ * we never invent one.
+ */
+function metadataFullName(user: Pick<User, 'user_metadata'>): string | null {
+	const meta = user.user_metadata;
+	const raw = meta?.full_name ?? meta?.name ?? meta?.given_name;
+	return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
+}
+
+/**
+ * Ensures a `public.profiles` row exists for the authenticated user without
+ * disturbing an existing profile. It reads the row first and only writes when it
+ * is missing, so an existing profile (including a stored `full_name`) is never
+ * overwritten with metadata or blank data.
+ *
+ * Used after login and after an OAuth redirect back to the app, where no name is
+ * being supplied by the user this turn.
+ */
+export async function ensureUserProfile(
+	user: Pick<User, 'id' | 'user_metadata'>,
+): Promise<{ error: Error | null }> {
+	try {
+		const { data: existing, error: selectError } = await supabase
+			.from('profiles')
+			.select('id')
+			.eq('id', user.id)
+			.maybeSingle();
+
+		if (selectError) {
+			throw selectError;
+		}
+
+		if (existing) {
+			return { error: null };
+		}
+
+		const full_name = metadataFullName(user);
+		return upsertProfile(user, { full_name, avatar_url: null });
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		console.error(`[auth] Failed to ensure profile for user ${user.id}:`, message);
+		return { error: error as Error };
+	}
 }
