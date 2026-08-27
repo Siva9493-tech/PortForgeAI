@@ -1,0 +1,1 @@
+import{c as e}from"./portfolio-manager.CfaTGt5k.js";var t=document.getElementById(`empty-state`);if(t){let n=!1,r=()=>{let r=e.getPortfolios().length===0;t.hidden=!(n&&r)};e.subscribe(r),r(),e.ensureHydrated().then(()=>{n=!0,r()})}

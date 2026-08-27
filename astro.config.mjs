@@ -5,17 +5,15 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 //
-// STEP 10: the public `/portfolio/[slug]` route must be reachable the moment a
-// publish write to Supabase succeeds. With a fully static build Astro needs a
-// rebuild to materialise a new path, so the deployment target is now the
-// `@astrojs/node` standalone server. The standalone output is the smallest
-// runtime addition possible: a single `dist/server/entry.mjs` plus the existing
-// `dist/client/` static assets, served on the same Node process.
+// STEP 10: Vercel deployment architecture.
 //
-// Everything except `src/pages/portfolio/[slug].astro` is explicitly opted back
-// into static prerender, so marketing pages, auth pages, and authenticated app
-// pages keep their existing build-time generation semantics. The only runtime
-// route is the public portfolio slug page.
+// We use @astrojs/node in standalone mode. The build emits
+// `dist/server/entry.mjs`, which Vercel invokes directly as a long-running
+// Node server. Static pages use `export const prerender = true`; the public
+// portfolio slug route and authenticated pages use `prerender = false` and
+// render on each request. This isolates server-side environment checks
+// from the static build steps and matches Vercel's expected Node runtime
+// contract (no serverless function routing layer to misroute `/`).
 export default defineConfig({
 	output: 'server',
 	adapter: node({ mode: 'standalone' }),

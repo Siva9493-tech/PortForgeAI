@@ -1,6 +1,4 @@
----
-// STEP 10: authenticated app pages stay statically generated.
-export const prerender = true;
+﻿---
 
 import AchievementsSummary from '../components/dashboard/AchievementsSummary.astro';
 import AnalyticsAbout from '../components/dashboard/AnalyticsAbout.astro';
@@ -11,7 +9,7 @@ import AnalyticsToolbar from '../components/dashboard/AnalyticsToolbar.astro';
 import CreatorInsightsSection from '../components/dashboard/CreatorInsightsSection.astro';
 import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
 
-const title = 'Analytics — PortForge AI';
+const title = 'Analytics â€” PortForge AI';
 const description =
 	'Inspect views, unique visitors, clicks, completion, quality, activity and achievements for each portfolio, isolated by portfolio.';
 ---
@@ -40,7 +38,7 @@ const description =
 	 * given a subtle entrance. The `js-reveal` class is added to <html> only by
 	 * JavaScript, so with scripting disabled, reduced motion, or no
 	 * IntersectionObserver support every section is fully visible immediately.
-	 * Primary metrics are NOT part of the reveal — they stay above the fold and
+	 * Primary metrics are NOT part of the reveal â€” they stay above the fold and
 	 * immediately understandable.
 	 */
 	const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -90,3 +88,4 @@ const description =
 		}
 	}
 </script>
+

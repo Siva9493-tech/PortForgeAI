@@ -1,13 +1,11 @@
----
-// STEP 10: authenticated app pages stay statically generated.
-export const prerender = true;
+﻿---
 
 import { Bot, FolderPlus, Sparkles } from 'lucide-astro';
 import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
 import { ASSISTANT_FEATURES } from '../lib/ai-assistant';
 import { portfolioManagerStore } from '../lib/portfolio-manager';
 
-const title = 'AI Assistant — PortForge AI';
+const title = 'AI Assistant â€” PortForge AI';
 const description =
 	'Use AI to improve your portfolio: headlines, bios, project descriptions and more.';
 
@@ -49,7 +47,7 @@ const fieldClass =
 				</h1>
 				<p class="max-w-narrow text-body-sm text-ink-muted">
 					Generate and improve portfolio content from your saved portfolio.
-					The assistant works with the portfolio shown below — it never
+					The assistant works with the portfolio shown below â€” it never
 					changes your portfolio automatically.
 				</p>
 			</div>
@@ -318,7 +316,7 @@ const fieldClass =
 			<h2 id="skills-heading" class="text-heading-md text-ink">Skills Improvement Suggestions</h2>
 			<p class="text-body-sm text-ink-muted">
 				Analyze the portfolio's skills and get grounded suggestions for
-				improvement. Suggestions are recommendations only — nothing is
+				improvement. Suggestions are recommendations only â€” nothing is
 				added or changed automatically.
 			</p>
 		</div>
@@ -363,7 +361,7 @@ const fieldClass =
 			<h2 id="portfolio-review-heading" class="text-heading-md text-ink">Portfolio Review</h2>
 			<p class="text-body-sm text-ink-muted">
 				Review the portfolio across its content areas and get grounded,
-				itemized feedback with priorities. The review is read-only — nothing
+				itemized feedback with priorities. The review is read-only â€” nothing
 				in the portfolio is changed automatically.
 			</p>
 		</div>
@@ -416,7 +414,7 @@ const fieldClass =
 			<h2 id="recommendations-heading" class="text-heading-md text-ink">AI Recommendations</h2>
 			<p class="text-body-sm text-ink-muted">
 				Get prioritized, actionable recommendations for improving the
-				portfolio shown above. Recommendations are suggestions only —
+				portfolio shown above. Recommendations are suggestions only â€”
 				nothing is applied or changed automatically.
 			</p>
 		</div>
@@ -688,15 +686,15 @@ const fieldClass =
 		if (contextStatus) contextStatus.textContent = portfolioStatusText(current.status);
 		if (contextVersion) contextVersion.textContent = `v${current.currentVersion}`;
 		if (contextUpdated) contextUpdated.textContent = formatPortfolioDate(current.updatedAt);
-		if (contextTheme) contextTheme.textContent = context.themeName || '—';
+		if (contextTheme) contextTheme.textContent = context.themeName || 'â€”';
 		if (contextContent) contextContent.textContent = portfolioContextLabel(context);
-		if (contextSummary) contextSummary.textContent = context.summary || '—';
+		if (contextSummary) contextSummary.textContent = context.summary || 'â€”';
 
 		if (statusRegion) {
 			statusRegion.textContent = `AI Assistant loaded portfolio "${current.title}".`;
 		}
 
-		if (headlineCurrent) headlineCurrent.textContent = context.headline || '—';
+		if (headlineCurrent) headlineCurrent.textContent = context.headline || 'â€”';
 		if (headlineGenerate) headlineGenerate.disabled = portfolios.length === 0 || runningFeatures.has('headline');
 		if (headlinePanel) headlinePanel.hidden = portfolios.length === 0;
 		if (headlineNote) headlineNote.hidden = portfolios.length > 0;
@@ -706,7 +704,7 @@ const fieldClass =
 			if (headlineError) headlineError.hidden = true;
 		}
 
-		if (bioCurrent) bioCurrent.textContent = context.summary || '—';
+		if (bioCurrent) bioCurrent.textContent = context.summary || 'â€”';
 		if (bioGenerate) bioGenerate.disabled = portfolios.length === 0 || runningFeatures.has('bio');
 		if (bioPanel) bioPanel.hidden = portfolios.length === 0;
 		if (bioNote) bioNote.hidden = portfolios.length > 0;
@@ -746,8 +744,8 @@ const fieldClass =
 		if (skillsCurrent) {
 			skillsCurrent.textContent =
 				skillTokens.length > 0
-					? skillTokens.slice(0, 5).join(', ') + (skillTokens.length > 5 ? '…' : '')
-					: '—';
+					? skillTokens.slice(0, 5).join(', ') + (skillTokens.length > 5 ? 'â€¦' : '')
+					: 'â€”';
 		}
 		if (skillsGenerate) skillsGenerate.disabled = portfolios.length === 0 || runningFeatures.has('skills');
 		if (skillsPanel) skillsPanel.hidden = portfolios.length === 0;
@@ -883,8 +881,8 @@ const fieldClass =
 			controls.button.disabled = true;
 			controls.button.setAttribute('aria-busy', 'true');
 		}
-		if (labelSpan) labelSpan.textContent = 'Generating…';
-		if (controls.status) controls.status.textContent = `Generating ${controls.label}…`;
+		if (labelSpan) labelSpan.textContent = 'Generatingâ€¦';
+		if (controls.status) controls.status.textContent = `Generating ${controls.label}â€¦`;
 		if (controls.error) {
 			controls.error.replaceChildren();
 			controls.error.hidden = true;
@@ -1057,3 +1055,4 @@ const fieldClass =
 	portfolioManagerStore.subscribe(render);
 	render();
 </script>
+

@@ -1,8 +1,6 @@
----
-// STEP 10: authenticated app pages stay statically generated. Client-side
+﻿---
 // session gating (ProtectedRoute) is preserved as-is; only the public
 // portfolio slug route is rendered on the server at request time.
-export const prerender = true;
 
 import AnalyticsActivitySection from '../components/dashboard/AnalyticsActivitySection.astro';
 import AnalyticsCards from '../components/dashboard/AnalyticsCards.astro';
@@ -12,7 +10,7 @@ import QuickActions from '../components/dashboard/QuickActions.astro';
 import RecentPortfolios from '../components/dashboard/RecentPortfolios.astro';
 import WelcomeSection from '../components/dashboard/WelcomeSection.astro';
 
-const title = 'Dashboard — PortForge AI';
+const title = 'Dashboard â€” PortForge AI';
 const description = 'Build and manage your AI-powered portfolio from your PortForge AI dashboard.';
 ---
 
@@ -51,3 +49,4 @@ const description = 'Build and manage your AI-powered portfolio from your PortFo
 		}
 	})();
 </script>
+

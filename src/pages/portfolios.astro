@@ -1,13 +1,11 @@
----
-// STEP 10: authenticated app pages stay statically generated.
-export const prerender = true;
+﻿---
 
 import { Download, FolderPlus, History, Plus, Search, SearchX, Trash2, X } from 'lucide-astro';
 import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
 import PortfolioCard from '../components/portfolio/PortfolioCard.astro';
 import { PORTFOLIO_EXPORT_OPTIONS, portfolioManagerStore } from '../lib/portfolio-manager';
 
-const title = 'My Portfolios — PortForge AI';
+const title = 'My Portfolios â€” PortForge AI';
 const description = 'Create, view and manage the portfolios you have generated with PortForge AI.';
 
 const records = portfolioManagerStore.getPortfolios();
@@ -60,7 +58,7 @@ const fieldClass =
 					id="portfolio-search"
 					type="search"
 					name="portfolio-search"
-					placeholder="Search by title…"
+					placeholder="Search by titleâ€¦"
 					autocomplete="off"
 					spellcheck="false"
 					class="w-full min-w-0 bg-transparent text-body-sm text-ink placeholder:text-ink-tertiary"
@@ -643,7 +641,7 @@ const fieldClass =
 			radio.checked = radio === defaultChecked;
 		}
 		if (exportSubtitle) {
-			exportSubtitle.textContent = `"${record.title}" — Version ${record.currentVersion} (${record.status})`;
+			exportSubtitle.textContent = `"${record.title}" â€” Version ${record.currentVersion} (${record.status})`;
 		}
 		pendingExport = { id, trigger: button };
 		if (typeof exportDialog.showModal === 'function') {

@@ -1,7 +1,5 @@
----
-// STEP 10: authenticated preview page stays statically generated. The
+﻿---
 // client-side rendering pipeline is preserved as-is.
-export const prerender = true;
 
 import '../styles/globals.css';
 import { ArrowLeft, FolderOpen, PenLine } from 'lucide-astro';
@@ -179,7 +177,7 @@ import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 
 			if (isBuilderPreview) {
 				// Creator preview of the CURRENT builder state (including unsaved
-				// changes). Reuses the existing live-preview pipeline — it never
+				// changes). Reuses the existing live-preview pipeline â€” it never
 				// creates/updates a portfolio, never publishes, and never records
 				// analytics. The selected theme is preserved from the builder.
 				// The status line makes the current-vs-saved state explicit so the
@@ -205,7 +203,7 @@ import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 						}
 					}
 				} else {
-					setStatus('Previewing your new draft — it is not saved yet. Use Save Portfolio in the Builder to keep it.');
+					setStatus('Previewing your new draft â€” it is not saved yet. Use Save Portfolio in the Builder to keep it.');
 				}
 				try {
 					initLivePreview();

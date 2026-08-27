@@ -1,6 +1,4 @@
----
-// STEP 10: authenticated app pages stay statically generated.
-export const prerender = true;
+﻿---
 
 import Achievements from '../components/portfolio/Achievements.astro';
 import BuilderProgress from '../components/portfolio/BuilderProgress.astro';
@@ -21,7 +19,7 @@ import WizardSidebar from '../components/portfolio/WizardSidebar.astro';
 import { Clock, Eye, PenLine } from 'lucide-astro';
 import { WIZARD_STEPS, wizardStore } from '../lib/portfolio';
 
-const title = 'Portfolio Builder — PortForge AI';
+const title = 'Portfolio Builder â€” PortForge AI';
 const description = 'Create your professional portfolio with the PortForge AI guided builder.';
 
 const activeStepId = wizardStore.getState().currentStep;
@@ -166,7 +164,7 @@ const sectionsByStep = {
 
 	// Resolve an edit only after the store has reconciled with Supabase. Without
 	// this, a direct load or reload of an edit URL can read the record before
-	// hydration and drop out of edit mode — risking an accidental duplicate on
+	// hydration and drop out of edit mode â€” risking an accidental duplicate on
 	// save. Create mode needs no record, so we skip the wait there.
 	if (editPortfolioId) {
 		await portfolioManagerStore.ensureHydrated();
@@ -210,7 +208,7 @@ const sectionsByStep = {
 
 	/**
 	 * Scroll-reveal for progressive entrance of section cards and contextual
-	 * blocks. Content is NEVER removed from the document — only faded in.
+	 * blocks. Content is NEVER removed from the document â€” only faded in.
 	 * The `js-reveal` class is added to <html> only by JS, so without
 	 * scripting, with reduced motion, or without IntersectionObserver support
 	 * every block is fully visible immediately. Reveal is one-shot: once a
@@ -347,7 +345,7 @@ const sectionsByStep = {
 
 	/**
 	 * Re-applies the current wizard data to every section in the DOM. Used at
-	 * init and again after a recovery restore/discard, because the store→DOM
+	 * init and again after a recovery restore/discard, because the storeâ†’DOM
 	 * bindings (rows, field values, indices, empty states) only run here.
 	 */
 	const refreshSections = (): void => {
@@ -513,3 +511,4 @@ const sectionsByStep = {
 
 	builderRecovery.enable(recoveryContext, recoveryBaseline);
 </script>
+
