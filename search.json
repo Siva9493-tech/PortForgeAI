@@ -1,0 +1,52 @@
+﻿[
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://stackoverflow.com/questions/77783175/client-side-404-error-while-fetching-vercel-serverless-function&amp;rut=c6c519be3210853278ba380e4f4468ed015ba4f8f1f4239c505d5783ff0be778",
+    "snippet": "When deploying to Vercel, the serverless functions inside the api folder are automatically mapped to the /api path. So, in your client-side code, you should adjust the fetch URL to match the correct path for your serverless function."
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://vercel.com/docs/functions&amp;rut=b44ebd74b496991b7515e0b3e23cbf71b626d9f8ae3ebc31ba04a6d21c324203",
+    "snippet": "These functions let you add extra capabilities to your application, such as handling authentication, streaming data, or querying databases. When a user sends a request to your site, Vercel can automatically run a function based on your application code. You don&#x27;t need to manage servers or handle scaling."
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://vercel.com/kb/guide/why-is-my-deployed-project-giving-404&amp;rut=9e35486164d258d69698f483f60c429849a1d3b78dbfb35d42660f4fa92f9814",
+    "snippet": "Why is my deployed project giving a 404? Vercel 404 errors often hit healthy builds when routing metadata does not match the request path. Learn the causes and how to diagnose each one."
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://aidevhub.ai/blog/vercel-serverless-api-404-rewrite&amp;rut=ea4ed88ffb505b9f099377347cb3e62f57759be0f674ce4fefb9b082e653315b",
+    "snippet": "Encountered these issues while deploying a Hono backend to Vercel Serverless Functions. Three cascading problems: esbuild bundling format errors, native dependency resolution failures, and the most subtle one — catch-all routes silently failing on nested paths."
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://github.com/vercel/community/discussions/5404&amp;rut=e06b3a92eea3553200194200d50798924ebfb898bab6f18168cfbb994d1f2b57",
+    "snippet": "Summary I have created a static website with html, tailwindcss, and vanilla javascript. I am trying to create a simple POST request on the client side to the server-less function from Vercel. I dep..."
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://community.vercel.com/t/api-routes-returning-404-functions-work-via-invoke-function-but-fail-via-http/45593&amp;rut=c2fa05e43b43a6369eb06555410d010d251a459fd9ca9162528e1b0cf84ba7da",
+    "snippet": "Title: Serverless functions return 404 via public HTTP, but work fine via &quot;Invoke Function&quot; — across two separate projects/repos Hi everyone, I&#x27;m dealing with a persistent issue on one specific project in my team, and I&#x27;ve run out of ideas after extensive troubleshooting. Hoping someone has seen this before. The problem All serverless functions inside api/*.js compile successfully ..."
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://dev.to/diegoguevara/serverless-functions-with-vercel-287n&amp;rut=e56e6db517db5bc4c9df629bbdcf680bf561631c8105ba8bf5bd0273b113e292",
+    "snippet": "With Vercel, you can deploy Serverless Functions, which are pieces of code written with backend languages like NodeJS, that take an HTTP request and provide a response. You can use Serverless Functions to handle user authentication, form submission, database queries, custom slack commands, and more."
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://github.com/vercel-community/deno&amp;rut=6a8d5f6d95daa33d741bc0bf6fc276e661b62a6924ad3e0dda679d3b4a40fa36",
+    "snippet": "Your serverless function file is expected to export default the HTTP handler function, and then vercel-deno takes care of invoking that handler function every time an HTTP request is received. Note: Check out the api directory to see examples of using popular Deno web frameworks with vercel-deno. Feel free to send a pull request to add additional examples!"
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://stackoverflow.com/questions/75140349/how-can-i-add-a-custom-404-page-on-vercel-using-vanilla-javscript&amp;rut=3bd5f34bb7cd23d6cc6807d3e772eb8018c67791c59d6a0d69841b0cd99d3c25",
+    "snippet": "I am not using any framework and I would like to add a custom 404 page. In Vercel&#x27;s documentation, they only provide information for users of frameworks."
+  },
+  {
+    "title": "",
+    "url": "//duckduckgo.com/l/?uddg=https://community.vercel.com/t/404-not-found-but-serverless-backend-and-frontend-work-well-locally/9434/2&amp;rut=c731d71c120ecb724d0655a85f958bd20ef93c99c17ab656cd451d6cbf53a14e",
+    "snippet": "There&#x27;s another community post with 404 debugging tips that might be helpful. Please give these solutions a try and let us know how it goes. A human should be around soon to offer more advice. But you can also get helpful information quickly by asking v0."
+  }
+]
