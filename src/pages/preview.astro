@@ -1,8 +1,8 @@
-﻿---
+---
 // client-side rendering pipeline is preserved as-is.
 
 import '../styles/globals.css';
-import { ArrowLeft, FolderOpen, PenLine } from 'lucide-astro';
+import { ArrowLeft, ExternalLink, FolderOpen, Globe, PenLine, Rocket, Share2 } from 'lucide-astro';
 import { generatePortfolio } from '../lib/portfolio';
 import { previewSwatchClass, themeStore, type PortfolioTheme } from '../lib/themes';
 import { PortfolioRenderer } from '../components/portfolio-renderer';
@@ -69,6 +69,35 @@ const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
 						<FolderOpen size="16" aria-hidden="true" />
 						My Portfolios
 					</a>
+					<a
+						data-view-published
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex items-center justify-center gap-xs rounded-md border border-semantic-success/30 bg-semantic-success/15 px-md py-sm text-button font-medium text-semantic-success transition-colors duration-200 hover:bg-semantic-success/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-semantic-success focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+						hidden
+					>
+						<Globe size="16" aria-hidden="true" />
+						View Published
+						<ExternalLink size="14" class="opacity-70" aria-hidden="true" />
+					</a>
+					<button
+						type="button"
+						data-share-portfolio
+						class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-2 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+						hidden
+					>
+						<Share2 size="16" aria-hidden="true" />
+						Share
+					</button>
+					<button
+						type="button"
+						data-publish-preview
+						class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-1"
+						hidden
+					>
+						<Rocket size="16" aria-hidden="true" />
+						Publish
+					</button>
 				</div>
 				<label id="theme-selector-label" class="text-body-sm font-medium text-ink-muted">
 					Theme
@@ -118,8 +147,9 @@ const themeButtonIdle = 'bg-surface-2 text-ink border-hairline';
 			import { wizardStore } from '../lib/portfolio';
 			import { initLivePreview, startManagedPortfolioPreview } from '../lib/portfolio/live-preview';
 			import { themeStore, isThemeId, type PortfolioTheme } from '../lib/themes';
-			import { portfolioManagerStore, portfolioOutputEquals } from '../lib/portfolio-manager';
-import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
+			import { portfolioManagerStore, portfolioOutputEquals, publishPortfolio } from '../lib/portfolio-manager';
+			import { getById } from '../lib/portfolio-manager/portfolio-repository';
+			import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 
 			const params = new URLSearchParams(window.location.search);
 			const portfolioId = params.get('portfolio');
@@ -143,6 +173,9 @@ import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 			const backLink = document.querySelector<HTMLAnchorElement>('[data-back-to-builder]');
 			const editLink = document.querySelector<HTMLAnchorElement>('[data-edit-portfolio]');
 			const portfoliosLink = document.querySelector<HTMLAnchorElement>('[data-back-to-portfolios]');
+			const viewPublishedLink = document.querySelector<HTMLAnchorElement>('[data-view-published]');
+			const shareButton = document.querySelector<HTMLButtonElement>('[data-share-portfolio]');
+			const publishButton = document.querySelector<HTMLButtonElement>('[data-publish-preview]');
 			const statusLine = document.getElementById('preview-status');
 
 			const setStatus = (message: string): void => {
@@ -151,6 +184,72 @@ import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 					statusLine.hidden = false;
 				}
 			};
+
+			const syncPublishControls = (record: { status: string; slug?: string | null }): void => {
+				const isPublished = record.status === 'published' && Boolean(record.slug);
+				if (isPublished && record.slug) {
+					if (viewPublishedLink) {
+						viewPublishedLink.href = `/portfolio/${encodeURIComponent(record.slug)}`;
+						viewPublishedLink.hidden = false;
+					}
+					if (shareButton) {
+						shareButton.hidden = false;
+					}
+					if (publishButton) {
+						publishButton.hidden = true;
+					}
+				} else {
+					if (viewPublishedLink) viewPublishedLink.hidden = true;
+					if (shareButton) shareButton.hidden = true;
+					if (publishButton) publishButton.hidden = false;
+				}
+			};
+
+			shareButton?.addEventListener('click', async () => {
+				if (!portfolioId) return;
+				const currentRecord = portfolioManagerStore.getPortfolio(portfolioId);
+				if (currentRecord?.slug) {
+					const fullUrl = `${window.location.origin}/portfolio/${currentRecord.slug}`;
+					try {
+						await navigator.clipboard.writeText(fullUrl);
+						const origHtml = shareButton.innerHTML;
+						shareButton.textContent = 'Copied Link!';
+						setTimeout(() => {
+							shareButton.innerHTML = origHtml;
+						}, 2000);
+					} catch {
+						prompt('Public portfolio link:', fullUrl);
+					}
+				}
+			});
+
+			publishButton?.addEventListener('click', async () => {
+				if (!portfolioId) return;
+				publishButton.disabled = true;
+				publishButton.textContent = 'Publishing...';
+				try {
+					const result = await publishPortfolio(portfolioId);
+					if (result.ok && result.record) {
+						syncPublishControls(result.record);
+						setStatus(`Published! Public URL: ${window.location.origin}${result.publicUrl}`);
+						if (result.publicUrl) {
+							try {
+								await navigator.clipboard.writeText(`${window.location.origin}${result.publicUrl}`);
+							} catch {
+								// clipboard write optional
+							}
+						}
+					} else {
+						setStatus(result.message || 'Publishing failed.');
+						publishButton.disabled = false;
+						publishButton.textContent = 'Publish';
+					}
+				} catch (err) {
+					setStatus('An error occurred during publishing.');
+					publishButton.disabled = false;
+					publishButton.textContent = 'Publish';
+				}
+			});
 
 			if (isBuilderPreview) {
 				if (backLink) {
@@ -222,29 +321,49 @@ import { analyticsStore, trackPortfolioClicks } from '../lib/analytics';
 					}
 				}
 			} else if (portfolioId) {
-				const record = portfolioManagerStore.getPortfolio(portfolioId);
-				if (record) {
-					const output = record.data;
-					const templateId = output.theme?.templateId ?? output.metadata?.templateId;
-					if (templateId && isThemeId(templateId)) {
-						themeStore.setTheme(templateId);
+				let record = portfolioManagerStore.getPortfolio(portfolioId);
+				let redirected = false;
+
+				// If not found in local store (e.g. Incognito or unauthenticated visitor opening a /preview link directly),
+				// check if it's a published portfolio in Supabase.
+				if (!record) {
+					try {
+						const remote = await getById(portfolioId);
+						if (remote && remote.status === 'published' && remote.slug) {
+							// Gracefully redirect the visitor from the internal preview route to the public portfolio slug route.
+							window.location.replace(`/portfolio/${encodeURIComponent(remote.slug)}`);
+							redirected = true;
+						}
+					} catch {
+						// remote fetch failed or unauthenticated and draft
 					}
-					document.title = record.title;
-					startManagedPortfolioPreview(output);
-					analyticsStore.recordPortfolioView(record.id);
-					trackPortfolioClicks(record.id, document.getElementById('live-preview-root'));
-				} else {
-					const root = document.getElementById('live-preview-root');
-					if (root) {
-						root.innerHTML = `
-							<div class="card mx-auto mt-xl flex w-full max-w-md flex-col items-center gap-sm p-xl text-center">
-								<span class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-subtle" aria-hidden="true">
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 2 2 4-4"/></svg>
-								</span>
-								<h1 class="text-heading-sm text-ink">Portfolio not found</h1>
-								<p class="text-body-sm text-ink-subtle">The portfolio you requested does not exist.</p>
-								<a href="/portfolios" class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover">Back to My Portfolios</a>
-							</div>`;
+				}
+
+				if (!redirected) {
+					if (record) {
+						syncPublishControls(record);
+						const output = record.data;
+						const templateId = output.theme?.templateId ?? output.metadata?.templateId;
+						if (templateId && isThemeId(templateId)) {
+							themeStore.setTheme(templateId);
+						}
+						document.title = record.title;
+						startManagedPortfolioPreview(output);
+						analyticsStore.recordPortfolioView(record.id);
+						trackPortfolioClicks(record.id, document.getElementById('live-preview-root'));
+					} else {
+						const root = document.getElementById('live-preview-root');
+						if (root) {
+							root.innerHTML = `
+								<div class="card mx-auto mt-xl flex w-full max-w-md flex-col items-center gap-sm p-xl text-center">
+									<span class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-subtle" aria-hidden="true">
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="m8 11 2 2 4-4"/></svg>
+									</span>
+									<h1 class="text-heading-sm text-ink">Portfolio not found</h1>
+									<p class="text-body-sm text-ink-subtle">The portfolio you requested does not exist or has not been published.</p>
+									<a href="/portfolios" class="inline-flex items-center justify-center gap-xs rounded-md bg-primary px-md py-sm text-button font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover">Back to My Portfolios</a>
+								</div>`;
+						}
 					}
 				}
 			} else {

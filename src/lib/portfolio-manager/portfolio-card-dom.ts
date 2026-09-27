@@ -65,7 +65,31 @@ export function createPortfolioCardElement(portfolio: PortfolioRecord): HTMLElem
 	footer.className =
 		'mt-md flex grow flex-col gap-sm rounded-b-md border-t border-hairline pt-sm';
 
-	if (portfolio.status === 'draft') {
+	if (portfolio.status === 'published' && portfolio.slug) {
+		const publishedContainer = document.createElement('div');
+		publishedContainer.className = 'flex items-center gap-xs';
+
+		const viewLink = document.createElement('a');
+		viewLink.href = `/portfolio/${portfolio.slug}`;
+		viewLink.target = '_blank';
+		viewLink.rel = 'noopener noreferrer';
+		viewLink.setAttribute('aria-label', `View published ${portfolio.title}`);
+		viewLink.className =
+			'inline-flex flex-1 items-center justify-center gap-xs rounded-md border border-semantic-success/30 bg-semantic-success/15 px-md py-sm text-button font-medium text-semantic-success transition-colors duration-200 hover:bg-semantic-success/25';
+		viewLink.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>View Published<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 opacity-70" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>`;
+
+		const shareButton = document.createElement('button');
+		shareButton.type = 'button';
+		shareButton.dataset.copyPublicUrl = `/portfolio/${portfolio.slug}`;
+		shareButton.setAttribute('aria-label', `Copy public link for ${portfolio.title}`);
+		shareButton.title = 'Copy Public Link';
+		shareButton.className =
+			'inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-sm py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2';
+		shareButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>`;
+
+		publishedContainer.append(viewLink, shareButton);
+		footer.append(publishedContainer);
+	} else {
 		const publishButton = document.createElement('button');
 		publishButton.type = 'button';
 		publishButton.dataset.publishPortfolio = portfolio.id;
@@ -116,10 +140,10 @@ export function createPortfolioCardElement(portfolio: PortfolioRecord): HTMLElem
 
 	const openLink = document.createElement('a');
 	openLink.href = `/preview?portfolio=${portfolio.id}`;
-	openLink.setAttribute('aria-label', `Open ${portfolio.title}`);
+	openLink.setAttribute('aria-label', `Preview ${portfolio.title}`);
 	openLink.className =
 		'inline-flex flex-1 items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-md py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2';
-	openLink.textContent = 'Open';
+	openLink.textContent = 'Preview';
 	openLink.innerHTML = `${openLink.innerHTML}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 text-ink-subtle" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>`;
 
 	actions.append(editLink, openLink);

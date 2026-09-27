@@ -1,5 +1,5 @@
 ---
-import { ArrowUpRight, Copy, Download, History, Pencil, Rocket, Trash2 } from 'lucide-astro';
+import { ArrowUpRight, Copy, Download, Globe, History, Pencil, Rocket, Share2, Trash2 } from 'lucide-astro';
 import type { PortfolioRecord } from '../../lib/portfolio-manager';
 import {
 	formatPortfolioDate,
@@ -65,7 +65,30 @@ const exportButtonClass =
 		class="mt-md flex grow flex-col gap-sm rounded-b-md border-t border-hairline pt-sm"
 	>
 		{
-			portfolio.status === 'draft' && (
+			portfolio.status === 'published' && portfolio.slug ? (
+				<div class="flex items-center gap-xs">
+					<a
+						href={`/portfolio/${portfolio.slug}`}
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label={`View published ${portfolio.title}`}
+						class="inline-flex flex-1 items-center justify-center gap-xs rounded-md border border-semantic-success/30 bg-semantic-success/15 px-md py-sm text-button font-medium text-semantic-success transition-colors duration-200 hover:bg-semantic-success/25"
+					>
+						<Globe size="14" aria-hidden="true" />
+						View Published
+						<ArrowUpRight size="14" class="opacity-70" aria-hidden="true" />
+					</a>
+					<button
+						type="button"
+						data-copy-public-url={`/portfolio/${portfolio.slug}`}
+						aria-label={`Copy public link for ${portfolio.title}`}
+						title="Copy Public Link"
+						class="inline-flex items-center justify-center gap-xs rounded-md border border-hairline bg-surface-1 px-sm py-sm text-button font-medium text-ink transition-colors duration-200 hover:bg-surface-2"
+					>
+						<Share2 size="14" aria-hidden="true" />
+					</button>
+				</div>
+			) : (
 				<button
 					type="button"
 					data-publish-portfolio={portfolio.id}
@@ -115,10 +138,10 @@ const exportButtonClass =
 			</a>
 			<a
 				href={`/preview?portfolio=${portfolio.id}`}
-				aria-label={`Open ${portfolio.title}`}
+				aria-label={`Preview ${portfolio.title}`}
 				class={`${secondaryButtonClass} flex-1 justify-center`}
 			>
-				Open
+				Preview
 				<ArrowUpRight size="14" class="text-ink-subtle" aria-hidden="true" />
 			</a>
 			<button

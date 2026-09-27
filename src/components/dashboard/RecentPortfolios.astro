@@ -153,8 +153,15 @@ const hasPortfolios = records.length > 0;
 
 				const open = card.querySelector('[data-open]');
 				if (open instanceof HTMLAnchorElement) {
-					open.href = `/preview?portfolio=${record.id}`;
-					open.setAttribute('aria-label', `Open ${record.title}`);
+					if (record.status === 'published' && record.slug) {
+						open.href = `/portfolio/${record.slug}`;
+						open.setAttribute('aria-label', `View published ${record.title}`);
+						open.target = '_blank';
+						open.rel = 'noopener noreferrer';
+					} else {
+						open.href = `/preview?portfolio=${record.id}`;
+						open.setAttribute('aria-label', `Preview ${record.title}`);
+					}
 				}
 
 				fragment.append(card);

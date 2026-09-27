@@ -1,4 +1,4 @@
-﻿---
+---
 
 import { Download, FolderPlus, History, Plus, Search, SearchX, Trash2, X } from 'lucide-astro';
 import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
@@ -734,20 +734,25 @@ const fieldClass =
 		}
 		hideFeedback();
 		if (publishStatus) {
-			const urlText = result.alreadyPublished ? '' : result.publicUrl ? ` Public at ${result.publicUrl}.` : '';
+			const fullUrl = result.publicUrl ? `${window.location.origin}${result.publicUrl}` : '';
+			const urlText = result.alreadyPublished ? '' : fullUrl ? ` Public at ${fullUrl}` : '';
 			publishStatus.textContent = result.alreadyPublished
 				? result.record?.title
 					? `"${result.record.title}" is already published.`
 					: 'Portfolio is already published.'
 				: result.record?.title
-					? `"${result.record.title}" was published.${urlText}`
-					: `Portfolio published.${urlText}`;
+					? `"${result.record.title}" was published!${urlText}`
+					: `Portfolio published!${urlText}`;
 			publishStatus.hidden = false;
+			if (fullUrl) {
+				navigator.clipboard.writeText(fullUrl).catch(() => {});
+			}
 		}
 		if (publishError) {
 			publishError.hidden = true;
 			publishError.textContent = '';
 		}
+		render();
 	};
 
 	const duplicate = async (button: HTMLButtonElement): Promise<void> => {
@@ -782,6 +787,21 @@ const fieldClass =
 	};
 
 	list?.addEventListener('click', (event) => {
+		const copyTarget = (event.target as HTMLElement).closest<HTMLButtonElement>(
+			'[data-copy-public-url]'
+		);
+		if (copyTarget) {
+			const path = copyTarget.dataset.copyPublicUrl;
+			if (path) {
+				const fullUrl = `${window.location.origin}${path}`;
+				navigator.clipboard.writeText(fullUrl).then(() => {
+					showStatus(`Public link copied to clipboard: ${fullUrl}`);
+				}).catch(() => {
+					showStatus(`Public link: ${fullUrl}`);
+				});
+			}
+			return;
+		}
 		const target = (event.target as HTMLElement).closest<HTMLButtonElement>(
 			'[data-publish-portfolio]'
 		);
