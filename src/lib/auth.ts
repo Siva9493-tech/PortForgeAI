@@ -63,13 +63,15 @@ export async function getAuth(): Promise<Session | null> {
 export function waitForInitialAuth(): Promise<Session | null> {
   return new Promise((resolve) => {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'INITIAL_SESSION') {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
         data.subscription.unsubscribe();
         resolve(session);
       }
     });
   });
 }
+
+export { EXISTING_EMAIL_MESSAGE, isExistingUserResponse } from './auth-utils';
 
 /**
  * Fields a caller may set when writing a `public.profiles` row. Omitted fields

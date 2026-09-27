@@ -251,7 +251,7 @@ const description =
 </style>
 
 <script>
-	import { signUp, signInWithGoogle, upsertProfile } from '../lib/auth';
+	import { signUp, signInWithGoogle, upsertProfile, isExistingUserResponse, EXISTING_EMAIL_MESSAGE } from '../lib/auth';
 
 	const form = document.getElementById('signup-form') as HTMLFormElement | null;
 	const submitButton = document.getElementById('signup-submit') as HTMLButtonElement | null;
@@ -351,8 +351,8 @@ const description =
 	}
 
 	function friendlyError(message: string): string {
-		if (/already registered/i.test(message)) {
-			return 'An account with this email already exists. Try logging in instead.';
+		if (/already registered|already exists|already taken/i.test(message)) {
+			return EXISTING_EMAIL_MESSAGE;
 		}
 		return message;
 	}
@@ -388,6 +388,11 @@ const description =
 		const { data, error } = await signUp(email?.value.trim() ?? '', password?.value ?? '');
 
 		setBusy(false);
+
+		if (isExistingUserResponse(data, error)) {
+			showFormError(EXISTING_EMAIL_MESSAGE);
+			return;
+		}
 
 		if (error) {
 			showFormError(error.message);

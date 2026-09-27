@@ -47,7 +47,7 @@ const { redirectTo = '/login' } = Astro.props;
 </style>
 
 <script>
-	import { getCurrentSession } from '../lib/auth';
+	import { getCurrentSession, waitForInitialAuth } from '../lib/auth';
 
 	const root = document.querySelector<HTMLDivElement>('[data-protected-route]');
 	if (root) {
@@ -57,8 +57,11 @@ const { redirectTo = '/login' } = Astro.props;
 
 		(async () => {
 			try {
-				const { data } = await getCurrentSession();
-				if (data.session) {
+				let session = (await getCurrentSession()).data.session;
+				if (!session && (window.location.hash.includes('access_token') || window.location.search.includes('code='))) {
+					session = await waitForInitialAuth();
+				}
+				if (session) {
 					root.removeAttribute('aria-busy');
 					if (loading) loading.hidden = true;
 					if (content) content.hidden = false;
