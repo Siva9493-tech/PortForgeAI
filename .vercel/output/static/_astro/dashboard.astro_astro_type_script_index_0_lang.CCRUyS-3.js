@@ -1,1 +1,0 @@
-import{t as e,u as t}from"./auth.xUkP8P6p.js";(async()=>{try{let n=await t();if(n?.user){let{error:t}=await e(n.user);t&&console.error(`[dashboard] Failed to ensure profile for user:`,t)}}catch(e){console.error(`[dashboard] Failed to resolve authentication session:`,e)}})();
