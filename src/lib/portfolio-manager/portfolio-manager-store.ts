@@ -21,6 +21,7 @@ import {
 	type PortfolioUpdatePatch,
 } from './portfolio-repository';
 import { getCurrentSession, onAuthStateChange } from '../auth';
+import { generatePublishSlug } from '../publish/publish-utils';
 
 export type PortfolioManagerListener = (records: ReadonlyArray<PortfolioRecord>) => void;
 
@@ -194,7 +195,7 @@ export class PortfolioManagerStore {
 	 * an unauthenticated user this is purely local (existing behavior).
 	 */
 	async createPortfolio(input: CreatePortfolioInput): Promise<PortfolioRecord> {
-		await this.ensureHydrated();
+		await this.ensureHydrated(true);
 		const record = this.buildDraftRecord(input);
 
 		if (!this.currentUserId) {
@@ -247,7 +248,7 @@ export class PortfolioManagerStore {
 			authoritative = await updatePortfolioRow(id, patch);
 		} catch (error) {
 			console.error('[portfolio-store] Failed to update portfolio in Supabase.', error);
-			return undefined;
+			throw error;
 		}
 		if (!authoritative) {
 			return undefined;
@@ -391,7 +392,7 @@ export class PortfolioManagerStore {
 	 * authenticated user the duplicate is created in Supabase first.
 	 */
 	async duplicatePortfolio(id: string): Promise<PortfolioRecord | undefined> {
-		await this.ensureHydrated();
+		await this.ensureHydrated(true);
 		const source = this.records.find((record) => record.id === id);
 		if (!source) {
 			return undefined;
@@ -457,8 +458,11 @@ export class PortfolioManagerStore {
 	 * this before `getPortfolio`, so a store that has not yet reconciled with
 	 * Supabase never misreads a real record as missing.
 	 */
-	async ensureHydrated(): Promise<void> {
-		if (!canUseStorage() || this.sessionResolved) {
+	async ensureHydrated(force = false): Promise<void> {
+		if (!canUseStorage()) {
+			return;
+		}
+		if (this.sessionResolved && !force) {
 			return;
 		}
 		await this.hydrate();
@@ -614,7 +618,7 @@ export class PortfolioManagerStore {
 			id: generatePortfolioId(),
 			title,
 			status,
-			slug: input.data.seo?.slug ?? null,
+			slug: input.slug ?? input.data.seo?.slug ?? null,
 			createdAt: now,
 			updatedAt: now,
 			publishedAt: status === 'published' ? now : null,
@@ -631,10 +635,20 @@ export class PortfolioManagerStore {
 			source.title,
 			this.records.map((record) => record.title)
 		);
+		const baseSlug = generatePublishSlug(title);
+		const duplicateData = clonePortfolioData(source.data);
+
+		if (duplicateData.seo) {
+			duplicateData.seo.title = title;
+			duplicateData.seo.slug = baseSlug;
+			duplicateData.seo.canonicalUrl = `/p/${baseSlug}`;
+			duplicateData.seo.ogImage = `/og/${baseSlug}.png`;
+		}
+
 		const snapshot: PortfolioVersion = {
 			version: 1,
 			title,
-			data: clonePortfolioData(source.data),
+			data: duplicateData,
 			createdAt: now,
 		};
 
@@ -642,7 +656,7 @@ export class PortfolioManagerStore {
 			id: generatePortfolioId(),
 			title,
 			status: 'draft',
-			slug: null,
+			slug: baseSlug,
 			createdAt: now,
 			updatedAt: now,
 			publishedAt: null,

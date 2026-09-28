@@ -155,11 +155,9 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 	const nav = document.getElementById('wizard-navigation');
 	const editParamId = new URLSearchParams(window.location.search).get('portfolio');
 
-	// Resolve edit mode only once the store has hydrated, so a direct edit URL
-	// never misreads an un-hydrated store as create mode (see the page script).
-	if (editParamId) {
-		await portfolioManagerStore.ensureHydrated();
-	}
+	// Always resolve store hydration so both create and edit modes bind to the
+	// active authenticated user without stale cached account IDs.
+	await portfolioManagerStore.ensureHydrated(true);
 
 	const editRecord = editParamId ? portfolioManagerStore.getPortfolio(editParamId) : undefined;
 	const isEditMode = Boolean(editRecord);
@@ -438,8 +436,15 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 				renderSaveState();
 				builderRecovery.markSaved(wizardStore.getState().data);
 				navigateToSavedPortfolio();
-			} catch {
-				fail('Could not save the portfolio. Please try again.');
+			} catch (error) {
+				console.error('[portfolio-builder] Save failed:', error);
+				const message =
+					error instanceof Error
+						? error.message
+						: typeof error === 'object' && error !== null && 'message' in error
+							? String((error as { message: unknown }).message)
+							: 'Could not save the portfolio. Please try again.';
+				fail(message);
 			}
 		};
 

@@ -10,6 +10,7 @@ import {
 	isPortfolioStatus,
 	isoNow,
 } from './portfolio-manager-utils';
+import { suffixSlug } from './portfolio-slug';
 
 /**
  * Thin persistence adapter for portfolios over the existing Supabase client.
@@ -148,40 +149,89 @@ export async function findBySlug(slug: string): Promise<PortfolioRecord | null> 
 	return data ? mapRowToRecord(data) : null;
 }
 
+/** True when an error is a Postgres unique-violation on portfolios.slug. */
+export function isSlugConflict(error: unknown): boolean {
+	const err = error as { code?: string; message?: string } | null;
+	return err?.code === '23505' || /duplicate key|portfolios_slug_key/i.test(err?.message ?? '');
+}
+
+/** Checks whether a slug is already taken in Supabase by another portfolio. */
+export async function isSlugTaken(slug: string, excludeId?: string): Promise<boolean> {
+	const existing = await findBySlug(slug).catch(() => null);
+	if (!existing) return false;
+	return existing.id !== excludeId;
+}
+
 /**
- * Inserts a portfolio, preserving the caller-supplied id and timestamps. The
- * whole `PortfolioRecord` is surfaced back (mapped from the inserted row), so
- * V1 callers see a single-snapshot record consistent with what is stored.
+ * Inserts a portfolio, preserving the caller-supplied id and timestamps.
+ * Always resolves against the active Supabase authenticated user to prevent
+ * RLS mismatches with stale cached user IDs.
+ * Retries with deterministic slug suffixing if a hidden or concurrent slug collision occurs.
  */
-export async function create(record: PortfolioRecord, userId: string): Promise<PortfolioRecord> {
-	const row = {
-		id: record.id,
-		user_id: userId,
-		title: record.title,
-		slug: resolveInitialSlug(record.data),
-		status: record.status,
-		data: record.data,
-		created_at: record.createdAt,
-		updated_at: record.updatedAt,
-		published_at: record.publishedAt,
-	};
-
-	const { data, error } = await supabase
-		.from('portfolios')
-		.insert(row)
-		.select(COLUMNS)
-		.single();
-
-	if (error) {
-		throw error;
+export async function create(record: PortfolioRecord, userId?: string): Promise<PortfolioRecord> {
+	const { data: authData } = await supabase.auth.getUser();
+	const authUserId = authData?.user?.id ?? userId;
+	if (!authUserId) {
+		throw new Error('User must be authenticated to create a portfolio.');
 	}
 
-	return mapRowToRecord(data);
+	let candidateSlug = record.slug ?? resolveInitialSlug(record.data);
+	const baseSlug = candidateSlug ? candidateSlug.replace(/-\d+$/, '') : 'portfolio';
+	let counter = 2;
+	const maxRetries = 10;
+
+	for (;;) {
+		const row = {
+			id: record.id,
+			user_id: authUserId,
+			title: record.title,
+			slug: candidateSlug,
+			status: record.status,
+			data: {
+				...record.data,
+				seo: record.data.seo
+					? {
+							...record.data.seo,
+							slug: candidateSlug ?? record.data.seo.slug,
+							canonicalUrl: candidateSlug ? `/p/${candidateSlug}` : record.data.seo.canonicalUrl,
+							ogImage: candidateSlug ? `/og/${candidateSlug}.png` : record.data.seo.ogImage,
+						}
+					: record.data.seo,
+			},
+			created_at: record.createdAt,
+			updated_at: record.updatedAt,
+			published_at: record.publishedAt,
+		};
+
+		const { data, error } = await supabase
+			.from('portfolios')
+			.insert(row)
+			.select(COLUMNS)
+			.single();
+
+		if (!error && data) {
+			return mapRowToRecord(data);
+		}
+
+		if (error && isSlugConflict(error) && counter <= maxRetries) {
+			candidateSlug = suffixSlug(baseSlug, counter);
+			counter += 1;
+			continue;
+		}
+
+		if (error) {
+			console.error('[portfolio-repository] Failed to create portfolio in Supabase:', error);
+			throw error;
+		}
+
+		throw new Error('Unknown error while creating portfolio.');
+	}
 }
 
 /**
  * Updates only the fields supplied by the patch, bumping `updated_at`. Returns
  * the updated record, or null when no portfolio with that id exists.
+ * Retries with deterministic slug suffixing if a slug update collides.
  */
 export async function update(
 	id: string,
@@ -191,9 +241,6 @@ export async function update(
 
 	if (patch.title !== undefined) {
 		row.title = patch.title;
-	}
-	if (patch.slug !== undefined) {
-		row.slug = patch.slug;
 	}
 	if (patch.status !== undefined) {
 		row.status = patch.status;
@@ -207,18 +254,47 @@ export async function update(
 
 	row.updated_at = isoNow();
 
-	const { data, error } = await supabase
-		.from('portfolios')
-		.update(row)
-		.eq('id', id)
-		.select(COLUMNS)
-		.maybeSingle();
+	let candidateSlug = patch.slug;
+	const baseSlug = candidateSlug ? candidateSlug.replace(/-\d+$/, '') : undefined;
+	let counter = 2;
+	const maxRetries = 10;
 
-	if (error) {
-		throw error;
+	for (;;) {
+		if (candidateSlug !== undefined) {
+			row.slug = candidateSlug;
+			if (row.data && typeof row.data === 'object' && 'seo' in (row.data as object)) {
+				const currentData = row.data as PortfolioOutput;
+				if (currentData.seo) {
+					currentData.seo.slug = candidateSlug;
+					currentData.seo.canonicalUrl = `/p/${candidateSlug}`;
+					currentData.seo.ogImage = `/og/${candidateSlug}.png`;
+				}
+			}
+		}
+
+		const { data, error } = await supabase
+			.from('portfolios')
+			.update(row)
+			.eq('id', id)
+			.select(COLUMNS)
+			.maybeSingle();
+
+		if (!error) {
+			return data ? mapRowToRecord(data) : null;
+		}
+
+		if (error && isSlugConflict(error) && baseSlug && counter <= maxRetries) {
+			candidateSlug = suffixSlug(baseSlug, counter);
+			counter += 1;
+			continue;
+		}
+
+		if (error) {
+			console.error('[portfolio-repository] Failed to update portfolio in Supabase:', error);
+			throw error;
+		}
+
 	}
-
-	return data ? mapRowToRecord(data) : null;
 }
 
 /**

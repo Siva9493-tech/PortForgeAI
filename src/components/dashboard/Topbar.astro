@@ -171,6 +171,8 @@ const { title = 'Dashboard', subtitle = 'Manage your portfolios and workspace' }
 			// cache can never be restored for the next account that signs in here.
 			try {
 				await portfolioManagerStore.hydrate();
+				localStorage.removeItem('portforge:wizard:v1');
+				localStorage.removeItem('portforge:builder-recovery:v1');
 			} catch (cleanupError) {
 				// The Supabase session is already gone; never let a cleanup hiccup
 				// trap the user on a protected page — redirect regardless.
@@ -178,6 +180,7 @@ const { title = 'Dashboard', subtitle = 'Manage your portfolios and workspace' }
 			}
 
 			window.location.assign('/login');
+
 		});
 	}
 </script>

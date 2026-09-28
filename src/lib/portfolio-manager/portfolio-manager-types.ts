@@ -56,7 +56,9 @@ export interface CreatePortfolioInput {
 	title: string;
 	data: PortfolioOutput;
 	status?: PortfolioStatus;
+	slug?: string | null;
 }
+
 
 /** Fields that may be changed on an existing managed portfolio. */
 export interface UpdatePortfolioInput {

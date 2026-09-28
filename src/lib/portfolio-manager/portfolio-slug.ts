@@ -42,25 +42,55 @@ export function publicUrlForSlug(slug: string): string {
 	return `${PUBLIC_ROUTE_PREFIX}/${slug}`;
 }
 
+/** Extracts the portfolio owner's name/full name from a title string. */
+export function extractOwnerName(title: string): string {
+	const trimmed = title.trim();
+	if (!trimmed) return '';
+	const [namePart] = trimmed.split(/\s*—\s*|\s*-\s*|\s*\|\s*/);
+	return namePart?.trim() || trimmed;
+}
+
+
+/** Checks whether a slug was derived from a given name (exact match or suffixed collision -2, -3). */
+export function isSlugDerivedFromName(slug: string, name: string): boolean {
+	if (!isValidSlug(slug)) return false;
+	const ownerName = extractOwnerName(name);
+	const baseSlug = generatePublishSlug(ownerName, 'portfolio');
+	if (slug === baseSlug) return true;
+	const escaped = baseSlug.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+	return new RegExp(`^${escaped}-\\d+$`).test(slug);
+}
+
 /**
- * Resolves the slug a portfolio should be published under. Prefers the
- * portfolio's existing stable slug (what round-trips through Supabase), then the
- * SEO slug embedded in the output, then a deterministic slug derived from the
- * SEO title / record title. Falls back to a slug derived from the portfolio id
- * so an empty title can still yield a unique, deterministic value.
+ * Resolves the slug a portfolio should be published under.
+ * Requirements:
+ * - Unchanged name: retain existing stable slug.
+ * - Changed name: derive new slug from the current owner name.
+ * - Duplicate: derive slug from duplicate's current name.
+ * - Fall back to an id-derived slug when name is empty.
  */
 export function resolvePublishSlug(record: SlugSource): string {
+	const rawTitle = record.data.seo?.title?.trim() || record.title;
+	const ownerName = extractOwnerName(rawTitle);
+	const fallbackSlug = generatePublishSlug(record.id, 'portfolio');
+	const baseSlug = generatePublishSlug(ownerName, fallbackSlug);
+
 	const existing = record.slug?.trim();
 	if (existing && isValidSlug(existing)) {
-		return existing;
+		if (isSlugDerivedFromName(existing, ownerName)) {
+			return existing;
+		}
+		// Name changed -> derive from new name
+		return baseSlug;
 	}
 
 	const seoSlug = record.data.seo?.slug?.trim();
 	if (seoSlug && isValidSlug(seoSlug)) {
-		return seoSlug;
+		if (isSlugDerivedFromName(seoSlug, ownerName)) {
+			return seoSlug;
+		}
 	}
 
-	const title = record.data.seo?.title?.trim() || record.title;
-	const idSlug = generatePublishSlug(record.id, 'portfolio');
-	return generatePublishSlug(title, idSlug);
+	return baseSlug;
 }
+

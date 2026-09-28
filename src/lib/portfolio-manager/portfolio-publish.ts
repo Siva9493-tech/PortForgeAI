@@ -2,10 +2,12 @@ import { generatePortfolioPackage, validatePortfolio } from '../publish';
 import type { PortfolioPackage, PublishReadinessReport } from '../publish';
 import { findBySlug } from './portfolio-repository';
 import {
+	isSlugDerivedFromName,
 	publicUrlForSlug,
 	resolvePublishSlug,
 	suffixSlug,
 } from './portfolio-slug';
+
 import type { PortfolioRecord } from './portfolio-manager-types';
 import { portfolioManagerStore } from './portfolio-manager-store';
 
@@ -119,18 +121,27 @@ export async function publishPortfolio(id: string): Promise<PublishPortfolioResu
 		};
 	}
 
+	const baseSlug = resolvePublishSlug(record);
+
 	if (record.status === 'published') {
-		return {
-			ok: true,
-			alreadyPublished: true,
-			record,
-			readiness: null,
-			package: null,
-			slug: record.slug ?? null,
-			publicUrl: record.slug ? publicUrlForSlug(record.slug) : null,
-			message: 'This portfolio is already published.',
-		};
+		const isSlugCurrent =
+			record.slug === baseSlug ||
+			(record.slug !== null && isSlugDerivedFromName(record.slug, record.title));
+
+		if (isSlugCurrent) {
+			return {
+				ok: true,
+				alreadyPublished: true,
+				record,
+				readiness: null,
+				package: null,
+				slug: record.slug ?? null,
+				publicUrl: record.slug ? publicUrlForSlug(record.slug) : null,
+				message: 'This portfolio is already published.',
+			};
+		}
 	}
+
 
 	const readiness = validatePortfolio(record.data);
 	if (!readiness.ready) {
@@ -146,7 +157,6 @@ export async function publishPortfolio(id: string): Promise<PublishPortfolioResu
 		};
 	}
 
-	const baseSlug = resolvePublishSlug(record);
 	const outcome = await persistPublished(id, baseSlug);
 
 	if (!outcome.ok) {

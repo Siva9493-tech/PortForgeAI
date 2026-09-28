@@ -5,6 +5,10 @@ import { transformPortfolio, type PortfolioInput } from '../ai';
 import { themeStore } from '../themes';
 import type { PortfolioRecord } from './portfolio-manager-types';
 import { portfolioManagerStore } from './portfolio-manager-store';
+import { generatePublishSlug } from '../publish/publish-utils';
+import { isSlugDerivedFromName, suffixSlug } from './portfolio-slug';
+import { isSlugTaken } from './portfolio-repository';
+
 
 const SKILL_CATEGORY_FIELDS: Array<[string, keyof ReturnType<typeof createEmptySkills>]> = [
 	['Programming Languages', 'programmingLanguages'],
@@ -195,8 +199,27 @@ export async function createPortfolioFromBuilder(data: PortfolioData): Promise<P
 	const fullName = data.personalInformation.fullName.trim();
 	const professionalTitle = data.personalInformation.professionalTitle.trim();
 	const seoTitle = output.seo?.title && output.seo.title !== 'Portfolio' ? output.seo.title : '';
-	const title = fullName || professionalTitle || seoTitle;
-	return portfolioManagerStore.createPortfolio({ title, data: output });
+	const title = fullName || professionalTitle || seoTitle || 'Untitled Portfolio';
+
+	const baseSlug = generatePublishSlug(fullName || title);
+	let slug = baseSlug;
+	let counter = 2;
+	while (
+		portfolioManagerStore.getPortfolios().some((r) => r.slug === slug) ||
+		(await isSlugTaken(slug))
+	) {
+		slug = suffixSlug(baseSlug, counter);
+		counter += 1;
+	}
+
+	if (output.seo) {
+		output.seo.title = title;
+		output.seo.slug = slug;
+		output.seo.canonicalUrl = `/p/${slug}`;
+		output.seo.ogImage = `/og/${slug}.png`;
+	}
+
+	return portfolioManagerStore.createPortfolio({ title, data: output, slug });
 }
 
 /**
@@ -213,5 +236,37 @@ export async function savePortfolioFromBuilder(
 	data: PortfolioData,
 ): Promise<PortfolioRecord | undefined> {
 	const output = transformBuilderData(data);
-	return portfolioManagerStore.updatePortfolio(id, { data: output });
+	const fullName = data.personalInformation.fullName.trim();
+	const professionalTitle = data.personalInformation.professionalTitle.trim();
+	const seoTitle = output.seo?.title && output.seo.title !== 'Portfolio' ? output.seo.title : '';
+	const title = fullName || professionalTitle || seoTitle || 'Untitled Portfolio';
+
+	const existing = portfolioManagerStore.getPortfolio(id);
+	const ownerName = fullName || title;
+	const nameChanged = !existing || !isSlugDerivedFromName(existing.slug ?? '', ownerName);
+
+	let slug: string;
+	if (nameChanged || !existing?.slug) {
+		const baseSlug = generatePublishSlug(ownerName);
+		slug = baseSlug;
+		let counter = 2;
+		while (
+			portfolioManagerStore.getPortfolios().some((r) => r.id !== id && r.slug === slug) ||
+			(await isSlugTaken(slug, id))
+		) {
+			slug = suffixSlug(baseSlug, counter);
+			counter += 1;
+		}
+	} else {
+		slug = existing.slug;
+	}
+
+	if (output.seo) {
+		output.seo.title = title;
+		output.seo.slug = slug;
+		output.seo.canonicalUrl = `/p/${slug}`;
+		output.seo.ogImage = `/og/${slug}.png`;
+	}
+
+	return portfolioManagerStore.updatePortfolio(id, { title, data: output, slug });
 }

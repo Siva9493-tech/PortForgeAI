@@ -59,9 +59,22 @@ test('isValidSlug accepts only normalized slugs', () => {
 	ok(!isValidSlug('a'.repeat(61))); // over the max length
 });
 
-test('resolvePublishSlug keeps an existing stable slug on republish', () => {
-	equal(resolvePublishSlug(source({ slug: 'my-ai-ml-portfolio' })), 'my-ai-ml-portfolio');
+test('resolvePublishSlug keeps an existing stable slug on republish when name is unchanged', () => {
+	equal(resolvePublishSlug(source({ slug: 'jordan-lee' })), 'jordan-lee');
+	equal(resolvePublishSlug(source({ slug: 'jordan-lee-2' })), 'jordan-lee-2');
 });
+
+test('resolvePublishSlug generates new slug when portfolio name is edited', () => {
+	// Old slug was siva-balaji-mamidala, but name is edited to Mohan
+	const edited: SlugSource = {
+		id: '550e8400-e29b-41d4-a716-446655440000',
+		title: 'Mohan',
+		slug: 'siva-balaji-mamidala',
+		data: { seo: { title: 'Mohan', slug: 'mohan' } },
+	};
+	equal(resolvePublishSlug(edited), 'mohan');
+});
+
 
 test('resolvePublishSlug falls back to the SEO slug', () => {
 	equal(resolvePublishSlug(source({ slug: null })), 'jordan-lee');
