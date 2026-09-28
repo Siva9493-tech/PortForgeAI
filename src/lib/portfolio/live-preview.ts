@@ -452,16 +452,16 @@ function contactHtml(output: PortfolioOutput): string {
 			: '';
 
 	return `<section id="contact" aria-labelledby="contact-heading" data-reveal class="card-elevated edge-highlight rounded-2xl card-p md:card-p-lg flex flex-col md:flex-row md:items-center md:justify-between gap-lg ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
-		<div class="flex flex-col gap-xs max-w-lg min-w-0">
+		<div class="flex flex-col gap-xs w-full md:flex-1 max-w-xl">
 			<p class="type-eyebrow">Next Step</p>
 			<div class="flex items-center gap-sm">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 ${currentPresentation.accent}" data-theme="accent" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
 				<h2 id="contact-heading" class="type-heading-section ${currentPresentation.display} ${currentPresentation.heading}" data-theme="display heading">Let's Connect</h2>
 			</div>
-			<p class="type-body-sm text-ink-muted leading-relaxed break-words">Interested in collaborating or discussing opportunities? Reach out directly via the channels below.</p>
+			<p class="type-body-sm text-ink-muted leading-relaxed">Interested in collaborating or discussing opportunities? Reach out directly via the channels below.</p>
 			${note}
 		</div>
-		<div class="flex flex-wrap items-center gap-sm">${actions.join('')}</div>
+		<div class="flex flex-wrap items-center gap-sm md:shrink-0">${actions.join('')}</div>
 	</section>`;
 }
 
