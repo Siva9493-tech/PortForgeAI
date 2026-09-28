@@ -15,70 +15,99 @@ const presentation = theme.presentation;
 
 {
 	projects.length > 0 && (
-		<SectionWrapper id="projects" heading="Projects" theme={theme} bodyClass="mt-lg grid grid-cols-1 gap-md md:grid-cols-2">
+		<SectionWrapper
+			id="projects"
+			heading="Projects"
+			eyebrow="Featured Work"
+			theme={theme}
+			bodyClass="mt-lg grid grid-cols-1 gap-lg md:grid-cols-2"
+		>
 			<FolderGit2 slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
 			{
-				projects.map((project) => (
-					<article class={`${presentation.card} flex flex-col gap-xs p-md`}>
-						<h3 class="text-card-title text-ink">{project.name}</h3>
-						{
-							project.role && <p class="text-caption text-ink-tertiary">{project.role}</p>
-						}
-						{
-							project.description && (
-								<p class="text-body-sm text-ink-muted">{project.description}</p>
-							)
-						}
-						{
-							project.highlights.length > 0 && (
-								<ul class="flex flex-col gap-xs">
-									{project.highlights.map((highlight) => (
-										<li class="text-body-sm text-ink-muted">• {highlight}</li>
-									))}
-								</ul>
-							)
-						}
-						{
-							project.technologies.length > 0 && (
-								<ul class="flex flex-wrap gap-xs" aria-label={`Technologies for ${project.name}`}>
-									{project.technologies.map((tech) => (
-										<li class="rounded-sm border border-hairline bg-surface-2 px-xs py-xxs text-caption text-ink-subtle">
-											{tech}
-										</li>
-									))}
-								</ul>
-							)
-						}
-						{
-							(project.repositoryUrl || project.liveUrl) && (
-								<div class="mt-xs flex flex-wrap gap-sm">
-									{project.repositoryUrl && (
-										<a
-											class="inline-flex items-center gap-xs py-xxs text-button text-primary hover:text-primary-hover"
-											href={project.repositoryUrl}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											<ExternalLink size="16" aria-hidden="true" />
-											Repository
-										</a>
-									)}
-									{project.liveUrl && (
-										<a
-											class="inline-flex items-center gap-xs py-xxs text-button text-primary hover:text-primary-hover"
-											href={project.liveUrl}
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											<Globe size="16" aria-hidden="true" />
-											Live Demo
-										</a>
-									)}
+				projects.map((project, index) => {
+					const isFeatured = index === 0 && projects.length > 1;
+					const cardClass = isFeatured
+						? `${presentation.card} card-interactive edge-highlight flex flex-col justify-between gap-md card-p-sm md:card-p-lg md:col-span-2 emphasis-featured`
+						: `${presentation.card} card-interactive edge-highlight flex flex-col justify-between gap-sm card-p-sm md:card-p`;
+
+					return (
+						<article class={cardClass}>
+							<div class="flex flex-col gap-xs">
+								<div class="flex items-start justify-between gap-xs min-w-0">
+									<h3 class={`${isFeatured ? 'type-heading-sub md:text-headline' : 'type-heading-sub'} ${presentation.display} text-ink break-words min-w-0`}>
+										{project.name}
+									</h3>
+									<div class="flex items-center gap-xs shrink-0">
+										{isFeatured && <span class="badge badge-accent">Featured</span>}
+										{project.role && <span class="badge badge-neutral">{project.role}</span>}
+									</div>
 								</div>
-							)
-						}
-					</article>
-				))
+								{
+									project.description && (
+										<p class="type-body-sm text-ink-muted leading-relaxed break-words">{project.description}</p>
+									)
+								}
+								{
+									project.highlights.length > 0 && (
+										<ul class="flex flex-col gap-xxs pt-xxs">
+											{project.highlights.map((highlight) => (
+												<li class="type-body-sm flex items-start gap-xs text-ink-muted break-words">
+													<span class="text-ink-tertiary select-none" aria-hidden="true">•</span>
+													<span>{highlight}</span>
+												</li>
+											))}
+										</ul>
+									)
+								}
+							</div>
+							<div class="flex flex-col gap-sm pt-xs">
+								{
+									project.technologies.length > 0 && (
+										<ul class="flex flex-wrap gap-xs" aria-label={`Technologies for ${project.name}`}>
+											{project.technologies.map((tech) => (
+												<li class="pill pill-sm">
+													{tech}
+												</li>
+											))}
+										</ul>
+									)
+								}
+								{
+									(project.repositoryUrl || project.liveUrl) && (
+										<div class="flex flex-wrap items-center gap-md border-t border-hairline-subtle pt-xs">
+											{project.repositoryUrl && (
+												<a
+													class="link-action group"
+													href={project.repositoryUrl}
+													target="_blank"
+													rel="noopener noreferrer"
+													data-analytics-click="project_click"
+													data-analytics-project={project.id ?? project.name}
+												>
+													<ExternalLink size="14" class="icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+													<span>Repository</span>
+												</a>
+											)}
+											{project.liveUrl && (
+												<a
+													class="link-action group"
+													href={project.liveUrl}
+													target="_blank"
+													rel="noopener noreferrer"
+													data-analytics-click="project_click"
+													data-analytics-project={project.id ?? project.name}
+												>
+													<Globe size="14" class="icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true" />
+													<span>Live Demo</span>
+												</a>
+											)}
+										</div>
+									)
+								}
+							</div>
+						</article>
+					);
+				})
 			}
 		</SectionWrapper>
 	)

@@ -31,7 +31,13 @@ const links = resolveIdentityLinks(portfolio);
 
 {
 	links.length > 0 && (
-		<SectionWrapper id="social" heading="Find Me Online" theme={theme} bodyClass="mt-lg flex flex-wrap gap-sm">
+		<SectionWrapper
+			id="social"
+			heading="Find Me Online"
+			eyebrow="Connectivity"
+			theme={theme}
+			bodyClass="mt-lg flex flex-wrap items-center gap-xs sm:gap-sm"
+		>
 			<Share2 slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
 			{
 				links.map((link) => {
@@ -41,13 +47,13 @@ const links = resolveIdentityLinks(portfolio);
 					const external = link.href.startsWith('http');
 					return (
 						<a
-							class={presentation.ghostButton}
+							class={`group btn ${presentation.ghostButton}`}
 							href={link.href}
 							{...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
 							{...(trackType ? { 'data-analytics-click': trackType } : {})}
 						>
-							<Icon size="16" aria-hidden="true" />
-							{link.label}
+							<Icon size="15" class="icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true" />
+							<span>{link.label}</span>
 						</a>
 					);
 				})

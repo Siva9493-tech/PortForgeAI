@@ -6,12 +6,18 @@ interface Props {
 	id: string;
 	/** Visible heading text. */
 	heading: string;
+	/** Optional category/eyebrow kicker above the heading. */
+	eyebrow?: string;
+	/** Optional descriptive subtitle below the heading. */
+	subtitle?: string;
 	/** Heading level (logical hierarchy); defaults to 2. */
 	headingLevel?: 2 | 3;
 	/** Selected presentation theme, forwarded by the renderer coordinator. */
 	theme: PortfolioTheme;
 	/** Classes for the section element. */
 	className?: string;
+	/** Classes for the header wrapper. */
+	headerClass?: string;
 	/** Classes for the content wrapper inside the section. */
 	bodyClass?: string;
 }
@@ -19,9 +25,12 @@ interface Props {
 const {
 	id,
 	heading,
+	eyebrow,
+	subtitle,
 	headingLevel = 2,
 	theme,
 	className,
+	headerClass = 'flex flex-col gap-xs',
 	bodyClass = 'mt-lg grid grid-cols-1 gap-lg md:grid-cols-2',
 } = Astro.props;
 
@@ -32,12 +41,24 @@ const sectionClass = className ?? presentation.sectionSpacing;
 ---
 
 <section id={id} aria-labelledby={headingId} data-reveal class={sectionClass}>
-	<div class="flex items-center gap-sm">
-		<slot name="icon" />
-		<HeadingTag id={headingId} class={`${presentation.display} text-headline ${presentation.heading}`}>
-			{heading}
-		</HeadingTag>
-	</div>
+	<header class={headerClass}>
+		{
+			eyebrow && (
+				<p class="type-eyebrow">{eyebrow}</p>
+			)
+		}
+		<div class="flex items-center gap-sm">
+			<slot name="icon" />
+			<HeadingTag id={headingId} class={`type-heading-section ${presentation.display} ${presentation.heading}`}>
+				{heading}
+			</HeadingTag>
+		</div>
+		{
+			subtitle && (
+				<p class="type-body-sm max-w-prose text-ink-muted">{subtitle}</p>
+			)
+		}
+	</header>
 	<div class={bodyClass}>
 		<slot />
 	</div>

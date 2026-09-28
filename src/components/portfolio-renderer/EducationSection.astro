@@ -26,21 +26,49 @@ function formatYears(entry: PortfolioEducation): string {
 
 {
 	education.length > 0 && (
-		<SectionWrapper id="education" heading="Education" theme={theme} bodyClass="mt-lg flex flex-col gap-md">
+		<SectionWrapper
+			id="education"
+			heading="Education"
+			eyebrow="Academic Background"
+			theme={theme}
+			bodyClass="mt-lg flex flex-col divide-y divide-hairline-subtle"
+		>
 			<GraduationCap slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
 			{
 				education.map((entry) => (
-					<article class={`${presentation.card} flex flex-col gap-xs p-md`}>
-						<h3 class="text-card-title text-ink">{entry.degree}</h3>
-						<p class="text-caption text-ink-tertiary">
-							{entry.institution}
-							{entry.fieldOfStudy && ` • ${entry.fieldOfStudy}`}
-						</p>
-						<div class="flex flex-wrap gap-sm text-caption text-ink-subtle">
-							{formatYears(entry) && <span>{formatYears(entry)}</span>}
-							{entry.cgpa && <span>CGPA: {entry.cgpa}</span>}
+					<article class="flex flex-col gap-xs py-md first:pt-0 last:pb-0">
+						<div class="flex flex-col gap-xxs sm:flex-row sm:items-baseline sm:justify-between sm:gap-sm min-w-0">
+							<div class="min-w-0">
+								<h3 class={`type-heading-sub ${presentation.display} text-ink break-words min-w-0`}>
+									{entry.degree}
+								</h3>
+								<p class="type-body-sm text-ink-muted break-words">
+									{entry.institution}
+									{entry.fieldOfStudy && <span class="text-ink-subtle"> · {entry.fieldOfStudy}</span>}
+								</p>
+							</div>
+							<div class="flex items-center gap-xs pt-xxs sm:pt-0 shrink-0">
+								{
+									entry.cgpa && (
+										<span class="badge badge-neutral">
+											CGPA: {entry.cgpa}
+										</span>
+									)
+								}
+								{
+									formatYears(entry) && (
+										<span class="type-meta font-mono shrink-0 text-ink-subtle">
+											{formatYears(entry)}
+										</span>
+									)
+								}
+							</div>
 						</div>
-						{entry.description && <p class="text-body-sm text-ink-muted">{entry.description}</p>}
+						{entry.description && (
+							<p class="type-body-sm max-w-prose pt-xs leading-relaxed text-ink-subtle break-words">
+								{entry.description}
+							</p>
+						)}
 					</article>
 				))
 			}

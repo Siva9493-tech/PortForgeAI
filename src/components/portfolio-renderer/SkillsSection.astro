@@ -11,24 +11,49 @@ interface Props {
 
 const { skills, theme } = Astro.props;
 const presentation = theme.presentation;
+function parseSkillItems(value: string): string[] {
+	if (!value) return [];
+	if (value.includes(',')) {
+		return value.split(',').map((s) => s.trim()).filter(Boolean);
+	}
+	return [value.trim()];
+}
 ---
 
 {
 	skills.length > 0 && (
 		<SectionWrapper
 			id="skills"
-			heading="Skills"
+			heading="Skills & Capabilities"
+			eyebrow="Expertise"
 			theme={theme}
-			bodyClass="mt-lg grid grid-cols-1 gap-sm md:grid-cols-2"
+			bodyClass="mt-lg grid grid-cols-1 gap-md md:grid-cols-2 lg:gap-lg"
 		>
 			<Wrench slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
 			{
-				skills.map((skill) => (
-					<div class={`${presentation.card} flex flex-col gap-xs p-sm`}>
-						<h3 class="text-eyebrow text-primary">{skill.category}</h3>
-						<p class="text-body-sm text-ink-muted">{skill.value}</p>
-					</div>
-				))
+				skills.map((skill) => {
+					const items = parseSkillItems(skill.value);
+					return (
+						<div class="flex flex-col gap-xs rounded-lg border border-hairline-subtle bg-surface-subtle p-md transition-colors duration-fast hover:border-hairline min-w-0">
+							<h3 class="type-eyebrow text-primary text-caption tracking-wider break-words">
+								{skill.category}
+							</h3>
+							{
+								items.length > 1 ? (
+									<ul class="flex flex-wrap gap-xs pt-xxs" aria-label={`Skills for ${skill.category}`}>
+										{items.map((item) => (
+											<li class="pill pill-default pill-interactive">
+												{item}
+											</li>
+										))}
+									</ul>
+								) : (
+									<p class="type-body-sm text-ink-muted break-words">{skill.value}</p>
+								)
+							}
+						</div>
+					);
+				})
 			}
 		</SectionWrapper>
 	)

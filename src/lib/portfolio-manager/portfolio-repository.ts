@@ -265,9 +265,9 @@ export async function update(
 			if (row.data && typeof row.data === 'object' && 'seo' in (row.data as object)) {
 				const currentData = row.data as PortfolioOutput;
 				if (currentData.seo) {
-					currentData.seo.slug = candidateSlug;
-					currentData.seo.canonicalUrl = `/p/${candidateSlug}`;
-					currentData.seo.ogImage = `/og/${candidateSlug}.png`;
+					currentData.seo.slug = candidateSlug ?? undefined;
+					currentData.seo.canonicalUrl = candidateSlug ? `/p/${candidateSlug}` : undefined;
+					currentData.seo.ogImage = candidateSlug ? `/og/${candidateSlug}.png` : undefined;
 				}
 			}
 		}

@@ -148,7 +148,7 @@ function heroHtml(output: PortfolioOutput): string {
 				${HERO_SPARKLES_SVG}
 				<p class="text-eyebrow ${currentPresentation.accent}" data-theme="accent">Portfolio</p>
 			</div>
-			<h1 id="hero-heading" class="text-balance break-words ${currentPresentation.display} text-display-lg ${currentPresentation.heading}" data-theme="display heading">${escapeHtml(hero.name || 'Portfolio')}</h1>
+			<h1 id="hero-heading" class="type-display break-words ${currentPresentation.display} ${currentPresentation.heading}" data-theme="display heading">${escapeHtml(hero.name || 'Portfolio')}</h1>
 			${headline}
 			${introduction}
 			${location}
@@ -169,7 +169,7 @@ function heroLinksHtml(hero: PublicHeroData): string {
 			const external = entry.href.startsWith('http')
 				? ' target="_blank" rel="noopener noreferrer"'
 				: '';
-			return `<li><a href="${escapeHtml(entry.href)}"${external} class="inline-flex items-center gap-xs py-xxs text-body-sm text-ink-muted transition-colors duration-200 hover:text-ink">${HERO_ICON_SVG[entry.kind]}${escapeHtml(entry.label)}</a></li>`;
+			return `<li><a href="${escapeHtml(entry.href)}"${external} class="inline-flex items-center gap-xs py-xxs text-body-sm text-ink-muted transition-colors duration-fast hover:text-ink">${HERO_ICON_SVG[entry.kind]}${escapeHtml(entry.label)}</a></li>`;
 		})
 		.join('');
 	return `<ul class="flex flex-wrap items-center gap-md" aria-label="Profile links">${items}</ul>`;
@@ -185,16 +185,21 @@ function aboutHtml(output: PortfolioOutput): string {
 		return '';
 	}
 	const body = paragraphs
-		.map((paragraph) => `<p class="max-w-narrow text-body text-ink-muted">${escapeHtml(paragraph)}</p>`)
+		.map(
+			(paragraph, index) =>
+				`<p class="${index === 0 ? 'text-body-lg text-ink font-normal text-balance leading-relaxed break-words' : 'type-body text-ink-muted leading-relaxed break-words'}">${escapeHtml(paragraph)}</p>`
+		)
 		.join('');
-	return `<section id="about" aria-labelledby="about-heading" data-reveal class="grid grid-cols-1 gap-md md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:gap-xl ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
+	return `<section id="about" aria-labelledby="about-heading" data-reveal class="grid grid-cols-1 gap-md md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] md:gap-xl lg:gap-xxl ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
 		<div class="flex flex-col gap-xs">
+			<p class="type-eyebrow">Biography</p>
 			<div class="flex items-center gap-sm">
 				${ABOUT_USER_SVG}
-				<h2 id="about-heading" class="${currentPresentation.display} text-headline ${currentPresentation.heading}" data-theme="display heading">About</h2>
+				<h2 id="about-heading" class="type-heading-section ${currentPresentation.display} ${currentPresentation.heading}" data-theme="display heading">About</h2>
 			</div>
+			<div class="hidden md:block w-10 h-0.5 bg-primary/40 mt-xs rounded-pill" aria-hidden="true"></div>
 		</div>
-		<div class="flex flex-col gap-md">${body}</div>
+		<div class="flex flex-col gap-md max-w-prose min-w-0">${body}</div>
 	</section>`;
 }
 
@@ -203,35 +208,49 @@ function projectsHtml(output: PortfolioOutput): string {
 		return '';
 	}
 	const cards = output.projects
-		.map((project) => {
+		.map((project, index) => {
+			const isFeatured = index === 0 && output.projects.length > 1;
+			const cardClass = isFeatured
+				? `${currentPresentation.card} card-interactive edge-highlight flex flex-col justify-between gap-md card-p-sm md:card-p-lg md:col-span-2 emphasis-featured`
+				: `${currentPresentation.card} card-interactive edge-highlight flex flex-col justify-between gap-sm card-p-sm md:card-p`;
+
 			const highlights = project.highlights.length
-				? `<ul class="flex flex-col gap-xs">${project.highlights
-						.map((item) => `<li class="text-body-sm text-ink-muted">• ${escapeHtml(item)}</li>`)
+				? `<ul class="flex flex-col gap-xxs pt-xxs">${project.highlights
+						.map((item) => `<li class="type-body-sm flex items-start gap-xs text-ink-muted break-words"><span class="text-ink-tertiary select-none" aria-hidden="true">•</span><span>${escapeHtml(item)}</span></li>`)
 						.join('')}</ul>`
 				: '';
 			const techs = project.technologies.length
-				? `<ul class="flex flex-wrap gap-xs" aria-label="Technologies for ${escapeHtml(project.name)}">${project.technologies.map(chip).join('')}</ul>`
+				? `<ul class="flex flex-wrap gap-xs" aria-label="Technologies for ${escapeHtml(project.name)}">${project.technologies.map((t) => `<li class="pill pill-sm">${escapeHtml(t)}</li>`).join('')}</ul>`
 				: '';
 			const projectToken = escapeHtml(project.id ?? project.name);
 			const projectAttr = ` data-analytics-click="project_click" data-analytics-project="${projectToken}"`;
 			const links =
 				project.repositoryUrl || project.liveUrl
-					? `<div class="mt-xs flex flex-wrap gap-sm">
-						${project.repositoryUrl ? link(project.repositoryUrl, 'Repository', 'inline-flex items-center gap-xs py-xxs text-button text-primary hover:text-primary-hover', null, undefined, projectAttr) : ''}
-						${project.liveUrl ? link(project.liveUrl, 'Live Demo', 'inline-flex items-center gap-xs py-xxs text-button text-primary hover:text-primary-hover', null, undefined, projectAttr) : ''}
+					? `<div class="flex flex-wrap items-center gap-md border-t border-hairline-subtle pt-xs">
+						${project.repositoryUrl ? `<a href="${escapeHtml(project.repositoryUrl)}" target="_blank" rel="noopener noreferrer"${projectAttr} class="link-action group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><span>Repository</span></a>` : ''}
+						${project.liveUrl ? `<a href="${escapeHtml(project.liveUrl)}" target="_blank" rel="noopener noreferrer"${projectAttr} class="link-action group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span>Live Demo</span></a>` : ''}
 					</div>`
 					: '';
-			return `<article class="${currentPresentation.card} flex flex-col gap-xs p-md" data-theme="card">
-				<h3 class="text-card-title text-ink">${escapeHtml(project.name)}</h3>
-				${project.role ? `<p class="text-caption text-ink-tertiary">${escapeHtml(project.role)}</p>` : ''}
-				${project.description ? `<p class="text-body-sm text-ink-muted">${escapeHtml(project.description)}</p>` : ''}
-				${highlights}
-				${techs}
-				${links}
+			return `<article class="${cardClass}" data-theme="card">
+				<div class="flex flex-col gap-xs">
+					<div class="flex items-start justify-between gap-xs min-w-0">
+						<h3 class="${isFeatured ? 'type-heading-sub md:text-headline' : 'type-heading-sub'} ${currentPresentation.display} text-ink break-words min-w-0" data-theme="display">${escapeHtml(project.name)}</h3>
+						<div class="flex items-center gap-xs shrink-0">
+							${isFeatured ? '<span class="badge badge-accent">Featured</span>' : ''}
+							${project.role ? `<span class="badge badge-neutral">${escapeHtml(project.role)}</span>` : ''}
+						</div>
+					</div>
+					${project.description ? `<p class="type-body-sm text-ink-muted leading-relaxed break-words">${escapeHtml(project.description)}</p>` : ''}
+					${highlights}
+				</div>
+				<div class="flex flex-col gap-sm pt-xs">
+					${techs}
+					${links}
+				</div>
 			</article>`;
 		})
 		.join('');
-	return section('projects', 'Projects', 'grid grid-cols-1 gap-md md:grid-cols-2', cards);
+	return section('projects', 'Projects', 'grid grid-cols-1 gap-lg md:grid-cols-2', cards);
 }
 
 function experienceHtml(output: PortfolioOutput): string {
@@ -247,23 +266,32 @@ function experienceHtml(output: PortfolioOutput): string {
 				: entry.startDate && entry.endDate
 					? `${escapeHtml(entry.startDate)} — ${escapeHtml(entry.endDate)}`
 					: escapeHtml(entry.startDate || entry.endDate || '');
-			const meta = [
-				period ? `<span>${period}</span>` : '',
-				entry.employmentType ? `<span>${escapeHtml(entry.employmentType)}</span>` : '',
-				entry.location ? `<span>${escapeHtml(entry.location)}</span>` : '',
-			]
-				.filter(Boolean)
-				.join('');
-			return `<article class="${currentPresentation.card} flex flex-col gap-xs p-md" data-theme="card">
-				<div class="flex flex-col gap-xxs">
-					<h3 class="text-card-title text-ink">${escapeHtml(entry.role)}${entry.company ? `<span class="text-ink-subtle"> at ${escapeHtml(entry.company)}</span>` : ''}</h3>
-					${meta ? `<div class="flex flex-wrap gap-sm text-caption text-ink-tertiary">${meta}</div>` : ''}
+			const currentBadge = entry.currentlyWorking
+				? '<span class="badge badge-accent"><span class="badge-dot" aria-hidden="true"></span>Current</span>'
+				: '';
+			const typeBadge = entry.employmentType
+				? `<span class="badge badge-neutral">${escapeHtml(entry.employmentType)}</span>`
+				: '';
+			const location = entry.location
+				? `<span class="type-meta text-ink-subtle">${escapeHtml(entry.location)}</span>`
+				: '';
+
+			return `<article class="group relative flex flex-col gap-xs">
+				<div class="absolute -left-[calc(var(--spacing-md)+5px)] sm:-left-[calc(var(--spacing-lg)+5px)] top-1.5 size-2.5 rounded-full border border-hairline-strong bg-primary shadow-subtle transition-transform duration-fast group-hover:scale-125" aria-hidden="true"></div>
+				<div class="flex flex-col gap-xxs sm:flex-row sm:items-baseline sm:justify-between sm:gap-sm min-w-0">
+					<h3 class="type-heading-sub ${currentPresentation.display} text-ink break-words min-w-0" data-theme="display">${escapeHtml(entry.role)}${entry.company ? `<span class="text-ink-subtle font-normal"> · ${escapeHtml(entry.company)}</span>` : ''}</h3>
+					${period ? `<span class="type-meta font-mono shrink-0 text-ink-subtle">${period}</span>` : ''}
 				</div>
-				${entry.description ? `<p class="text-body-sm text-ink-muted">${escapeHtml(entry.description)}</p>` : ''}
+				<div class="flex flex-wrap items-center gap-xs">
+					${currentBadge}
+					${typeBadge}
+					${location}
+				</div>
+				${entry.description ? `<p class="type-body-sm max-w-prose pt-xxs leading-relaxed text-ink-muted break-words">${escapeHtml(entry.description)}</p>` : ''}
 			</article>`;
 		})
 		.join('');
-	return section('experience', 'Experience', 'flex flex-col gap-md', entries);
+	return section('experience', 'Experience', 'relative border-l border-hairline pl-md sm:pl-lg ml-xs sm:ml-sm flex flex-col gap-lg', entries);
 }
 
 function educationHtml(output: PortfolioOutput): string {
@@ -273,21 +301,25 @@ function educationHtml(output: PortfolioOutput): string {
 	const entries = output.education
 		.map((entry) => {
 			const years = [entry.startYear, entry.endYear].filter(Boolean).join(' — ');
-			const meta = [
-				years ? `<span>${escapeHtml(years)}</span>` : '',
-				entry.cgpa ? `<span>CGPA: ${escapeHtml(entry.cgpa)}</span>` : '',
-			]
-				.filter(Boolean)
-				.join('');
-			return `<article class="${currentPresentation.card} flex flex-col gap-xs p-md" data-theme="card">
-				<h3 class="text-card-title text-ink">${escapeHtml(entry.degree)}</h3>
-				<p class="text-caption text-ink-tertiary">${escapeHtml(entry.institution)}${entry.fieldOfStudy ? ` • ${escapeHtml(entry.fieldOfStudy)}` : ''}</p>
-				${meta ? `<div class="flex flex-wrap gap-sm text-caption text-ink-subtle">${meta}</div>` : ''}
-				${entry.description ? `<p class="text-body-sm text-ink-muted">${escapeHtml(entry.description)}</p>` : ''}
+			const cgpa = entry.cgpa ? `<span class="badge badge-neutral">CGPA: ${escapeHtml(entry.cgpa)}</span>` : '';
+			const yearMeta = years ? `<span class="type-meta font-mono shrink-0 text-ink-subtle">${escapeHtml(years)}</span>` : '';
+
+			return `<article class="flex flex-col gap-xs py-md first:pt-0 last:pb-0">
+				<div class="flex flex-col gap-xxs sm:flex-row sm:items-baseline sm:justify-between sm:gap-sm min-w-0">
+					<div class="min-w-0">
+						<h3 class="type-heading-sub ${currentPresentation.display} text-ink break-words min-w-0" data-theme="display">${escapeHtml(entry.degree)}</h3>
+						<p class="type-body-sm text-ink-muted break-words">${escapeHtml(entry.institution)}${entry.fieldOfStudy ? `<span class="text-ink-subtle"> · ${escapeHtml(entry.fieldOfStudy)}</span>` : ''}</p>
+					</div>
+					<div class="flex items-center gap-xs pt-xxs sm:pt-0 shrink-0">
+						${cgpa}
+						${yearMeta}
+					</div>
+				</div>
+				${entry.description ? `<p class="type-body-sm max-w-prose pt-xs leading-relaxed text-ink-subtle break-words">${escapeHtml(entry.description)}</p>` : ''}
 			</article>`;
 		})
 		.join('');
-	return section('education', 'Education', 'flex flex-col gap-md', entries);
+	return section('education', 'Education', 'flex flex-col divide-y divide-hairline-subtle', entries);
 }
 
 function skillsHtml(output: PortfolioOutput): string {
@@ -295,14 +327,21 @@ function skillsHtml(output: PortfolioOutput): string {
 		return '';
 	}
 	const cards = output.skills
-		.map(
-			(skill) => `<div class="${currentPresentation.card} flex flex-col gap-xs p-sm" data-theme="card">
-				<h3 class="text-eyebrow text-primary">${escapeHtml(skill.category)}</h3>
-				<p class="text-body-sm text-ink-muted">${escapeHtml(skill.value)}</p>
-			</div>`
-		)
+		.map((skill) => {
+			const items = skill.value && skill.value.includes(',')
+				? skill.value.split(',').map((s) => s.trim()).filter(Boolean)
+				: [skill.value.trim()];
+			const content = items.length > 1
+				? `<ul class="flex flex-wrap gap-xs pt-xxs" aria-label="Skills for ${escapeHtml(skill.category)}">${items.map((item) => `<li class="pill pill-default pill-interactive">${escapeHtml(item)}</li>`).join('')}</ul>`
+				: `<p class="type-body-sm text-ink-muted break-words">${escapeHtml(skill.value)}</p>`;
+
+			return `<div class="flex flex-col gap-xs rounded-lg border border-hairline-subtle bg-surface-subtle p-md transition-colors duration-fast hover:border-hairline min-w-0">
+				<h3 class="type-eyebrow text-primary text-caption tracking-wider break-words">${escapeHtml(skill.category)}</h3>
+				${content}
+			</div>`;
+		})
 		.join('');
-	return section('skills', 'Skills', 'grid grid-cols-1 gap-sm md:grid-cols-2', cards);
+	return section('skills', 'Skills & Capabilities', 'grid grid-cols-1 gap-md md:grid-cols-2 lg:gap-lg', cards);
 }
 
 function certificationsHtml(output: PortfolioOutput): string {
@@ -310,15 +349,28 @@ function certificationsHtml(output: PortfolioOutput): string {
 		return '';
 	}
 	const cards = output.certifications
-		.map((certification) => `<article class="${currentPresentation.card} flex flex-col gap-xs p-md" data-theme="card">
-			<h3 class="text-card-title text-ink">${escapeHtml(certification.name)}</h3>
-			<p class="text-caption text-ink-tertiary">${escapeHtml(certification.issuingOrganization)}${certification.issueDate ? ` • ${escapeHtml(certification.issueDate)}` : ''}</p>
-			${certification.credentialId ? `<p class="text-caption text-ink-subtle">ID: ${escapeHtml(certification.credentialId)}</p>` : ''}
-			${certification.description ? `<p class="text-body-sm text-ink-muted">${escapeHtml(certification.description)}</p>` : ''}
-			${certification.credentialUrl ? link(certification.credentialUrl, 'View Credential', 'mt-xs inline-flex items-center gap-xs py-xxs text-button text-primary hover:text-primary-hover', null) : ''}
-		</article>`)
+		.map((certification) => {
+			const verifyLink = certification.credentialUrl
+				? `<div class="pt-xs border-t border-hairline-subtle"><a href="${escapeHtml(certification.credentialUrl)}" target="_blank" rel="noopener noreferrer" class="link-action group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><span>Verify Credential</span></a></div>`
+				: '';
+			return `<article class="card-subtle card-interactive flex flex-col justify-between gap-sm card-p-sm">
+				<div class="flex flex-col gap-xs">
+					<div class="flex items-start justify-between gap-sm min-w-0">
+						<div class="flex items-center gap-xs min-w-0">
+							<div class="icon-box-accent icon-box-sm shrink-0" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+							<span class="badge badge-neutral break-words">${escapeHtml(certification.issuingOrganization)}</span>
+						</div>
+						${certification.issueDate ? `<span class="type-meta font-mono text-ink-subtle shrink-0">${escapeHtml(certification.issueDate)}</span>` : ''}
+					</div>
+					<h3 class="type-heading-sub ${currentPresentation.display} text-ink break-words min-w-0" data-theme="display">${escapeHtml(certification.name)}</h3>
+					${certification.credentialId ? `<p class="type-label-micro font-mono text-ink-tertiary break-all">Credential ID: ${escapeHtml(certification.credentialId)}</p>` : ''}
+					${certification.description ? `<p class="type-body-sm text-ink-muted leading-relaxed break-words">${escapeHtml(certification.description)}</p>` : ''}
+				</div>
+				${verifyLink}
+			</article>`;
+		})
 		.join('');
-	return section('certifications', 'Certifications', 'grid grid-cols-1 gap-md md:grid-cols-2', cards);
+	return section('certifications', 'Certifications & Licenses', 'grid grid-cols-1 gap-md md:grid-cols-2', cards);
 }
 
 function achievementsHtml(output: PortfolioOutput): string {
@@ -326,14 +378,28 @@ function achievementsHtml(output: PortfolioOutput): string {
 		return '';
 	}
 	const cards = output.achievements
-		.map((achievement) => `<article class="${currentPresentation.card} flex flex-col gap-xs p-md" data-theme="card">
-			<h3 class="text-card-title text-ink">${escapeHtml(achievement.title)}</h3>
-			<p class="text-caption text-ink-tertiary">${[achievement.organization, achievement.date, achievement.category].filter(Boolean).map(escapeHtml).join(' • ')}</p>
-			${achievement.description ? `<p class="text-body-sm text-ink-muted">${escapeHtml(achievement.description)}</p>` : ''}
-			${achievement.link ? link(achievement.link, 'Learn more', 'mt-xs inline-flex items-center gap-xs py-xxs text-primary hover:text-primary-hover', null) : ''}
-		</article>`)
+		.map((achievement) => {
+			const learnLink = achievement.link
+				? `<div class="pt-xs border-t border-hairline-subtle"><a href="${escapeHtml(achievement.link)}" target="_blank" rel="noopener noreferrer" class="link-action group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><span>Learn more</span></a></div>`
+				: '';
+			return `<article class="card-subtle card-interactive flex flex-col justify-between gap-sm card-p-sm">
+				<div class="flex flex-col gap-xs">
+					<div class="flex items-start justify-between gap-xs min-w-0">
+						<div class="flex flex-wrap items-center gap-xs">
+							<div class="icon-box-accent icon-box-sm shrink-0" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
+							${achievement.organization ? `<span class="badge badge-neutral break-words">${escapeHtml(achievement.organization)}</span>` : ''}
+							${achievement.category ? `<span class="badge badge-accent break-words">${escapeHtml(achievement.category)}</span>` : ''}
+						</div>
+						${achievement.date ? `<span class="type-meta font-mono text-ink-subtle shrink-0">${escapeHtml(achievement.date)}</span>` : ''}
+					</div>
+					<h3 class="type-heading-sub ${currentPresentation.display} text-ink break-words min-w-0" data-theme="display">${escapeHtml(achievement.title)}</h3>
+					${achievement.description ? `<p class="type-body-sm text-ink-muted leading-relaxed break-words">${escapeHtml(achievement.description)}</p>` : ''}
+				</div>
+				${learnLink}
+			</article>`;
+		})
 		.join('');
-	return section('achievements', 'Achievements', 'grid grid-cols-1 gap-md md:grid-cols-2', cards);
+	return section('achievements', 'Honors & Achievements', 'grid grid-cols-1 gap-md md:grid-cols-2', cards);
 }
 
 function socialLinksHtml(output: PortfolioOutput): string {
@@ -352,33 +418,51 @@ function socialLinksHtml(output: PortfolioOutput): string {
 			const external = entry.href.startsWith('http')
 				? ' target="_blank" rel="noopener noreferrer"'
 				: '';
-			return `<a href="${escapeHtml(entry.href)}"${external}${trackType} class="${currentPresentation.ghostButton}" data-theme="ghostButton">${HERO_ICON_SVG[entry.kind]}${escapeHtml(entry.label)}</a>`;
+			return `<a href="${escapeHtml(entry.href)}"${external}${trackType} class="group btn ${currentPresentation.ghostButton}" data-theme="ghostButton">${HERO_ICON_SVG[entry.kind]}<span>${escapeHtml(entry.label)}</span></a>`;
 		})
 		.join('');
-	return section('social', 'Find Me Online', 'flex flex-wrap gap-sm', buttons);
+	return section('social', 'Find Me Online', 'flex flex-wrap items-center gap-xs sm:gap-sm', buttons);
 }
 
 function contactHtml(output: PortfolioOutput): string {
 	const resume = output.resume;
 	const links = resolveIdentityLinks(output);
 	const actions: string[] = [];
-	for (const kind of ['linkedin', 'github', 'email'] as const) {
+	for (const kind of ['email', 'linkedin', 'github'] as const) {
 		const entry = links.find((link) => link.kind === kind);
 		if (entry) {
-			actions.push(link(entry.href, entry.label, currentPresentation.button, HERO_ICON_SVG[entry.kind], 'button', ' data-analytics-click="contact_click"'));
+			const isPrimary = actions.length === 0;
+			const cls = `group btn ${isPrimary ? currentPresentation.button : currentPresentation.ghostButton}`;
+			const themeKey = isPrimary ? 'button' : 'ghostButton';
+			actions.push(link(entry.href, entry.label, cls, HERO_ICON_SVG[entry.kind], themeKey, ' data-analytics-click="contact_click"'));
 		}
 	}
 	if (resume?.fileUrl) {
-		actions.push(link(resume.fileUrl, 'Download Resume', currentPresentation.button, null, 'button', ' data-analytics-click="resume_click"'));
+		const isPrimary = actions.length === 0;
+		const cls = `group btn ${isPrimary ? currentPresentation.button : currentPresentation.ghostButton}`;
+		const themeKey = isPrimary ? 'button' : 'ghostButton';
+		actions.push(link(resume.fileUrl, 'Download Resume', cls, HERO_DOWNLOAD_SVG, themeKey, ' data-analytics-click="resume_click"'));
 	}
 	if (actions.length === 0 && !resume) {
 		return '';
 	}
 	const note =
 		resume && !resume.fileUrl
-			? `<p class="text-body-sm text-ink-muted">Resume attached: ${escapeHtml(resume.fileName || 'resume')}</p>`
+			? `<p class="type-meta text-ink-subtle pt-xxs break-all">Resume attached: ${escapeHtml(resume.fileName || 'resume')}</p>`
 			: '';
-	return section('contact', 'Get in Touch', 'flex flex-wrap gap-sm', `${actions.join('')}${note}`);
+
+	return `<section id="contact" aria-labelledby="contact-heading" data-reveal class="card-elevated edge-highlight rounded-2xl card-p md:card-p-lg flex flex-col md:flex-row md:items-center md:justify-between gap-lg ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
+		<div class="flex flex-col gap-xs max-w-lg min-w-0">
+			<p class="type-eyebrow">Next Step</p>
+			<div class="flex items-center gap-sm">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 ${currentPresentation.accent}" data-theme="accent" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+				<h2 id="contact-heading" class="type-heading-section ${currentPresentation.display} ${currentPresentation.heading}" data-theme="display heading">Let's Connect</h2>
+			</div>
+			<p class="type-body-sm text-ink-muted leading-relaxed break-words">Interested in collaborating or discussing opportunities? Reach out directly via the channels below.</p>
+			${note}
+		</div>
+		<div class="flex flex-wrap items-center gap-sm">${actions.join('')}</div>
+	</section>`;
 }
 
 function sectionNavHtml(output: PortfolioOutput): string {
@@ -389,10 +473,10 @@ function sectionNavHtml(output: PortfolioOutput): string {
 	const links = items
 		.map(
 			(item) =>
-				`<li class="shrink-0"><a href="#${item.id}" data-section-nav="${item.id}" class="inline-flex items-center py-xs text-body-sm font-medium text-ink-muted transition-colors duration-200 hover:text-ink">${escapeHtml(item.label)}</a></li>`,
+				`<li class="shrink-0"><a href="#${item.id}" data-section-nav="${item.id}" class="inline-flex items-center py-xs text-body-sm font-medium text-ink-muted transition-colors duration-fast hover:text-ink">${escapeHtml(item.label)}</a></li>`,
 		)
 		.join('');
-	return `<nav aria-label="Portfolio sections" class="sticky top-0 z-40 mb-lg border-b border-hairline surface-glass shadow-sm"><ul class="flex flex-nowrap items-center gap-x-lg overflow-x-auto py-xs">${links}</ul></nav>`;
+	return `<nav aria-label="Portfolio sections" class="sticky top-0 z-40 mb-lg border-b border-hairline surface-glass shadow-subtle"><ul class="flex flex-nowrap items-center gap-x-md overflow-x-auto py-xs sm:gap-x-lg">${links}</ul></nav>`;
 }
 
 function footerHtml(output: PortfolioOutput): string {
@@ -400,14 +484,14 @@ function footerHtml(output: PortfolioOutput): string {
 	const year = new Date().getFullYear();
 
 	const identity = `<div class="flex flex-col gap-xs">
-		<p class="text-headline font-medium text-ink">${escapeHtml(footer.name || 'Portfolio')}</p>
-		${footer.headline ? `<p class="text-body-sm text-ink-muted">${escapeHtml(footer.headline)}</p>` : ''}
+		<p class="type-heading-sub ${currentPresentation.display} text-ink break-words">${escapeHtml(footer.name || 'Portfolio')}</p>
+		${footer.headline ? `<p class="type-body-sm text-ink-muted break-words">${escapeHtml(footer.headline)}</p>` : ''}
 	</div>`;
 	const nav = footer.nav.length
 		? `<nav aria-label="Footer sections"><ul class="flex flex-wrap gap-x-lg gap-y-xs">${footer.nav
 				.map(
 					(item) =>
-						`<li><a href="#${item.id}" class="inline-flex items-center py-xxs text-body-sm font-medium text-ink-muted transition-colors duration-200 hover:text-ink">${escapeHtml(item.label)}</a></li>`,
+						`<li><a href="#${item.id}" class="link-subtle inline-flex items-center py-xxs text-body-sm font-medium">${escapeHtml(item.label)}</a></li>`,
 				)
 				.join('')}</ul></nav>`
 		: '';
@@ -423,23 +507,23 @@ function footerHtml(output: PortfolioOutput): string {
 					const external = link.href.startsWith('http')
 						? ' target="_blank" rel="noopener noreferrer"'
 						: '';
-					return `<li><a href="${escapeHtml(link.href)}"${external}${trackType} class="inline-flex items-center gap-xs py-xxs text-body-sm text-ink-muted transition-colors duration-200 hover:text-ink">${HERO_ICON_SVG[link.kind]}${escapeHtml(link.label)}</a></li>`;
+					return `<li><a href="${escapeHtml(link.href)}"${external}${trackType} class="link-subtle group inline-flex items-center gap-xs py-xxs text-body-sm">${HERO_ICON_SVG[link.kind]}<span>${escapeHtml(link.label)}</span></a></li>`;
 				})
 				.join('')}</ul>`
 		: '';
 	const actions =
 		footer.contactHref || footer.resumeHref
 			? `<div class="flex flex-wrap items-center gap-sm">${footer.contactHref
-					? `<a href="${escapeHtml(footer.contactHref)}"${footer.contactHref.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : ''} data-analytics-click="contact_click" class="${currentPresentation.ghostButton}" data-theme="ghostButton">${HERO_ICON_SVG.email}Get in Touch</a>`
+					? `<a href="${escapeHtml(footer.contactHref)}"${footer.contactHref.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : ''} data-analytics-click="contact_click" class="btn ${currentPresentation.ghostButton}" data-theme="ghostButton">${HERO_ICON_SVG.email}<span>Get in Touch</span></a>`
 					: ''}${footer.resumeHref
-					? `<a href="${escapeHtml(footer.resumeHref)}"${footer.resumeHref.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : ''} data-analytics-click="resume_click" class="${currentPresentation.ghostButton}" data-theme="ghostButton">${HERO_DOWNLOAD_SVG}Download Resume</a>`
+					? `<a href="${escapeHtml(footer.resumeHref)}"${footer.resumeHref.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : ''} data-analytics-click="resume_click" class="btn ${currentPresentation.ghostButton}" data-theme="ghostButton">${HERO_DOWNLOAD_SVG}<span>Download Resume</span></a>`
 					: ''}</div>`
 			: '';
 	const ownership = footer.name
-		? `<p class="text-caption text-ink-subtle">© ${year} ${escapeHtml(footer.name)}</p>`
+		? `<p class="type-meta border-t border-hairline-subtle pt-md text-caption text-ink-subtle break-words">© ${year} ${escapeHtml(footer.name)}</p>`
 		: '';
 
-	return `<footer id="portfolio-footer" aria-label="Portfolio footer" class="border-t border-hairline pt-xl">
+	return `<footer id="portfolio-footer" aria-label="Portfolio footer" class="border-t border-hairline-subtle pt-xl">
 		<div class="flex flex-col gap-lg">
 			${identity}
 			${nav}

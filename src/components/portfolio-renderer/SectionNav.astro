@@ -9,23 +9,82 @@ interface Props {
 const { items } = Astro.props;
 ---
 
-<nav
-	aria-label="Portfolio sections"
-	class="sticky top-0 z-40 mb-lg border-b border-hairline surface-glass shadow-sm"
->
-	<ul class="flex flex-nowrap items-center gap-x-lg overflow-x-auto py-xs">
-		{
-			items.map((item) => (
-				<li class="shrink-0">
-					<a
-						href={`#${item.id}`}
-						data-section-nav={item.id}
-						class="inline-flex items-center py-xs text-body-sm font-medium text-ink-muted transition-colors duration-200 hover:text-ink"
-					>
-						{item.label}
-					</a>
-				</li>
-			))
+{
+	items && items.length > 0 && (
+		<nav
+			aria-label="Portfolio sections"
+			class="sticky top-0 z-40 mb-lg border-b border-hairline surface-glass shadow-subtle"
+		>
+			<ul class="flex flex-nowrap items-center gap-x-md overflow-x-auto py-xs sm:gap-x-lg">
+				{
+					items.map((item) => (
+						<li class="shrink-0">
+							<a
+								href={`#${item.id}`}
+								data-section-nav={item.id}
+								class="inline-flex items-center px-xs py-xs text-body-sm font-medium text-ink-muted transition-colors duration-fast hover:text-ink"
+							>
+								{item.label}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+	)
+}
+
+<script>
+	function initSectionNav() {
+		const nav = document.querySelector<HTMLElement>('nav[aria-label="Portfolio sections"]');
+		if (!nav) return;
+		const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a[data-section-nav]'));
+		if (links.length === 0) return;
+
+		const targets: HTMLElement[] = [];
+		for (const link of links) {
+			const id = link.dataset.sectionNav;
+			if (!id) continue;
+			const target = document.getElementById(id);
+			if (target) targets.push(target);
 		}
-	</ul>
-</nav>
+		if (targets.length === 0) return;
+
+		const setActive = (id: string | null) => {
+			for (const link of links) {
+				const active = link.dataset.sectionNav === id;
+				link.classList.toggle('text-ink-muted', !active);
+				link.classList.toggle('text-ink', active);
+				link.classList.toggle('font-medium', !active);
+				link.classList.toggle('font-semibold', active);
+				if (active) {
+					link.setAttribute('aria-current', 'location');
+				} else {
+					link.removeAttribute('aria-current');
+				}
+			}
+		};
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const active = entries
+					.filter((entry) => entry.isIntersecting)
+					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+				if (active) {
+					setActive(active.target.id);
+				}
+			},
+			{ root: null, rootMargin: '-30% 0px -50% 0px', threshold: 0 }
+		);
+
+		for (const target of targets) {
+			observer.observe(target);
+		}
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initSectionNav);
+	} else {
+		initSectionNav();
+	}
+</script>

@@ -3,7 +3,6 @@ import { Download, Github, Linkedin, Mail } from 'lucide-astro';
 import type { PortfolioOutput, PortfolioResume } from '../../lib/ai';
 import { resolveIdentityLinks } from '../../lib/portfolio';
 import type { PortfolioTheme } from '../../lib/themes';
-import SectionWrapper from './SectionWrapper.astro';
 
 interface Props {
 	/** The normalized output driving every action in this section. */
@@ -22,6 +21,7 @@ const ICONS: Record<'linkedin' | 'github' | 'email', typeof Mail> = {
 };
 
 interface ContactAction {
+	kind: 'linkedin' | 'github' | 'email' | 'resume';
 	label: string;
 	href: string;
 	icon: typeof Mail;
@@ -31,43 +31,66 @@ interface ContactAction {
 const links = resolveIdentityLinks(portfolio);
 
 const actions: ContactAction[] = [];
-for (const kind of ['linkedin', 'github', 'email'] as const) {
+for (const kind of ['email', 'linkedin', 'github'] as const) {
 	const link = links.find((entry) => entry.kind === kind);
 	if (link) {
-		actions.push({ label: link.label, href: link.href, icon: ICONS[kind], trackType: 'contact_click' });
+		actions.push({ kind, label: link.label, href: link.href, icon: ICONS[kind], trackType: 'contact_click' });
 	}
 }
 if (resume?.fileUrl) {
-	actions.push({ label: 'Download Resume', href: resume.fileUrl, icon: Download, trackType: 'resume_click' });
+	actions.push({ kind: 'resume', label: 'Download Resume', href: resume.fileUrl, icon: Download, trackType: 'resume_click' });
 }
 ---
 
 {
 	(actions.length > 0 || resume) && (
-		<SectionWrapper id="contact" heading="Get in Touch" theme={theme} bodyClass="mt-lg flex flex-wrap gap-sm">
-			<Mail slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+		<section
+			id="contact"
+			aria-labelledby="contact-heading"
+			data-reveal
+			class={`card-elevated edge-highlight rounded-2xl card-p md:card-p-lg flex flex-col md:flex-row md:items-center md:justify-between gap-lg ${presentation.sectionSpacing}`}
+		>
+			<div class="flex flex-col gap-xs max-w-lg min-w-0">
+				<p class="type-eyebrow">Next Step</p>
+				<div class="flex items-center gap-sm">
+					<Mail size="20" class={presentation.accent} aria-hidden="true" />
+					<h2 id="contact-heading" class={`type-heading-section ${presentation.display} ${presentation.heading}`}>
+						Let's Connect
+					</h2>
+				</div>
+				<p class="type-body-sm text-ink-muted leading-relaxed break-words">
+					Interested in collaborating or discussing opportunities? Reach out directly via the channels below.
+				</p>
+				{
+					resume && !resume.fileUrl && (
+						<p class="type-meta text-ink-subtle pt-xxs break-all">
+							Resume attached: {resume.fileName || 'resume'}
+						</p>
+					)
+				}
+			</div>
 			{
-				actions.map((action) => (
-					<a
-						class={presentation.button}
-						href={action.href}
-						data-analytics-click={action.trackType}
-						{...(action.href.startsWith('http')
-							? { target: '_blank', rel: 'noopener noreferrer' }
-							: {})}
-					>
-						<action.icon size="16" aria-hidden="true" />
-						{action.label}
-					</a>
-				))
-			}
-			{
-				resume && !resume.fileUrl && (
-					<p class="text-body-sm text-ink-muted">
-						Resume attached: {resume.fileName || 'resume'}
-					</p>
+				actions.length > 0 && (
+					<div class="flex flex-wrap items-center gap-sm">
+						{actions.map((action, index) => {
+							const isPrimary = index === 0;
+							return (
+								<a
+									class={`group btn ${isPrimary ? presentation.button : presentation.ghostButton}`}
+									href={action.href}
+									data-analytics-click={action.trackType}
+									{...(action.href.startsWith('http')
+										? { target: '_blank', rel: 'noopener noreferrer' }
+										: {})}
+								>
+									<action.icon size="16" class="icon-inline" aria-hidden="true" />
+									<span>{action.label}</span>
+								</a>
+							);
+						})}
+					</div>
 				)
 			}
-		</SectionWrapper>
+		</section>
 	)
 }

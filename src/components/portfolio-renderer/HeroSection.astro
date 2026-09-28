@@ -22,20 +22,20 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 	class={`grid grid-cols-1 gap-lg ${hasPhoto ? 'md:grid-cols-2 md:items-center md:gap-xl' : ''} ${presentation.sectionSpacing}`}
 >
 	<div class="flex flex-col gap-md">
-		<div class="flex items-center gap-sm">
-			<Sparkles size="16" class={presentation.accent} aria-hidden="true" />
-			<p class={`text-eyebrow ${presentation.accent}`}>Portfolio</p>
+		<div class="badge badge-accent self-start shadow-subtle">
+			<Sparkles size="13" class={presentation.accent} aria-hidden="true" />
+			<span>Portfolio</span>
 		</div>
 		<h1
 			id="hero-heading"
-			class={`text-balance break-words ${presentation.display} text-display-lg ${presentation.heading}`}
+			class={`type-display break-words ${presentation.display} ${presentation.heading}`}
 		>
 			{hero.name || 'Portfolio'}
 		</h1>
 		{
 			hero.headline && (
 				<p
-					class={`max-w-narrow break-words text-balance ${presentation.display} text-headline font-medium ${presentation.heading}`}
+					class={`type-heading-sub max-w-prose break-words font-medium ${presentation.display} ${presentation.heading}`}
 				>
 					{hero.headline}
 				</p>
@@ -43,13 +43,13 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 		}
 		{
 			hero.introduction && (
-				<p class="max-w-narrow text-body-lg text-ink-muted">{hero.introduction}</p>
+				<p class="type-body max-w-prose leading-relaxed text-ink-muted">{hero.introduction}</p>
 			)
 		}
 		{
 			hero.location && (
-				<p class="flex items-center gap-xs text-caption text-ink-subtle">
-					<MapPin size="14" aria-hidden="true" />
+				<p class="type-meta flex items-center gap-xs text-ink-subtle">
+					<MapPin size="14" class="icon-inline" aria-hidden="true" />
 					Based in {hero.location}
 				</p>
 			)
@@ -58,7 +58,7 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 			hero.keywords.length > 0 && (
 				<ul class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">
 					{hero.keywords.map((keyword) => (
-						<li class="rounded-md border border-hairline bg-surface-2 px-sm py-xxs text-caption text-ink-muted">
+						<li class="pill pill-default">
 							{keyword}
 						</li>
 					))}
@@ -75,13 +75,13 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 								{...(link.href.startsWith('http')
 									? { target: '_blank', rel: 'noopener noreferrer' }
 									: {})}
-								class="inline-flex items-center gap-xs py-xxs text-body-sm text-ink-muted transition-colors duration-200 hover:text-ink"
+								class="link-subtle group inline-flex items-center gap-xs py-xxs text-body-sm"
 							>
-								{link.kind === 'linkedin' && <Linkedin size="16" aria-hidden="true" />}
-								{link.kind === 'github' && <Github size="16" aria-hidden="true" />}
-								{link.kind === 'email' && <Mail size="16" aria-hidden="true" />}
-								{link.kind === 'website' && <Globe size="16" aria-hidden="true" />}
-								{link.label}
+								{link.kind === 'linkedin' && <Linkedin size="16" class="icon-inline" aria-hidden="true" />}
+								{link.kind === 'github' && <Github size="16" class="icon-inline" aria-hidden="true" />}
+								{link.kind === 'email' && <Mail size="16" class="icon-inline" aria-hidden="true" />}
+								{link.kind === 'website' && <Globe size="16" class="icon-inline" aria-hidden="true" />}
+								<span>{link.label}</span>
 							</a>
 						</li>
 					))}
@@ -94,15 +94,19 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 					{hero.ctas.map((cta) => (
 						<a
 							href={cta.href}
-							class={cta.variant === 'primary' ? presentation.button : presentation.ghostButton}
+							class={`group btn ${cta.variant === 'primary' ? presentation.button : presentation.ghostButton}`}
 							{...(cta.analytics ? { 'data-analytics-click': cta.analytics } : {})}
 							{...(cta.href.startsWith('http')
 								? { target: '_blank', rel: 'noopener noreferrer' }
 								: {})}
 						>
-							{cta.label}
-							{cta.icon === 'arrow' && <ArrowRight size="16" aria-hidden="true" />}
-							{cta.icon === 'download' && <Download size="16" aria-hidden="true" />}
+							<span>{cta.label}</span>
+							{cta.icon === 'arrow' && (
+								<ArrowRight size="16" class="icon-inline transition-transform duration-fast group-hover:translate-x-0.5" aria-hidden="true" />
+							)}
+							{cta.icon === 'download' && (
+								<Download size="16" class="icon-inline transition-transform duration-fast group-hover:translate-y-0.5" aria-hidden="true" />
+							)}
 						</a>
 					))}
 				</div>
@@ -112,11 +116,13 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 	{
 		hasPhoto && (
 			<div class="flex justify-center md:justify-end">
-				<img
-					src={hero.photo?.dataUrl}
-					alt={hero.name ? `${hero.name} profile photo` : 'Profile photo'}
-					class="size-40 rounded-full border border-hairline bg-surface-2 object-cover md:size-52"
-				/>
+				<div class="size-40 overflow-hidden rounded-full border border-hairline-strong bg-surface-2 p-1 shadow-elevated md:size-52">
+					<img
+						src={hero.photo?.dataUrl}
+						alt={hero.name ? `${hero.name} profile photo` : 'Profile photo'}
+						class="size-full rounded-full object-cover"
+					/>
+				</div>
 			</div>
 		)
 	}

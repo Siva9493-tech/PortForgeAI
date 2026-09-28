@@ -27,12 +27,12 @@ const ICONS: Record<PublicSocialKind, typeof Mail> = {
 };
 ---
 
-<footer id="portfolio-footer" aria-label="Portfolio footer" class="border-t border-hairline pt-xl">
+<footer id="portfolio-footer" aria-label="Portfolio footer" class="border-t border-hairline-subtle pt-xl">
 	<div class="flex flex-col gap-lg">
 		<div class="flex flex-col gap-xs">
-			<p class="text-headline font-medium text-ink">{footer.name || 'Portfolio'}</p>
+			<p class={`type-heading-sub ${presentation.display} text-ink break-words`}>{footer.name || 'Portfolio'}</p>
 			{
-				footer.headline && <p class="text-body-sm text-ink-muted">{footer.headline}</p>
+				footer.headline && <p class="type-body-sm text-ink-muted break-words">{footer.headline}</p>
 			}
 		</div>
 		{
@@ -43,7 +43,7 @@ const ICONS: Record<PublicSocialKind, typeof Mail> = {
 							<li>
 								<a
 									href={`#${item.id}`}
-									class="inline-flex items-center py-xxs text-body-sm font-medium text-ink-muted transition-colors duration-200 hover:text-ink"
+									class="link-subtle inline-flex items-center py-xxs text-body-sm font-medium"
 								>
 									{item.label}
 								</a>
@@ -71,10 +71,10 @@ const ICONS: Record<PublicSocialKind, typeof Mail> = {
 									href={link.href}
 									{...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
 									{...(trackType ? { 'data-analytics-click': trackType } : {})}
-									class="inline-flex items-center gap-xs py-xxs text-body-sm text-ink-muted transition-colors duration-200 hover:text-ink"
+									class="link-subtle group inline-flex items-center gap-xs py-xxs text-body-sm"
 								>
-									<Icon size="16" aria-hidden="true" />
-									{link.label}
+									<Icon size="15" class="icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true" />
+									<span>{link.label}</span>
 								</a>
 							</li>
 						);
@@ -88,32 +88,32 @@ const ICONS: Record<PublicSocialKind, typeof Mail> = {
 					{footer.contactHref && (
 						<a
 							href={footer.contactHref}
-							class={presentation.ghostButton}
+							class={`group btn ${presentation.ghostButton}`}
 							data-analytics-click="contact_click"
 							{...(footer.contactHref.startsWith('http')
 								? { target: '_blank', rel: 'noopener noreferrer' }
 								: {})}
 						>
-							<Mail size="16" aria-hidden="true" />
-							Get in Touch
+							<Mail size="15" class="icon-inline" aria-hidden="true" />
+							<span>Get in Touch</span>
 						</a>
 					)}
 					{footer.resumeHref && (
 						<a
 							href={footer.resumeHref}
-							class={presentation.ghostButton}
+							class={`group btn ${presentation.ghostButton}`}
 							data-analytics-click="resume_click"
 							{...(footer.resumeHref.startsWith('http')
 								? { target: '_blank', rel: 'noopener noreferrer' }
 								: {})}
 						>
-							<Download size="16" aria-hidden="true" />
-							Download Resume
+							<Download size="15" class="icon-inline transition-transform duration-fast group-hover:translate-y-0.5" aria-hidden="true" />
+							<span>Download Resume</span>
 						</a>
 					)}
 				</div>
 			)
 		}
-		{footer.name && <p class="text-caption text-ink-subtle">© {year} {footer.name}</p>}
+		{footer.name && <p class="type-meta border-t border-hairline-subtle pt-md text-caption text-ink-subtle break-words">© {year} {footer.name}</p>}
 	</div>
 </footer>

@@ -17,35 +17,53 @@ const presentation = theme.presentation;
 	certifications.length > 0 && (
 		<SectionWrapper
 			id="certifications"
-			heading="Certifications"
+			heading="Certifications & Licenses"
+			eyebrow="Credentials"
 			theme={theme}
 			bodyClass="mt-lg grid grid-cols-1 gap-md md:grid-cols-2"
 		>
 			<BadgeCheck slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
 			{
 				certifications.map((certification) => (
-					<article class={`${presentation.card} flex flex-col gap-xs p-md`}>
-						<h3 class="text-card-title text-ink">{certification.name}</h3>
-						<p class="text-caption text-ink-tertiary">
-							{certification.issuingOrganization}
-							{certification.issueDate && ` • ${certification.issueDate}`}
-						</p>
-						{certification.credentialId && (
-							<p class="text-caption text-ink-subtle">ID: {certification.credentialId}</p>
-						)}
-						{certification.description && (
-							<p class="text-body-sm text-ink-muted">{certification.description}</p>
-						)}
+					<article
+						class="card-subtle card-interactive flex flex-col justify-between gap-sm card-p-sm"
+					>
+						<div class="flex flex-col gap-xs">
+							<div class="flex items-start justify-between gap-sm min-w-0">
+								<div class="flex items-center gap-xs min-w-0">
+									<div class="icon-box-accent icon-box-sm shrink-0" aria-hidden="true">
+										<BadgeCheck size="14" />
+									</div>
+									<span class="badge badge-neutral break-words">{certification.issuingOrganization}</span>
+								</div>
+								{certification.issueDate && (
+									<span class="type-meta font-mono text-ink-subtle shrink-0">
+										{certification.issueDate}
+									</span>
+								)}
+							</div>
+							<h3 class={`type-heading-sub ${presentation.display} text-ink break-words min-w-0`}>{certification.name}</h3>
+							{certification.credentialId && (
+								<p class="type-label-micro font-mono text-ink-tertiary break-all">
+									Credential ID: {certification.credentialId}
+								</p>
+							)}
+							{certification.description && (
+								<p class="type-body-sm text-ink-muted leading-relaxed break-words">{certification.description}</p>
+							)}
+						</div>
 						{certification.credentialUrl && (
-							<a
-								class="mt-xs inline-flex items-center gap-xs py-xxs text-button text-primary hover:text-primary-hover"
-								href={certification.credentialUrl}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<ExternalLink size="16" aria-hidden="true" />
-								View Credential
-							</a>
+							<div class="pt-xs border-t border-hairline-subtle">
+								<a
+									class="link-action group"
+									href={certification.credentialUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									<ExternalLink size="14" class="icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+									<span>Verify Credential</span>
+								</a>
+							</div>
 						)}
 					</article>
 				))
