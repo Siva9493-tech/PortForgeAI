@@ -72,6 +72,10 @@
 			box-shadow var(--duration-base) var(--ease-smooth);
 	}
 
+	html.js-reveal [data-reveal-group].is-revealed > .card-interactive:hover,
+	html.js-reveal [data-reveal-group].is-revealed > .card-interactive:focus-within,
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item]:hover,
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item]:focus-within,
 	.card-interactive:hover,
 	.card-interactive:focus-within {
 		background-color: var(--color-surface-2);
@@ -548,17 +552,21 @@
 		content: '';
 		position: absolute;
 		bottom: -1px;
-		left: 0;
-		right: 0;
+		left: 0.375rem;
+		right: 0.375rem;
 		height: 2px;
 		background-color: var(--color-primary);
 		border-radius: var(--radius-pill);
+		opacity: 0;
 		transform: scaleX(0);
-		transition: transform var(--duration-base) var(--ease-out-soft);
+		transition:
+			opacity var(--duration-normal) var(--ease-cinematic),
+			transform var(--duration-normal) var(--ease-cinematic);
 	}
 
 	[data-section-nav][aria-current="location"]::after,
 	[data-section-nav][aria-current="page"]::after {
+		opacity: 1;
 		transform: scaleX(1);
 	}
 
@@ -639,31 +647,328 @@
 		border-width: 0;
 	}
 
-	/*
-	 * Progressive reveal (Day-11 Task 14).
-	 * Opt-in via `html.js-reveal` (added only by JS). Without JS, reduced
-	 * motion, or IntersectionObserver, the html class is never applied so every
-	 * section is fully visible by default — content is never removed, only given
-	 * a subtle entrance while motion is allowed.
-	 */
+	/* ------------------------------------------------------------------ */
+	/* Progressive Scroll Reveal System (Day 15 Motion Foundation)        */
+	/* Opt-in via `html.js-reveal` (added only by JS engine).             */
+	/* Without JS, reduced-motion, or IntersectionObserver, the class is  */
+	/* NEVER applied so content remains 100% visible and accessible.      */
+	/* ------------------------------------------------------------------ */
+
+	/* Base Section Reveal */
 	html.js-reveal [data-reveal].is-hidden {
 		opacity: 0;
-		transform: translateY(8px);
+		transform: translateY(var(--motion-distance-md));
+	}
+
+	html.js-reveal [data-reveal="fade-in"].is-hidden {
+		opacity: 0;
+		transform: none;
+	}
+
+	html.js-reveal [data-reveal="slide-up"].is-hidden {
+		opacity: 0;
+		transform: translateY(var(--motion-distance-lg));
+	}
+
+	html.js-reveal [data-reveal="slide-right"].is-hidden {
+		opacity: 0;
+		transform: translateX(calc(var(--motion-distance-md) * -1));
+	}
+
+	html.js-reveal [data-reveal="slide-left"].is-hidden {
+		opacity: 0;
+		transform: translateX(var(--motion-distance-md));
+	}
+
+	html.js-reveal [data-reveal="scale-in"].is-hidden {
+		opacity: 0;
+		transform: scale(0.97) translateY(var(--motion-distance-xs));
 	}
 
 	html.js-reveal [data-reveal].is-revealed {
 		opacity: 1;
-		transform: translateY(0);
+		transform: translate(0, 0) scale(1);
 		transition:
-			opacity var(--duration-slow) var(--ease-out-soft),
-			transform var(--duration-slow) var(--ease-out-soft);
+			opacity var(--duration-deliberate) var(--ease-cinematic),
+			transform var(--duration-deliberate) var(--ease-cinematic);
 	}
 
+	/* Group Stagger Primitive */
+	html.js-reveal [data-reveal-group].is-hidden > * {
+		opacity: 0;
+		transform: translateY(var(--motion-distance-sm));
+	}
+
+	html.js-reveal [data-reveal-group].is-revealed > * {
+		opacity: 1;
+		transform: translateY(0);
+		transition:
+			opacity var(--duration-normal) var(--ease-cinematic),
+			transform var(--duration-normal) var(--ease-cinematic);
+	}
+
+	html.js-reveal [data-reveal-group].is-revealed > *:nth-child(1) { transition-delay: calc(var(--motion-stagger-base) * 0); }
+	html.js-reveal [data-reveal-group].is-revealed > *:nth-child(2) { transition-delay: calc(var(--motion-stagger-base) * 1); }
+	html.js-reveal [data-reveal-group].is-revealed > *:nth-child(3) { transition-delay: calc(var(--motion-stagger-base) * 2); }
+	html.js-reveal [data-reveal-group].is-revealed > *:nth-child(4) { transition-delay: calc(var(--motion-stagger-base) * 3); }
+	html.js-reveal [data-reveal-group].is-revealed > *:nth-child(5) { transition-delay: calc(var(--motion-stagger-base) * 4); }
+	html.js-reveal [data-reveal-group].is-revealed > *:nth-child(6) { transition-delay: calc(var(--motion-stagger-base) * 5); }
+	html.js-reveal [data-reveal-group].is-revealed > *:nth-child(7) { transition-delay: calc(var(--motion-stagger-base) * 6); }
+	html.js-reveal [data-reveal-group].is-revealed > *:nth-child(8) { transition-delay: calc(var(--motion-stagger-base) * 7); }
+
+	/* Hero Initial Load Entrance Hierarchy */
+	html.js-reveal [data-reveal-hero] [data-hero-item] {
+		opacity: 0;
+		transform: translateY(var(--motion-distance-sm));
+		transition:
+			opacity var(--duration-normal) var(--ease-cinematic),
+			transform var(--duration-normal) var(--ease-cinematic);
+	}
+
+	html.js-reveal [data-reveal-hero].is-revealed [data-hero-item="badge"] {
+		opacity: 1;
+		transform: translateY(0);
+		transition-delay: 0ms;
+	}
+
+	html.js-reveal [data-reveal-hero].is-revealed [data-hero-item="headline"] {
+		opacity: 1;
+		transform: translateY(0);
+		transition-delay: 60ms;
+	}
+
+	html.js-reveal [data-reveal-hero].is-revealed [data-hero-item="content"] {
+		opacity: 1;
+		transform: translateY(0);
+		transition-delay: 120ms;
+	}
+
+	html.js-reveal [data-reveal-hero].is-revealed [data-hero-item="actions"] {
+		opacity: 1;
+		transform: translateY(0);
+		transition-delay: 180ms;
+	}
+
+	html.js-reveal [data-reveal-hero].is-revealed [data-hero-item="visual"] {
+		opacity: 1;
+		transform: translateY(0);
+		transition-delay: 240ms;
+	}
+
+	/* About Editorial Reveal Choreography */
+	html.js-reveal [data-reveal-about].is-hidden [data-about-col="bio"] {
+		opacity: 0;
+		transform: translateX(calc(var(--motion-distance-xs) * -1));
+	}
+
+	html.js-reveal [data-reveal-about].is-revealed [data-about-col="bio"] {
+		opacity: 1;
+		transform: translateX(0);
+		transition:
+			opacity var(--duration-deliberate) var(--ease-cinematic),
+			transform var(--duration-deliberate) var(--ease-cinematic);
+		transition-delay: 0ms;
+	}
+
+	html.js-reveal [data-reveal-about].is-hidden [data-about-col="story"] {
+		opacity: 0;
+		transform: translateY(var(--motion-distance-sm));
+	}
+
+	html.js-reveal [data-reveal-about].is-revealed [data-about-col="story"] {
+		opacity: 1;
+		transform: translateY(0);
+		transition:
+			opacity var(--duration-deliberate) var(--ease-cinematic),
+			transform var(--duration-deliberate) var(--ease-cinematic);
+		transition-delay: 80ms;
+	}
+
+	/* Projects Showcase Choreography */
+	html.js-reveal [data-reveal-projects].is-hidden [data-project-item="featured"] {
+		opacity: 0;
+		transform: scale(0.985) translateY(var(--motion-distance-md));
+	}
+
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="featured"] {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+		transition:
+			opacity var(--duration-deliberate) var(--ease-cinematic),
+			transform var(--duration-deliberate) var(--ease-cinematic);
+		transition-delay: 0ms;
+	}
+
+	html.js-reveal [data-reveal-projects].is-hidden [data-project-item="secondary"] {
+		opacity: 0;
+		transform: translateY(var(--motion-distance-sm));
+	}
+
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"] {
+		opacity: 1;
+		transform: translateY(0);
+		transition:
+			opacity var(--duration-normal) var(--ease-cinematic),
+			transform var(--duration-normal) var(--ease-cinematic);
+	}
+
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"]:nth-child(1),
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"]:nth-child(2) { transition-delay: 60ms; }
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"]:nth-child(3) { transition-delay: 120ms; }
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"]:nth-child(4) { transition-delay: 180ms; }
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"]:nth-child(5) { transition-delay: 240ms; }
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"]:nth-child(6) { transition-delay: 300ms; }
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"]:nth-child(7) { transition-delay: 360ms; }
+	html.js-reveal [data-reveal-projects].is-revealed [data-project-item="secondary"]:nth-child(8) { transition-delay: 420ms; }
+
+	/* Experience Timeline Choreography */
+	html.js-reveal [data-reveal-timeline].is-hidden [data-timeline-item] {
+		opacity: 0;
+		transform: translateY(var(--motion-distance-sm));
+	}
+
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item] {
+		opacity: 1;
+		transform: translateY(0);
+		transition:
+			opacity var(--duration-normal) var(--ease-cinematic),
+			transform var(--duration-normal) var(--ease-cinematic);
+	}
+
+	html.js-reveal [data-reveal-timeline].is-hidden [data-timeline-dot] {
+		opacity: 0;
+		transform: scale(0.6);
+	}
+
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-dot] {
+		opacity: 1;
+		transform: scale(1);
+		transition:
+			opacity var(--duration-normal) var(--ease-spring),
+			transform var(--duration-normal) var(--ease-spring);
+	}
+
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(1) { transition-delay: 0ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(1) [data-timeline-dot] { transition-delay: 40ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(2) { transition-delay: 70ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(2) [data-timeline-dot] { transition-delay: 110ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(3) { transition-delay: 140ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(3) [data-timeline-dot] { transition-delay: 180ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(4) { transition-delay: 210ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(4) [data-timeline-dot] { transition-delay: 250ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(5) { transition-delay: 280ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(5) [data-timeline-dot] { transition-delay: 320ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(6) { transition-delay: 350ms; }
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item]:nth-child(6) [data-timeline-dot] { transition-delay: 390ms; }
+
+	/* Fast compact stagger for Social Connectivity Bar */
+	html.js-reveal [data-reveal-group="compact"].is-revealed > *:nth-child(1) { transition-delay: calc(var(--motion-stagger-fast) * 0); }
+	html.js-reveal [data-reveal-group="compact"].is-revealed > *:nth-child(2) { transition-delay: calc(var(--motion-stagger-fast) * 1); }
+	html.js-reveal [data-reveal-group="compact"].is-revealed > *:nth-child(3) { transition-delay: calc(var(--motion-stagger-fast) * 2); }
+	html.js-reveal [data-reveal-group="compact"].is-revealed > *:nth-child(4) { transition-delay: calc(var(--motion-stagger-fast) * 3); }
+	html.js-reveal [data-reveal-group="compact"].is-revealed > *:nth-child(5) { transition-delay: calc(var(--motion-stagger-fast) * 4); }
+	html.js-reveal [data-reveal-group="compact"].is-revealed > *:nth-child(6) { transition-delay: calc(var(--motion-stagger-fast) * 5); }
+	html.js-reveal [data-reveal-group="compact"].is-revealed > *:nth-child(7) { transition-delay: calc(var(--motion-stagger-fast) * 6); }
+	html.js-reveal [data-reveal-group="compact"].is-revealed > *:nth-child(8) { transition-delay: calc(var(--motion-stagger-fast) * 7); }
+
+	/* ------------------------------------------------------------------ */
+	/* Step 3: Advanced Scroll Interactions & Depth                       */
+	/* ------------------------------------------------------------------ */
+
+	/* Timeline Progression State */
+	.timeline-rail-progress {
+		position: absolute;
+		left: -1px;
+		top: 0;
+		width: 2px;
+		background: linear-gradient(to bottom, var(--color-primary), var(--color-primary-hover));
+		transition: height var(--duration-normal) var(--ease-out-soft);
+		border-radius: var(--radius-pill);
+		pointer-events: none;
+		z-index: 1;
+	}
+
+	[data-timeline-item] [data-timeline-dot] {
+		transition:
+			background-color var(--duration-normal) var(--ease-smooth),
+			border-color var(--duration-normal) var(--ease-smooth),
+			box-shadow var(--duration-normal) var(--ease-smooth),
+			transform var(--duration-normal) var(--ease-spring);
+	}
+
+	[data-timeline-item].is-passed [data-timeline-dot] {
+		background-color: var(--color-primary);
+		border-color: var(--color-primary);
+	}
+
+	html.js-reveal [data-reveal-timeline].is-revealed [data-timeline-item].is-current [data-timeline-dot],
+	[data-timeline-item].is-current [data-timeline-dot] {
+		background-color: var(--color-primary);
+		border-color: var(--color-primary);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 22%, transparent);
+		transform: scale(1.2);
+	}
+
+	/* Hero Depth Parallax */
+	[data-parallax-hero] {
+		transform: translateY(var(--parallax-hero-y, 0px));
+		will-change: transform;
+		transition: transform 60ms linear;
+	}
+
+	@media (max-width: 767px) {
+		[data-parallax-hero] {
+			transform: none !important;
+		}
+	}
+
+	/* Project Visual Reveal & Card Depth */
+	[data-project-visual] {
+		overflow: hidden;
+		border-radius: var(--radius-md);
+	}
+
+	[data-project-visual] img {
+		transition: transform var(--duration-slow) var(--ease-cinematic);
+		will-change: transform;
+	}
+
+	.card-interactive:hover [data-project-visual] img {
+		transform: scale(1.03);
+	}
+
+	/* Reduced motion: Complete strict override for accessibility */
 	@media (prefers-reduced-motion: reduce) {
-		html.js-reveal [data-reveal] {
-			opacity: 1;
-			transform: none;
-			transition: none;
+		html.js-reveal [data-reveal],
+		html.js-reveal [data-reveal-group] > *,
+		html.js-reveal [data-reveal-hero] [data-hero-item],
+		html.js-reveal [data-reveal-about] [data-about-col],
+		html.js-reveal [data-reveal-projects] [data-project-item],
+		html.js-reveal [data-reveal-timeline] [data-timeline-item],
+		html.js-reveal [data-reveal-timeline] [data-timeline-dot],
+		html.js-reveal [data-reveal].is-hidden,
+		html.js-reveal [data-reveal-group].is-hidden > *,
+		html.js-reveal [data-reveal-about].is-hidden [data-about-col],
+		html.js-reveal [data-reveal-projects].is-hidden [data-project-item],
+		html.js-reveal [data-reveal-timeline].is-hidden [data-timeline-item],
+		html.js-reveal [data-reveal-timeline].is-hidden [data-timeline-dot],
+		[data-parallax-hero],
+		.timeline-rail-progress,
+		[data-project-visual] img,
+		a[data-section-nav]::after {
+			opacity: 1 !important;
+			transform: none !important;
+			transition: none !important;
+			animation: none !important;
+			transition-delay: 0s !important;
+		}
+
+		.btn:hover,
+		.btn:active,
+		.card-interactive:hover,
+		.card-interactive:focus-within,
+		.pill-interactive:hover {
+			transform: none !important;
 		}
 	}
 }

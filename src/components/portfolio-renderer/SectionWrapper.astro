@@ -18,8 +18,10 @@ interface Props {
 	className?: string;
 	/** Classes for the header wrapper. */
 	headerClass?: string;
-	/** Classes for the content wrapper inside the section. */
+	/** Classes for the body wrapper. */
 	bodyClass?: string;
+	/** Specific choreography mode for section entrance. */
+	revealMode?: 'default' | 'projects' | 'timeline' | 'compact' | 'none';
 }
 
 const {
@@ -32,15 +34,34 @@ const {
 	className,
 	headerClass = 'flex flex-col gap-xs',
 	bodyClass = 'mt-lg grid grid-cols-1 gap-lg md:grid-cols-2',
+	revealMode = 'default',
 } = Astro.props;
 
 const presentation = theme.presentation;
 const HeadingTag: 'h2' | 'h3' = headingLevel === 3 ? 'h3' : 'h2';
 const headingId = `${id}-heading`;
 const sectionClass = className ?? presentation.sectionSpacing;
+
+const sectionRevealAttr =
+	revealMode === 'projects'
+		? { 'data-reveal-projects': '' }
+		: revealMode === 'timeline'
+			? { 'data-reveal-timeline': '' }
+			: revealMode === 'none'
+				? {}
+				: { 'data-reveal': '' };
+
+const bodyRevealAttr =
+	revealMode === 'compact'
+		? { 'data-reveal-group': 'compact' }
+		: revealMode === 'timeline'
+			? { 'data-timeline-container': '' }
+			: (revealMode === 'projects' || revealMode === 'none')
+				? {}
+				: { 'data-reveal-group': '' };
 ---
 
-<section id={id} aria-labelledby={headingId} data-reveal class={sectionClass}>
+<section id={id} aria-labelledby={headingId} {...sectionRevealAttr} class={sectionClass}>
 	<header class={headerClass}>
 		{
 			eyebrow && (
@@ -59,7 +80,7 @@ const sectionClass = className ?? presentation.sectionSpacing;
 			)
 		}
 	</header>
-	<div class={bodyClass}>
+	<div class={bodyClass} {...bodyRevealAttr}>
 		<slot />
 	</div>
 </section>

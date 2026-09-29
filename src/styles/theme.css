@@ -195,6 +195,11 @@
 	/* ------------------------------------------------------------------ */
 	/* 10. Container widths                                                 */
 	/* ------------------------------------------------------------------ */
+	--container-xs: 20rem; /* 320px */
+	--container-sm: 24rem; /* 384px */
+	--container-md: 28rem; /* 448px */
+	--container-lg: 32rem; /* 512px */
+	--container-xl: 36rem; /* 576px */
 	--container-page: 80rem; /* 1280px — default content max width */
 	--container-narrow: 48rem; /* 768px  — lead / editorial blocks */
 	--container-wide: 90rem; /* 1440px — desktop-XL */
@@ -209,11 +214,33 @@
 	--breakpoint-2xl: 90rem; /* 1440px — desktop-xl */
 
 	/* ------------------------------------------------------------------ */
-	/* 12. Motion & easing                                                 */
+	/* 12. Motion & easing (Day 15 Motion Foundation)                      */
 	/* ------------------------------------------------------------------ */
+	--duration-instant: 50ms;
+	--duration-micro: 100ms;
+	--duration-fast: 150ms;
+	--duration-base: 200ms;
+	--duration-normal: 250ms;
+	--duration-slow: 350ms;
+	--duration-deliberate: 450ms;
+	--duration-cinematic: 600ms;
+	--duration-counter: 500ms;
+
 	--ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 	--ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
-	--duration-fast: 120ms;
-	--duration-base: 200ms;
-	--duration-slow: 320ms;
+	--ease-cinematic: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+	--ease-in-out-smooth: cubic-bezier(0.65, 0, 0.35, 1);
+
+	--motion-distance-xs: 6px;
+	--motion-distance-sm: 12px;
+	--motion-distance-md: 20px;
+	--motion-distance-lg: 32px;
+
+	--motion-stagger-fast: 40ms;
+	--motion-stagger-base: 70ms;
+	--motion-stagger-slow: 100ms;
+
+	--parallax-offset-hero: 12px;
+	--parallax-offset-mobile: 0px;
 }

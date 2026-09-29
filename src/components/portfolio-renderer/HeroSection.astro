@@ -19,15 +19,17 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 <section
 	id="hero"
 	aria-labelledby="hero-heading"
+	data-reveal-hero
 	class={`grid grid-cols-1 gap-lg ${hasPhoto ? 'md:grid-cols-2 md:items-center md:gap-xl' : ''} ${presentation.sectionSpacing}`}
 >
 	<div class="flex flex-col gap-md">
-		<div class="badge badge-accent self-start shadow-subtle">
+		<div class="badge badge-accent self-start shadow-subtle" data-hero-item="badge">
 			<Sparkles size="13" class={presentation.accent} aria-hidden="true" />
 			<span>Portfolio</span>
 		</div>
 		<h1
 			id="hero-heading"
+			data-hero-item="headline"
 			class={`type-display break-words ${presentation.display} ${presentation.heading}`}
 		>
 			{hero.name || 'Portfolio'}
@@ -35,6 +37,7 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 		{
 			hero.headline && (
 				<p
+					data-hero-item="content"
 					class={`type-heading-sub max-w-prose break-words font-medium ${presentation.display} ${presentation.heading}`}
 				>
 					{hero.headline}
@@ -43,12 +46,12 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 		}
 		{
 			hero.introduction && (
-				<p class="type-body max-w-prose leading-relaxed text-ink-muted">{hero.introduction}</p>
+				<p data-hero-item="content" class="type-body max-w-prose leading-relaxed text-ink-muted">{hero.introduction}</p>
 			)
 		}
 		{
 			hero.location && (
-				<p class="type-meta flex items-center gap-xs text-ink-subtle">
+				<p data-hero-item="content" class="type-meta flex items-center gap-xs text-ink-subtle">
 					<MapPin size="14" class="icon-inline" aria-hidden="true" />
 					Based in {hero.location}
 				</p>
@@ -56,7 +59,7 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 		}
 		{
 			hero.keywords.length > 0 && (
-				<ul class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">
+				<ul data-hero-item="content" class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">
 					{hero.keywords.map((keyword) => (
 						<li class="pill pill-default">
 							{keyword}
@@ -67,7 +70,7 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 		}
 		{
 			hero.links.length > 0 && (
-				<ul class="flex flex-wrap items-center gap-md" aria-label="Profile links">
+				<ul data-hero-item="actions" class="flex flex-wrap items-center gap-md" aria-label="Profile links">
 					{hero.links.map((link) => (
 						<li>
 							<a
@@ -90,7 +93,7 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 		}
 		{
 			hero.ctas.length > 0 && (
-				<div class="flex flex-wrap items-center gap-sm">
+				<div data-hero-item="actions" class="flex flex-wrap items-center gap-sm">
 					{hero.ctas.map((cta) => (
 						<a
 							href={cta.href}
@@ -115,8 +118,11 @@ const hasPhoto = Boolean(hero.photo?.dataUrl);
 	</div>
 	{
 		hasPhoto && (
-			<div class="flex justify-center md:justify-end">
-				<div class="size-40 overflow-hidden rounded-full border border-hairline-strong bg-surface-2 p-1 shadow-elevated md:size-52">
+			<div data-hero-item="visual" class="flex justify-center md:justify-end">
+				<div
+					data-parallax-hero
+					class="size-40 overflow-hidden rounded-full border border-hairline-strong bg-surface-2 p-1 shadow-elevated md:size-52"
+				>
 					<img
 						src={hero.photo?.dataUrl}
 						alt={hero.name ? `${hero.name} profile photo` : 'Profile photo'}

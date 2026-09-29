@@ -51,7 +51,17 @@ function formatYears(entry: PortfolioEducation): string {
 								{
 									entry.cgpa && (
 										<span class="badge badge-neutral">
-											CGPA: {entry.cgpa}
+											CGPA:{' '}
+											{!Number.isNaN(parseFloat(entry.cgpa)) ? (
+												<span
+													data-counter={parseFloat(entry.cgpa)}
+													data-counter-decimals={entry.cgpa.includes('.') ? entry.cgpa.split('.')[1].length : 0}
+												>
+													{entry.cgpa}
+												</span>
+											) : (
+												entry.cgpa
+											)}
 										</span>
 									)
 								}

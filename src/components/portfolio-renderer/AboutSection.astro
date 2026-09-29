@@ -27,10 +27,10 @@ const hasContent = paragraphs.length > 0;
 		<section
 			id="about"
 			aria-labelledby="about-heading"
-			data-reveal
+			data-reveal-about
 			class={`grid grid-cols-1 gap-md md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] md:gap-xl lg:gap-xxl ${presentation.sectionSpacing}`}
 		>
-			<div class="flex flex-col gap-xs">
+			<div data-about-col="bio" class="flex flex-col gap-xs">
 				<p class="type-eyebrow">Biography</p>
 				<div class="flex items-center gap-sm">
 					<User size="20" class={presentation.accent} aria-hidden="true" />
@@ -40,7 +40,7 @@ const hasContent = paragraphs.length > 0;
 				</div>
 				<div class="hidden md:block w-10 h-0.5 bg-primary/40 mt-xs rounded-pill" aria-hidden="true" />
 			</div>
-			<div class="flex flex-col gap-md max-w-prose min-w-0">
+			<div data-about-col="story" class="flex flex-col gap-md max-w-prose min-w-0">
 				{
 					paragraphs.map((paragraph, index) => (
 						<p

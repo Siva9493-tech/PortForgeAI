@@ -30,14 +30,17 @@ function formatPeriod(entry: PortfolioExperience): string {
 			heading="Experience"
 			eyebrow="Career Journey"
 			theme={theme}
+			revealMode="timeline"
 			bodyClass="mt-lg relative border-l border-hairline pl-md sm:pl-lg ml-xs sm:ml-sm flex flex-col gap-lg"
 		>
 			<Briefcase slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
+			<div class="timeline-rail-progress" aria-hidden="true" style="height: var(--timeline-progress, 0%);" />
 			{
 				experience.map((entry) => (
-					<article class="group relative flex flex-col gap-xs">
+					<article class="group relative flex flex-col gap-xs" data-timeline-item>
 						<div
 							class="absolute -left-[calc(var(--spacing-md)+5px)] sm:-left-[calc(var(--spacing-lg)+5px)] top-1.5 size-2.5 rounded-full border border-hairline-strong bg-primary shadow-subtle transition-transform duration-fast group-hover:scale-125"
+							data-timeline-dot
 							aria-hidden="true"
 						/>
 						<div class="flex flex-col gap-xxs sm:flex-row sm:items-baseline sm:justify-between sm:gap-sm min-w-0">

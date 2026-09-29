@@ -12,6 +12,7 @@ import {
 } from './public-data';
 import { wizardStore } from './wizard-store';
 import { generatePortfolio } from './generator';
+import { initMotionEngine } from './motion-engine';
 
 /**
  * Client-side live preview controller.
@@ -32,8 +33,7 @@ let unsubscribeData: (() => void) | undefined;
 let unsubscribeTheme: (() => void) | undefined;
 let mounted = false;
 let sectionNavObserver: IntersectionObserver | null = null;
-let revealObserver: IntersectionObserver | null = null;
-let revealFocusHandler: ((event: FocusEvent) => void) | null = null;
+let motionCleanup: (() => void) | null = null;
 let currentPresentation: ThemePresentation = themeStore.getTheme().presentation;
 
 /** Escapes user-provided text before it is injected into the DOM. */
@@ -67,11 +67,30 @@ function section(
 	id: string,
 	heading: string,
 	bodyClass: string,
-	bodyHtml: string
+	bodyHtml: string,
+	revealMode: 'default' | 'projects' | 'timeline' | 'compact' | 'none' = 'default'
 ): string {
-	return `<section id="${id}" aria-labelledby="${id}-heading" data-reveal class="${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
+	const sectionAttr =
+		revealMode === 'projects'
+			? 'data-reveal-projects'
+			: revealMode === 'timeline'
+				? 'data-reveal-timeline'
+				: revealMode === 'none'
+					? ''
+					: 'data-reveal';
+	const bodyAttr =
+		revealMode === 'compact'
+			? 'data-reveal-group="compact"'
+			: revealMode === 'timeline'
+				? 'data-timeline-container'
+				: revealMode === 'projects' || revealMode === 'none'
+					? ''
+					: 'data-reveal-group';
+	const sectionAttrStr = sectionAttr ? ` ${sectionAttr}` : '';
+	const bodyAttrStr = bodyAttr ? ` ${bodyAttr}` : '';
+	return `<section id="${id}" aria-labelledby="${id}-heading"${sectionAttrStr} class="${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
 		<h2 id="${id}-heading" class="${currentPresentation.display} text-headline ${currentPresentation.heading}" data-theme="display heading">${escapeHtml(heading)}</h2>
-		<div class="${bodyClass}">${bodyHtml}</div>
+		<div class="${bodyClass}"${bodyAttrStr}>${bodyHtml}</div>
 	</section>`;
 }
 
@@ -114,19 +133,19 @@ function heroHtml(output: PortfolioOutput): string {
 	const hasPhoto = Boolean(hero.photo?.dataUrl);
 
 	const headline = hero.headline
-		? `<p class="max-w-narrow break-words text-balance ${currentPresentation.display} text-headline font-medium ${currentPresentation.heading}" data-theme="display heading">${escapeHtml(hero.headline)}</p>`
+		? `<p data-hero-item="content" class="max-w-narrow break-words text-balance ${currentPresentation.display} text-headline font-medium ${currentPresentation.heading}" data-theme="display heading">${escapeHtml(hero.headline)}</p>`
 		: '';
 	const introduction = hero.introduction
-		? `<p class="max-w-narrow text-body-lg text-ink-muted">${escapeHtml(hero.introduction)}</p>`
+		? `<p data-hero-item="content" class="max-w-narrow text-body-lg text-ink-muted">${escapeHtml(hero.introduction)}</p>`
 		: '';
 	const location = hero.location
-		? `<p class="flex items-center gap-xs text-caption text-ink-subtle">${HERO_MAP_PIN_SVG}Based in ${escapeHtml(hero.location)}</p>`
+		? `<p data-hero-item="content" class="flex items-center gap-xs text-caption text-ink-subtle">${HERO_MAP_PIN_SVG}Based in ${escapeHtml(hero.location)}</p>`
 		: '';
 	const chips = hero.keywords.length
-		? `<ul class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">${hero.keywords.map(chip).join('')}</ul>`
+		? `<ul data-hero-item="content" class="flex flex-wrap gap-xs" aria-label="Portfolio keywords">${hero.keywords.map(chip).join('')}</ul>`
 		: '';
 	const actions = hero.ctas.length
-		? `<div class="flex flex-wrap items-center gap-sm">${hero.ctas
+		? `<div data-hero-item="actions" class="flex flex-wrap items-center gap-sm">${hero.ctas
 				.map((cta) => {
 					const external = cta.href.startsWith('http') ? ' target="_blank" rel="noopener noreferrer"' : '';
 					const analytics = cta.analytics ? ` data-analytics-click="${cta.analytics}"` : '';
@@ -139,16 +158,16 @@ function heroHtml(output: PortfolioOutput): string {
 		: '';
 	const profileLinks = heroLinksHtml(hero);
 	const photo = hasPhoto
-		? `<div class="flex justify-center md:justify-end"><img src="${escapeHtml(hero.photo?.dataUrl ?? '')}" alt="${escapeHtml(hero.name ? `${hero.name} profile photo` : 'Profile photo')}" class="size-40 rounded-full border border-hairline bg-surface-2 object-cover md:size-52" /></div>`
+		? `<div data-hero-item="visual" class="flex justify-center md:justify-end"><div data-parallax-hero class="size-40 overflow-hidden rounded-full border border-hairline-strong bg-surface-2 p-1 shadow-elevated md:size-52"><img src="${escapeHtml(hero.photo?.dataUrl ?? '')}" alt="${escapeHtml(hero.name ? `${hero.name} profile photo` : 'Profile photo')}" class="size-full rounded-full object-cover" /></div></div>`
 		: '';
 
-	return `<section id="hero" aria-labelledby="hero-heading" class="grid grid-cols-1 gap-lg ${hasPhoto ? 'md:grid-cols-2 md:items-center md:gap-xl' : ''} ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
+	return `<section id="hero" aria-labelledby="hero-heading" data-reveal-hero class="grid grid-cols-1 gap-lg ${hasPhoto ? 'md:grid-cols-2 md:items-center md:gap-xl' : ''} ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
 		<div class="flex flex-col gap-md">
-			<div class="flex items-center gap-sm">
+			<div class="badge badge-accent self-start shadow-subtle" data-hero-item="badge">
 				${HERO_SPARKLES_SVG}
-				<p class="text-eyebrow ${currentPresentation.accent}" data-theme="accent">Portfolio</p>
+				<span class="${currentPresentation.accent}" data-theme="accent">Portfolio</span>
 			</div>
-			<h1 id="hero-heading" class="type-display break-words ${currentPresentation.display} ${currentPresentation.heading}" data-theme="display heading">${escapeHtml(hero.name || 'Portfolio')}</h1>
+			<h1 id="hero-heading" data-hero-item="headline" class="type-display break-words ${currentPresentation.display} ${currentPresentation.heading}" data-theme="display heading">${escapeHtml(hero.name || 'Portfolio')}</h1>
 			${headline}
 			${introduction}
 			${location}
@@ -190,8 +209,8 @@ function aboutHtml(output: PortfolioOutput): string {
 				`<p class="${index === 0 ? 'text-body-lg text-ink font-normal text-balance leading-relaxed break-words' : 'type-body text-ink-muted leading-relaxed break-words'}">${escapeHtml(paragraph)}</p>`
 		)
 		.join('');
-	return `<section id="about" aria-labelledby="about-heading" data-reveal class="grid grid-cols-1 gap-md md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] md:gap-xl lg:gap-xxl ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
-		<div class="flex flex-col gap-xs">
+	return `<section id="about" aria-labelledby="about-heading" data-reveal-about class="grid grid-cols-1 gap-md md:grid-cols-[minmax(0,200px)_minmax(0,1fr)] lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] md:gap-xl lg:gap-xxl ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
+		<div data-about-col="bio" class="flex flex-col gap-xs">
 			<p class="type-eyebrow">Biography</p>
 			<div class="flex items-center gap-sm">
 				${ABOUT_USER_SVG}
@@ -199,7 +218,7 @@ function aboutHtml(output: PortfolioOutput): string {
 			</div>
 			<div class="hidden md:block w-10 h-0.5 bg-primary/40 mt-xs rounded-pill" aria-hidden="true"></div>
 		</div>
-		<div class="flex flex-col gap-md max-w-prose min-w-0">${body}</div>
+		<div data-about-col="story" class="flex flex-col gap-md max-w-prose min-w-0">${body}</div>
 	</section>`;
 }
 
@@ -231,7 +250,7 @@ function projectsHtml(output: PortfolioOutput): string {
 						${project.liveUrl ? `<a href="${escapeHtml(project.liveUrl)}" target="_blank" rel="noopener noreferrer"${projectAttr} class="link-action group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span>Live Demo</span></a>` : ''}
 					</div>`
 					: '';
-			return `<article class="${cardClass}" data-theme="card">
+			return `<article class="${cardClass}" data-project-item="${isFeatured || output.projects.length === 1 ? 'featured' : 'secondary'}" data-theme="card">
 				<div class="flex flex-col gap-xs">
 					<div class="flex items-start justify-between gap-xs min-w-0">
 						<h3 class="${isFeatured ? 'type-heading-sub md:text-headline' : 'type-heading-sub'} ${currentPresentation.display} text-ink break-words min-w-0" data-theme="display">${escapeHtml(project.name)}</h3>
@@ -250,7 +269,7 @@ function projectsHtml(output: PortfolioOutput): string {
 			</article>`;
 		})
 		.join('');
-	return section('projects', 'Projects', 'grid grid-cols-1 gap-lg md:grid-cols-2', cards);
+	return section('projects', 'Projects', 'grid grid-cols-1 gap-lg md:grid-cols-2', cards, 'projects');
 }
 
 function experienceHtml(output: PortfolioOutput): string {
@@ -276,8 +295,8 @@ function experienceHtml(output: PortfolioOutput): string {
 				? `<span class="type-meta text-ink-subtle">${escapeHtml(entry.location)}</span>`
 				: '';
 
-			return `<article class="group relative flex flex-col gap-xs">
-				<div class="absolute -left-[calc(var(--spacing-md)+5px)] sm:-left-[calc(var(--spacing-lg)+5px)] top-1.5 size-2.5 rounded-full border border-hairline-strong bg-primary shadow-subtle transition-transform duration-fast group-hover:scale-125" aria-hidden="true"></div>
+			return `<article class="group relative flex flex-col gap-xs" data-timeline-item>
+				<div class="absolute -left-[calc(var(--spacing-md)+5px)] sm:-left-[calc(var(--spacing-lg)+5px)] top-1.5 size-2.5 rounded-full border border-hairline-strong bg-primary shadow-subtle transition-transform duration-fast group-hover:scale-125" data-timeline-dot aria-hidden="true"></div>
 				<div class="flex flex-col gap-xxs sm:flex-row sm:items-baseline sm:justify-between sm:gap-sm min-w-0">
 					<h3 class="type-heading-sub ${currentPresentation.display} text-ink break-words min-w-0" data-theme="display">${escapeHtml(entry.role)}${entry.company ? `<span class="text-ink-subtle font-normal"> · ${escapeHtml(entry.company)}</span>` : ''}</h3>
 					${period ? `<span class="type-meta font-mono shrink-0 text-ink-subtle">${period}</span>` : ''}
@@ -291,7 +310,8 @@ function experienceHtml(output: PortfolioOutput): string {
 			</article>`;
 		})
 		.join('');
-	return section('experience', 'Experience', 'relative border-l border-hairline pl-md sm:pl-lg ml-xs sm:ml-sm flex flex-col gap-lg', entries);
+	const progressRail = '<div class="timeline-rail-progress" aria-hidden="true" style="height: var(--timeline-progress, 0%);"></div>';
+	return section('experience', 'Experience', 'relative border-l border-hairline pl-md sm:pl-lg ml-xs sm:ml-sm flex flex-col gap-lg', `${progressRail}${entries}`, 'timeline');
 }
 
 function educationHtml(output: PortfolioOutput): string {
@@ -301,7 +321,11 @@ function educationHtml(output: PortfolioOutput): string {
 	const entries = output.education
 		.map((entry) => {
 			const years = [entry.startYear, entry.endYear].filter(Boolean).join(' — ');
-			const cgpa = entry.cgpa ? `<span class="badge badge-neutral">CGPA: ${escapeHtml(entry.cgpa)}</span>` : '';
+			const isNumericCgpa = entry.cgpa && !Number.isNaN(parseFloat(entry.cgpa));
+			const decimals = isNumericCgpa && entry.cgpa.includes('.') ? entry.cgpa.split('.')[1].length : 0;
+			const cgpa = entry.cgpa
+				? `<span class="badge badge-neutral">CGPA: ${isNumericCgpa ? `<span data-counter="${parseFloat(entry.cgpa)}" data-counter-decimals="${decimals}">${escapeHtml(entry.cgpa)}</span>` : escapeHtml(entry.cgpa)}</span>`
+				: '';
 			const yearMeta = years ? `<span class="type-meta font-mono shrink-0 text-ink-subtle">${escapeHtml(years)}</span>` : '';
 
 			return `<article class="flex flex-col gap-xs py-md first:pt-0 last:pb-0">
@@ -421,7 +445,7 @@ function socialLinksHtml(output: PortfolioOutput): string {
 			return `<a href="${escapeHtml(entry.href)}"${external}${trackType} class="group btn ${currentPresentation.ghostButton}" data-theme="ghostButton">${HERO_ICON_SVG[entry.kind]}<span>${escapeHtml(entry.label)}</span></a>`;
 		})
 		.join('');
-	return section('social', 'Find Me Online', 'flex flex-wrap items-center gap-xs sm:gap-sm', buttons);
+	return section('social', 'Find Me Online', 'flex flex-wrap items-center gap-xs sm:gap-sm', buttons, 'compact');
 }
 
 function contactHtml(output: PortfolioOutput): string {
@@ -451,7 +475,7 @@ function contactHtml(output: PortfolioOutput): string {
 			? `<p class="type-meta text-ink-subtle pt-xxs break-all">Resume attached: ${escapeHtml(resume.fileName || 'resume')}</p>`
 			: '';
 
-	return `<section id="contact" aria-labelledby="contact-heading" data-reveal class="card-elevated edge-highlight rounded-2xl card-p md:card-p-lg flex flex-col md:flex-row md:items-center md:justify-between gap-lg ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
+	return `<section id="contact" aria-labelledby="contact-heading" data-reveal="scale-in" class="card-elevated edge-highlight rounded-2xl card-p md:card-p-lg flex flex-col md:flex-row md:items-center md:justify-between gap-lg ${currentPresentation.sectionSpacing}" data-theme="sectionSpacing">
 		<div class="flex flex-col gap-xs w-full md:flex-1 max-w-2xl min-w-0">
 			<p class="type-eyebrow">Next Step</p>
 			<div class="flex items-center gap-sm">
@@ -523,7 +547,7 @@ function footerHtml(output: PortfolioOutput): string {
 		? `<p class="type-meta border-t border-hairline-subtle pt-md text-caption text-ink-subtle break-words">© ${year} ${escapeHtml(footer.name)}</p>`
 		: '';
 
-	return `<footer id="portfolio-footer" aria-label="Portfolio footer" class="border-t border-hairline-subtle pt-xl">
+	return `<footer id="portfolio-footer" aria-label="Portfolio footer" data-reveal="fade-in" class="border-t border-hairline-subtle pt-xl">
 		<div class="flex flex-col gap-lg">
 			${identity}
 			${nav}
@@ -585,67 +609,15 @@ function renderOutput(output: PortfolioOutput): void {
  * state or observers.
  */
 function setupSectionReveal(): void {
-	if (typeof IntersectionObserver === 'undefined' || typeof document === 'undefined') {
-		return;
-	}
-	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-		return;
-	}
-	if (revealObserver) {
-		revealObserver.disconnect();
-		revealObserver = null;
+	if (motionCleanup) {
+		motionCleanup();
+		motionCleanup = null;
 	}
 	const root = mount();
 	if (!root) {
 		return;
 	}
-	document.documentElement.classList.add('js-reveal');
-	revealObserver = new IntersectionObserver(
-		(entries) => {
-			for (const entry of entries) {
-				if (entry.isIntersecting) {
-					revealElement(entry.target as HTMLElement);
-				}
-			}
-		},
-		{ threshold: 0.08, rootMargin: '0px 0px -6% 0px' },
-	);
-	observeRevealTargets(root);
-
-	// Keyboard safety: if focus lands inside an as-yet-hidden section (via Tab
-	// or anchor navigation), reveal it immediately so nothing is focused while
-	// invisible.
-	if (!revealFocusHandler) {
-		revealFocusHandler = (event) => {
-			const target = event.target as HTMLElement | null;
-			const revealRoot = target?.closest<HTMLElement>('[data-reveal]');
-			if (revealRoot) {
-				revealElement(revealRoot);
-			}
-		};
-		document.addEventListener('focusin', revealFocusHandler, true);
-	}
-}
-
-function revealElement(element: HTMLElement): void {
-	if (!revealObserver) {
-		return;
-	}
-	element.classList.add('is-revealed');
-	revealObserver.unobserve(element);
-}
-
-/** Observes reveal targets in `scope`; skips already-revealed or hidden ones. */
-function observeRevealTargets(scope: ParentNode): void {
-	if (!revealObserver) {
-		return;
-	}
-	for (const target of scope.querySelectorAll<HTMLElement>(
-		'[data-reveal]:not(.is-revealed):not(.is-hidden)',
-	)) {
-		target.classList.add('is-hidden');
-		revealObserver.observe(target);
-	}
+	motionCleanup = initMotionEngine(root);
 }
 
 /**
@@ -790,13 +762,9 @@ function cleanup(): void {
 		sectionNavObserver.disconnect();
 		sectionNavObserver = null;
 	}
-	if (revealObserver) {
-		revealObserver.disconnect();
-		revealObserver = null;
-	}
-	if (revealFocusHandler) {
-		document.removeEventListener('focusin', revealFocusHandler, true);
-		revealFocusHandler = null;
+	if (motionCleanup) {
+		motionCleanup();
+		motionCleanup = null;
 	}
 	if (unsubscribeData) {
 		unsubscribeData();
