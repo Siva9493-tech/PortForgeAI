@@ -1,0 +1,522 @@
+---
+import {
+	ArrowLeft,
+	ArrowUpRight,
+	Brain,
+	Check,
+	Code2,
+	Compass,
+	Copy,
+	Cpu,
+	ExternalLink,
+	Github,
+	GraduationCap,
+	Layers,
+	Linkedin,
+	Mail,
+	Sparkles,
+	Terminal,
+} from 'lucide-astro';
+import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
+
+const title = 'Built by Siva Balaji — PortForge AI';
+const description =
+	'Meet M. Siva Balaji, the student developer and AI/ML builder behind PortForge AI.';
+
+const currentFocusAreas = [
+	{ label: 'Artificial Intelligence', icon: Brain },
+	{ label: 'Machine Learning', icon: Cpu },
+	{ label: 'Computer Vision', icon: Sparkles },
+	{ label: 'AI Automation', icon: Terminal },
+	{ label: 'Software Development', icon: Code2 },
+	{ label: 'Data / ML Workflows', icon: Layers },
+	{ label: 'Product Building', icon: Compass },
+];
+---
+
+<DashboardLayout title={title} description={description} pageLabel="Built by Siva Balaji">
+	<div class="profile-container w-full mx-auto max-w-4xl pb-20 pt-2 sm:pt-4">
+		<!-- Top Navigation / Return to Dashboard -->
+		<nav class="reveal-item mb-8 flex w-full items-center justify-between gap-4" style="--stagger-delay: 50ms;" aria-label="Breadcrumb navigation">
+			<a
+				href="/dashboard"
+				id="back-to-dashboard"
+				class="group inline-flex shrink-0 items-center gap-2 rounded-md border border-hairline bg-surface-1 px-3 py-1.5 text-body-sm font-medium text-ink-subtle transition-all duration-200 hover:border-hairline-strong hover:bg-surface-2 hover:text-ink focus-visible:outline-2"
+			>
+				<ArrowLeft size="15" class="transition-transform duration-200 group-hover:-translate-x-0.5 text-ink-tertiary group-hover:text-ink" aria-hidden="true" />
+				<span>Back to Dashboard</span>
+			</a>
+
+			<span class="inline-flex shrink-0 items-center gap-1.5 rounded-pill border border-hairline bg-surface-2 px-3 py-1 text-caption font-medium tracking-wide uppercase text-ink-tertiary">
+				<span class="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true"></span>
+				Builder Profile
+			</span>
+		</nav>
+
+		<!-- Hero Section -->
+		<header class="reveal-item mb-14 w-full" style="--stagger-delay: 110ms;">
+			<div class="flex w-full flex-col sm:flex-row sm:items-start sm:justify-between gap-8 sm:gap-10">
+				<!-- Profile Photo: On mobile (flex-col) order-1 places it at the top; on desktop (sm:flex-row) sm:order-2 places it on the right -->
+				<div class="profile-photo-wrapper order-1 sm:order-2 shrink-0 self-start sm:self-start" style="--photo-delay: 180ms;">
+					<div class="relative h-32 w-32 overflow-hidden rounded-2xl border border-hairline-strong bg-surface-2 shadow-elevated ring-1 ring-hairline sm:h-40 sm:w-40 md:h-44 md:w-44">
+						<img
+							src="/siva-balaji.jpg"
+							alt="M. Siva Balaji — Builder of PortForge AI"
+							width="176"
+							height="176"
+							loading="eager"
+							class="h-full w-full object-cover object-[50%_25%]"
+						/>
+					</div>
+				</div>
+
+				<!-- Hero Text Content: On mobile order-2 places it below the photo with full width; on desktop sm:order-1 places it on the left -->
+				<div class="order-2 sm:order-1 flex w-full sm:flex-1 flex-col gap-3 min-w-0">
+					<div class="flex items-center gap-2">
+						<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+							BUILDER · AI/ML · SOFTWARE
+						</span>
+					</div>
+
+					<h1 class="text-3xl font-bold tracking-tight text-ink sm:text-4xl md:text-5xl leading-tight">
+						M. Siva Balaji
+					</h1>
+
+					<div class="flex flex-col gap-1 text-body-sm sm:text-body text-ink-subtle">
+						<p class="font-medium text-ink-muted">
+							B.Tech — 3rd Year · Computer Science & Engineering (AI & ML)
+						</p>
+						<p class="text-ink-tertiary">
+							Vasireddy Venkatadri International Technological University
+						</p>
+					</div>
+
+					<p class="mt-2 text-body text-ink-subtle leading-relaxed max-w-2xl">
+						Student developer passionate about Artificial Intelligence, Machine Learning, and building practical, user-first software tools. Creator and lead builder of PortForge AI.
+					</p>
+
+					<!-- Hero Social & Contact Links -->
+					<div class="mt-4 flex flex-wrap items-center gap-3">
+						<a
+							href="https://www.linkedin.com/in/m-siva-balaji/"
+							target="_blank"
+							rel="noopener noreferrer"
+							id="hero-linkedin-link"
+							class="inline-flex shrink-0 items-center gap-2 rounded-md border border-hairline bg-surface-1 px-3.5 py-2 text-body-sm font-medium text-ink transition-colors duration-200 hover:border-hairline-strong hover:bg-surface-2 focus-visible:outline-2"
+							aria-label="Siva Balaji's LinkedIn profile (opens in new tab)"
+						>
+							<Linkedin size="16" class="text-[#0a66c2]" aria-hidden="true" />
+							<span>LinkedIn</span>
+							<ArrowUpRight size="13" class="text-ink-tertiary" aria-hidden="true" />
+						</a>
+
+						<a
+							href="https://github.com/Siva9493-tech"
+							target="_blank"
+							rel="noopener noreferrer"
+							id="hero-github-link"
+							class="inline-flex shrink-0 items-center gap-2 rounded-md border border-hairline bg-surface-1 px-3.5 py-2 text-body-sm font-medium text-ink transition-colors duration-200 hover:border-hairline-strong hover:bg-surface-2 focus-visible:outline-2"
+							aria-label="Siva Balaji's GitHub profile (opens in new tab)"
+						>
+							<Github size="16" class="text-ink-muted" aria-hidden="true" />
+							<span>GitHub</span>
+							<ArrowUpRight size="13" class="text-ink-tertiary" aria-hidden="true" />
+						</a>
+
+						<a
+							href="mailto:mamidalasivabalaji@gmail.com"
+							id="hero-email-link"
+							class="inline-flex shrink-0 items-center gap-2 rounded-md border border-hairline bg-surface-1 px-3.5 py-2 text-body-sm font-medium text-ink transition-colors duration-200 hover:border-hairline-strong hover:bg-surface-2 focus-visible:outline-2"
+							aria-label="Send email to Siva Balaji"
+						>
+							<Mail size="16" class="text-ink-muted" aria-hidden="true" />
+							<span>Email</span>
+						</a>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<!-- Divider line -->
+		<hr class="border-t border-hairline mb-12 w-full" aria-hidden="true" />
+
+		<!-- Section: About the Builder (Editorial Layout) -->
+		<section class="reveal-item mb-14 w-full" style="--stagger-delay: 240ms;" aria-labelledby="about-builder-heading">
+			<div class="mb-5 flex flex-col gap-1">
+				<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+					Perspective & Background
+				</span>
+				<h2 id="about-builder-heading" class="text-2xl font-bold tracking-tight text-ink md:text-3xl">
+					About the Builder
+				</h2>
+			</div>
+
+			<div class="w-full max-w-3xl space-y-4 text-body text-ink-subtle leading-relaxed">
+				<p>
+					I am a 3rd-year B.Tech student majoring in Computer Science and Engineering with a specialization in Artificial Intelligence and Machine Learning (CSM) at Vasireddy Venkatadri International Technological University.
+				</p>
+				<p>
+					My primary focus centers on Artificial Intelligence and Machine Learning, with a keen interest in computer vision, automation, and building intelligent applications that solve real-world problems. Rather than viewing machine learning purely through abstract benchmarks, I enjoy engineering end-to-end software where intelligent systems and intuitive interfaces meet.
+				</p>
+				<p>
+					My goal is to become a high-impact AI/ML Engineer. I continuously expand my capabilities by building practical software products, participating in technical development programs, pursuing internships, and exploring full-stack and database systems alongside modern AI workflows.
+				</p>
+			</div>
+		</section>
+
+		<!-- Section: Why I Built PortForge AI (Product Narrative) -->
+		<section class="reveal-item mb-14 w-full" style="--stagger-delay: 310ms;" aria-labelledby="why-built-heading">
+			<div class="w-full rounded-xl border border-hairline bg-surface-1 p-6 sm:p-8 shadow-subtle">
+				<div class="mb-4 flex items-center gap-2">
+					<span class="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary" aria-hidden="true">
+						<Sparkles size="16" />
+					</span>
+					<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+						Product Journey
+					</span>
+				</div>
+
+				<h2 id="why-built-heading" class="text-xl font-bold tracking-tight text-ink sm:text-2xl mb-4">
+					Why I Built PortForge AI
+				</h2>
+
+				<div class="space-y-4 text-body text-ink-subtle leading-relaxed">
+					<p>
+						As a student, I noticed a consistent hurdle among peers: when internships, hackathons, and early career opportunities arise, having a well-crafted personal portfolio makes all the difference. Yet many talented students either lack the time to build a custom portfolio website from scratch, or struggle with the complexities of frontend design, responsive layouts, and hosting configurations.
+					</p>
+					<p>
+						I started building <strong class="text-ink font-medium">PortForge AI</strong> to solve this exact problem. The goal was simple: provide an intuitive, intelligent platform where students and early-career developers can assemble, customize, and publish recruiter-ready portfolios in minutes without wrestling with boilerplate code.
+					</p>
+					<p>
+						Engineering PortForge AI has also been a continuous personal masterclass in product design, modern web architecture, relational state management, and user experience.
+					</p>
+				</div>
+			</div>
+		</section>
+
+		<!-- Section: Currently Exploring (Compact Metadata / Tasteful Pills) -->
+		<section class="reveal-item mb-14 w-full" style="--stagger-delay: 380ms;" aria-labelledby="focus-heading">
+			<div class="mb-5 flex flex-col gap-1">
+				<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+					Technical Interests
+				</span>
+				<h2 id="focus-heading" class="text-2xl font-bold tracking-tight text-ink md:text-3xl">
+					Currently Exploring
+				</h2>
+			</div>
+
+			<p class="mb-6 max-w-2xl text-body text-ink-subtle leading-relaxed">
+				Key technical domains, engineering disciplines, and tooling ecosystems I am actively exploring and applying:
+			</p>
+
+			<div class="flex w-full flex-wrap gap-2.5 sm:gap-3" role="list" aria-label="Technical areas of interest">
+				{
+					currentFocusAreas.map((area) => (
+						<div
+							role="listitem"
+							class="inline-flex shrink-0 items-center gap-2 rounded-pill border border-hairline bg-surface-1 px-4 py-2 text-body-sm font-medium text-ink-muted transition-colors duration-200 hover:border-hairline-strong hover:bg-surface-2 hover:text-ink whitespace-nowrap"
+						>
+							<area.icon size="15" class="text-primary shrink-0" aria-hidden="true" />
+							<span>{area.label}</span>
+						</div>
+					))
+				}
+			</div>
+		</section>
+
+		<!-- Section: Guidance & Collaboration (Paired 2-column Grid) -->
+		<div class="mb-14 grid grid-cols-1 gap-6 md:grid-cols-2 w-full">
+			<!-- AI Hub Collaboration Block -->
+			<section class="reveal-item flex w-full flex-col rounded-xl border border-hairline bg-surface-1 p-6 shadow-subtle min-w-0" style="--stagger-delay: 450ms;" aria-labelledby="ai-hub-heading">
+				<div class="mb-4 flex items-center gap-2">
+					<span class="flex h-7 w-7 items-center justify-center rounded-md bg-surface-2 text-primary" aria-hidden="true">
+						<Terminal size="16" />
+					</span>
+					<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+						Collaboration
+					</span>
+				</div>
+
+				<h2 id="ai-hub-heading" class="text-lg font-bold tracking-tight text-ink mb-2">
+					AI Hub Journey
+				</h2>
+
+				<div class="space-y-3 text-body-sm text-ink-subtle leading-relaxed flex-1">
+					<p>
+						I joined AI Hub after being encouraged by <strong class="text-ink font-medium">A. Bhargav Sai Viswanath</strong>, a senior student who motivated me to expand my learning beyond my core AI/ML coursework.
+					</p>
+					<p>
+						Through his encouragement, I ventured into complementary technical disciplines including relational databases (SQL), backend architecture, and production development practices.
+					</p>
+				</div>
+
+				<div class="mt-5 pt-4 border-t border-hairline text-caption text-ink-tertiary">
+					Peer motivation to explore beyond existing technical comfort zones.
+				</div>
+			</section>
+
+			<!-- Academic & Project Guidance Block -->
+			<section class="reveal-item flex w-full flex-col rounded-xl border border-hairline bg-surface-1 p-6 shadow-subtle min-w-0" style="--stagger-delay: 510ms;" aria-labelledby="faculty-guidance-heading">
+				<div class="mb-4 flex items-center gap-2">
+					<span class="flex h-7 w-7 items-center justify-center rounded-md bg-surface-2 text-primary" aria-hidden="true">
+						<GraduationCap size="16" />
+					</span>
+					<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+						Guidance & Mentorship
+					</span>
+				</div>
+
+				<h2 id="faculty-guidance-heading" class="text-lg font-bold tracking-tight text-ink mb-1">
+					Assoc. Prof. Pardha Saradhi
+				</h2>
+
+				<p class="text-caption font-medium text-ink-muted mb-3">
+					Assoc. Prof, VVIT, Nambur &amp; NVIDIA DLI University Ambassador
+				</p>
+
+				<div class="space-y-2 text-body-sm text-ink-subtle leading-relaxed flex-1">
+					<p>
+						Mentored and guided under his academic leadership at Vasireddy Venkatadri Institute of Technology.
+					</p>
+					<p class="text-caption text-ink-tertiary">
+						M.Tech in Visual Information and Embedded Systems Engineering from IIT Kharagpur. Deep expertise spanning Python, Deep Learning, TensorFlow, MATLAB, and Keras.
+					</p>
+				</div>
+
+				<div class="mt-5 pt-4 border-t border-hairline text-caption text-ink-tertiary">
+					Academic and project guidance facilitating AI Hub exploration.
+				</div>
+			</section>
+		</div>
+
+		<!-- Section: Education -->
+		<section class="reveal-item mb-14 w-full" style="--stagger-delay: 560ms;" aria-labelledby="education-heading">
+			<div class="mb-5 flex flex-col gap-1">
+				<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+					Academic Foundation
+				</span>
+				<h2 id="education-heading" class="text-2xl font-bold tracking-tight text-ink md:text-3xl">
+					Education
+				</h2>
+			</div>
+
+			<div class="w-full rounded-xl border border-hairline bg-surface-1 p-6 shadow-subtle">
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<div class="flex flex-col gap-1">
+						<h3 class="text-lg font-semibold text-ink">
+							Vasireddy Venkatadri International Technological University
+						</h3>
+						<p class="text-body-sm text-ink-muted">
+							Bachelor of Technology (B.Tech) — Computer Science &amp; Engineering (AI &amp; ML)
+						</p>
+					</div>
+
+					<span class="inline-flex shrink-0 w-fit items-center rounded-pill border border-hairline bg-surface-2 px-3 py-1 text-caption font-medium text-primary">
+						3rd Year
+					</span>
+				</div>
+			</div>
+		</section>
+
+		<!-- Section: Connect / Get in Touch -->
+		<section class="reveal-item w-full" style="--stagger-delay: 620ms;" aria-labelledby="connect-heading">
+			<div class="w-full rounded-xl border border-hairline bg-surface-1 p-6 sm:p-8 shadow-subtle">
+				<div class="mb-4 flex flex-col gap-1">
+					<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+						Let's Connect
+					</span>
+					<h2 id="connect-heading" class="text-2xl font-bold tracking-tight text-ink md:text-3xl">
+						Get in Touch
+					</h2>
+					<p class="text-body text-ink-subtle mt-1 leading-relaxed">
+						Open to conversations about AI/ML initiatives, software engineering opportunities, product feedback, or collaborative ideas.
+					</p>
+				</div>
+
+				<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3 w-full">
+					<!-- Email Card -->
+					<div class="flex w-full min-w-0 flex-col justify-between rounded-lg border border-hairline bg-surface-2 p-4 transition-colors duration-200 hover:border-hairline-strong">
+						<div class="flex items-center gap-2.5 mb-3">
+							<span class="flex h-8 w-8 items-center justify-center rounded-md bg-surface-3 text-ink-muted shrink-0" aria-hidden="true">
+								<Mail size="16" />
+							</span>
+							<span class="text-body-sm font-medium text-ink">Email</span>
+						</div>
+						<div class="flex flex-col gap-2 min-w-0">
+							<a
+								href="mailto:mamidalasivabalaji@gmail.com"
+								id="connect-email-link"
+								class="text-caption text-ink-subtle hover:text-ink truncate transition-colors duration-200"
+								title="mamidalasivabalaji@gmail.com"
+							>
+								mamidalasivabalaji@gmail.com
+							</a>
+							<button
+								type="button"
+								id="btn-copy-email"
+								data-email="mamidalasivabalaji@gmail.com"
+								class="inline-flex shrink-0 items-center gap-1.5 text-caption font-medium text-primary hover:text-primary-hover transition-colors duration-200 w-fit"
+							>
+								<Copy size="12" id="copy-icon" aria-hidden="true" />
+								<Check size="12" id="check-icon" class="hidden text-semantic-success" aria-hidden="true" />
+								<span id="copy-text">Copy address</span>
+							</button>
+						</div>
+					</div>
+
+					<!-- LinkedIn Card -->
+					<a
+						href="https://www.linkedin.com/in/m-siva-balaji/"
+						target="_blank"
+						rel="noopener noreferrer"
+						id="connect-linkedin-link"
+						class="group flex w-full min-w-0 flex-col justify-between rounded-lg border border-hairline bg-surface-2 p-4 transition-colors duration-200 hover:border-hairline-strong focus-visible:outline-2"
+						aria-label="Connect with Siva Balaji on LinkedIn (opens in new tab)"
+					>
+						<div class="flex items-center justify-between mb-3">
+							<div class="flex items-center gap-2.5">
+								<span class="flex h-8 w-8 items-center justify-center rounded-md bg-surface-3 text-[#0a66c2] shrink-0" aria-hidden="true">
+									<Linkedin size="16" />
+								</span>
+								<span class="text-body-sm font-medium text-ink">LinkedIn</span>
+							</div>
+							<ExternalLink size="14" class="text-ink-tertiary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0" aria-hidden="true" />
+						</div>
+						<span class="text-caption text-ink-subtle group-hover:text-ink truncate transition-colors duration-200">
+							linkedin.com/in/m-siva-balaji
+						</span>
+					</a>
+
+					<!-- GitHub Card -->
+					<a
+						href="https://github.com/Siva9493-tech"
+						target="_blank"
+						rel="noopener noreferrer"
+						id="connect-github-link"
+						class="group flex w-full min-w-0 flex-col justify-between rounded-lg border border-hairline bg-surface-2 p-4 transition-colors duration-200 hover:border-hairline-strong focus-visible:outline-2"
+						aria-label="View Siva Balaji's GitHub repositories (opens in new tab)"
+					>
+						<div class="flex items-center justify-between mb-3">
+							<div class="flex items-center gap-2.5">
+								<span class="flex h-8 w-8 items-center justify-center rounded-md bg-surface-3 text-ink-muted shrink-0" aria-hidden="true">
+									<Github size="16" />
+								</span>
+								<span class="text-body-sm font-medium text-ink">GitHub</span>
+							</div>
+							<ExternalLink size="14" class="text-ink-tertiary transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0" aria-hidden="true" />
+						</div>
+						<span class="text-caption text-ink-subtle group-hover:text-ink truncate transition-colors duration-200">
+							github.com/Siva9493-tech
+						</span>
+					</a>
+				</div>
+
+				<!-- Return CTA -->
+				<div class="mt-8 pt-6 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
+					<p class="text-caption text-ink-tertiary text-center sm:text-left">
+						PortForge AI · Designed &amp; built by M. Siva Balaji
+					</p>
+
+					<a
+						href="/dashboard"
+						class="inline-flex shrink-0 items-center gap-2 rounded-md bg-surface-2 border border-hairline px-4 py-2 text-body-sm font-medium text-ink transition-colors duration-200 hover:bg-surface-3 hover:border-hairline-strong focus-visible:outline-2"
+					>
+						<ArrowLeft size="14" aria-hidden="true" />
+						Return to Dashboard
+					</a>
+				</div>
+			</div>
+		</section>
+	</div>
+</DashboardLayout>
+
+<style>
+	/* Portfolio-grade progressive reveal motion */
+	@keyframes profileReveal {
+		from {
+			opacity: 0;
+			transform: translateY(12px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes photoReveal {
+		from {
+			opacity: 0;
+			transform: scale(0.96) translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1) translateY(0);
+		}
+	}
+
+	.reveal-item {
+		animation: profileReveal var(--duration-slow, 350ms) var(--ease-out-soft, cubic-bezier(0.16, 1, 0.3, 1)) both;
+		animation-delay: var(--stagger-delay, 0ms);
+	}
+
+	.profile-photo-wrapper {
+		animation: photoReveal var(--duration-deliberate, 450ms) var(--ease-out-soft, cubic-bezier(0.16, 1, 0.3, 1)) both;
+		animation-delay: var(--photo-delay, 180ms);
+	}
+
+	/* Stable container width and clean word-wrapping (avoid character-by-character collapse) */
+	.profile-container {
+		width: 100%;
+		overflow-wrap: break-word;
+		word-break: normal;
+	}
+
+	/* Respect reduced motion globally */
+	@media (prefers-reduced-motion: reduce) {
+		.reveal-item,
+		.profile-photo-wrapper {
+			animation: none !important;
+			transform: none !important;
+		}
+	}
+</style>
+
+<script>
+	// Copy email address functionality with feedback
+	const copyBtn = document.getElementById('btn-copy-email') as HTMLButtonElement | null;
+	const copyIcon = document.getElementById('copy-icon');
+	const checkIcon = document.getElementById('check-icon');
+	const copyText = document.getElementById('copy-text');
+
+	if (copyBtn && copyIcon && checkIcon && copyText) {
+		let timeoutId: number | undefined;
+
+		copyBtn.addEventListener('click', async () => {
+			const email = copyBtn.dataset.email || 'mamidalasivabalaji@gmail.com';
+
+			try {
+				if (navigator.clipboard?.writeText) {
+					await navigator.clipboard.writeText(email);
+				} else {
+					window.prompt('Copy email address:', email);
+				}
+
+				// Show success feedback
+				copyIcon.classList.add('hidden');
+				checkIcon.classList.remove('hidden');
+				copyText.textContent = 'Copied to clipboard!';
+				copyBtn.classList.add('text-semantic-success');
+
+				if (timeoutId) window.clearTimeout(timeoutId);
+				timeoutId = window.setTimeout(() => {
+					copyIcon.classList.remove('hidden');
+					checkIcon.classList.add('hidden');
+					copyText.textContent = 'Copy address';
+					copyBtn.classList.remove('text-semantic-success');
+				}, 2000);
+			} catch (err) {
+				console.error('Failed to copy email:', err);
+			}
+		});
+	}
+</script>
