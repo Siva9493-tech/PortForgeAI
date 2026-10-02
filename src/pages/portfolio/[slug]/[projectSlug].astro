@@ -1,0 +1,17 @@
+---
+/**
+ * Direct route redirector.
+ * If a visitor directly accesses `/portfolio/<slug>/<projectSlug>` (instead of
+ * `/portfolio/<slug>/project/<projectSlug>`), redirect them cleanly to the
+ * canonical dedicated case study route.
+ */
+export const prerender = false;
+
+if (Astro.params.projectSlug && Astro.params.projectSlug !== 'project') {
+	return Astro.redirect(
+		`/portfolio/${encodeURIComponent(Astro.params.slug ?? '')}/project/${encodeURIComponent(Astro.params.projectSlug ?? '')}`
+	);
+}
+
+return Astro.redirect(`/portfolio/${encodeURIComponent(Astro.params.slug ?? '')}`);
+---

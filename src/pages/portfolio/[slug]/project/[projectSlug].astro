@@ -1,0 +1,792 @@
+---
+import '../../../../styles/globals.css';
+import {
+	ArrowLeft,
+	ExternalLink,
+	Globe,
+	FolderGit2,
+	BookOpen,
+	Layers,
+	CheckCircle2,
+	AlertTriangle,
+	Lightbulb,
+	Compass,
+	Monitor,
+	Sparkles,
+	X,
+	ChevronLeft,
+	ChevronRight,
+	Maximize2,
+} from 'lucide-astro';
+import { DEFAULT_THEME_ID, getThemeById, isThemeId } from '../../../../lib/themes';
+import { getPublishedBySlug } from '../../../../lib/portfolio-manager/portfolio-repository';
+import type { PortfolioRecord } from '../../../../lib/portfolio-manager';
+import { findProjectBySlug, type ResolvedProject } from '../../../../lib/portfolio/public-data';
+import type { ProjectMedia } from '../../../../lib/ai';
+
+export const prerender = false;
+
+const slug = Astro.params.slug ?? '';
+const projectSlug = Astro.params.projectSlug ?? '';
+
+const record: PortfolioRecord | null = await getPublishedBySlug(slug).catch(() => null);
+
+let project: ResolvedProject | null = null;
+let prevProject: ResolvedProject | null = null;
+let nextProject: ResolvedProject | null = null;
+
+if (record === null) {
+	Astro.response.status = 404;
+} else {
+	const match = findProjectBySlug(record.data.projects, projectSlug);
+	if (match === null) {
+		Astro.response.status = 404;
+	} else {
+		project = match.project;
+		prevProject = match.prevProject;
+		nextProject = match.nextProject;
+	}
+}
+
+const themeId = record?.data.theme?.templateId ?? record?.data.metadata?.templateId;
+const theme = themeId && isThemeId(themeId) ? getThemeById(themeId) : getThemeById(DEFAULT_THEME_ID);
+const presentation = theme.presentation;
+
+const ownerName = record?.data.seo?.title?.split(' — ')[0]?.trim() || record?.title || 'Developer';
+const portfolioTitle = record?.data.seo?.title?.trim() || record?.title || `${ownerName}'s Portfolio`;
+const portfolioUrl = `/portfolio/${slug}`;
+const projectsListUrl = `/portfolio/${slug}#projects`;
+
+const pageTitle = project ? `${project.name} — Case Study | ${ownerName}` : 'Project Not Found';
+const description = project?.summary || project?.caseStudy.problem || record?.data.seo?.description || '';
+const canonicalPath = `/portfolio/${slug}/project/${projectSlug}`;
+const canonicalHref = Astro.site ? new URL(canonicalPath, Astro.site).href : canonicalPath;
+const ogImage = (project?.hasMedia && project.media[0]?.url) || record?.data.seo?.ogImage || '';
+
+// Internal navigation targets based on actual content availability
+const navItems: Array<{ id: string; label: string }> = [];
+if (project) {
+	navItems.push({ id: 'overview', label: 'Overview' });
+	if (project.caseStudy.problem || project.caseStudy.whyItMattered) {
+		navItems.push({ id: 'problem', label: 'Problem' });
+	}
+	if (project.caseStudy.solution) {
+		navItems.push({ id: 'solution', label: 'Solution' });
+	}
+	if (project.caseStudy.howItWasBuilt) {
+		navItems.push({ id: 'architecture', label: 'Architecture' });
+	}
+	if (project.highlights.length > 0) {
+		navItems.push({ id: 'highlights', label: 'Highlights' });
+	}
+	if (project.role) {
+		navItems.push({ id: 'role', label: 'Role' });
+	}
+	if (project.caseStudy.challenges) {
+		navItems.push({ id: 'challenges', label: 'Challenges' });
+	}
+	if (project.caseStudy.results) {
+		navItems.push({ id: 'results', label: 'Results' });
+	}
+	if (project.hasMedia && project.media.length > 0) {
+		navItems.push({ id: 'gallery', label: 'Gallery' });
+	}
+	if (project.demoVideoUrl) {
+		navItems.push({ id: 'walkthrough', label: 'Demo' });
+	}
+}
+---
+
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#010102" />
+		<meta name="color-scheme" content="dark" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{pageTitle}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonicalHref} />
+
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:type" content="article" />
+		{ogImage && <meta property="og:image" content={ogImage} />}
+		<meta name="twitter:card" content="summary_large_image" />
+	</head>
+	<body class={`min-h-screen bg-canvas text-ink antialiased ${presentation.font}`}>
+		{/* ---------------------------------------------------------- */}
+		{/* 1. TOP UTILITY HEADER / BACK NAVIGATION                     */}
+		{/* ---------------------------------------------------------- */}
+		<header class="sticky top-0 z-40 border-b border-hairline bg-surface-1/90 backdrop-blur-md">
+			<div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-xs px-sm py-sm md:px-lg">
+				<a
+					href={projectsListUrl}
+					class="btn btn-sm btn-ghost group/back inline-flex items-center gap-xs text-body-sm font-medium text-ink transition-colors hover:text-accent"
+				>
+					<ArrowLeft size="16" class="transition-transform duration-fast group-hover/back:-translate-x-1" aria-hidden="true" />
+					<span>Back to Projects</span>
+				</a>
+
+				<div class="flex flex-wrap items-center gap-xs sm:gap-sm">
+					{project && project.liveUrl && (
+						<a
+							href={project.liveUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="btn btn-sm btn-primary inline-flex items-center gap-xs"
+							data-analytics-click="project_click"
+							data-analytics-project={project.id}
+						>
+							<Globe size="14" aria-hidden="true" />
+							<span>Live Demo</span>
+						</a>
+					)}
+					{project && project.repositoryUrl && (
+						<a
+							href={project.repositoryUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="btn btn-sm btn-secondary inline-flex items-center gap-xs"
+							data-analytics-click="project_click"
+							data-analytics-project={project.id}
+						>
+							<ExternalLink size="14" aria-hidden="true" />
+							<span>GitHub Code</span>
+						</a>
+					)}
+				</div>
+			</div>
+		</header>
+
+		{/* ---------------------------------------------------------- */}
+		{/* 2. MAIN CONTENT AREA OR 404 STATE                          */}
+		{/* ---------------------------------------------------------- */}
+		<main id="main-content" class="mx-auto w-full max-w-4xl px-md py-lg md:px-xl md:py-xl">
+			{record === null ? (
+				<div class="card mx-auto mt-xl flex w-full max-w-md flex-col items-center gap-sm p-xl text-center">
+					<span class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-subtle" aria-hidden="true">
+						<FolderGit2 size="24" />
+					</span>
+					<h1 class="text-heading-sm text-ink">Portfolio not found</h1>
+					<p class="text-body-sm text-ink-subtle">The portfolio you requested does not exist or is not public.</p>
+				</div>
+			) : project === null ? (
+				<div class="card mx-auto mt-xl flex w-full max-w-md flex-col items-center gap-sm p-xl text-center">
+					<span class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-ink-subtle" aria-hidden="true">
+						<BookOpen size="24" />
+					</span>
+					<h1 class="text-heading-sm text-ink">Project Case Study Not Found</h1>
+					<p class="text-body-sm text-ink-subtle">
+						The case study <code class="rounded bg-surface-2 px-1 py-0.5 text-caption font-mono text-ink">{projectSlug}</code> could not be found in this portfolio.
+					</p>
+					<div class="mt-md">
+						<a href={projectsListUrl} class="btn btn-primary inline-flex items-center gap-xs">
+							<ArrowLeft size="16" aria-hidden="true" />
+							<span>Back to {portfolioTitle}</span>
+						</a>
+					</div>
+				</div>
+			) : (
+				<div class="flex flex-col gap-xl">
+					{/* ==================================================== */}
+					{/* CASE STUDY HERO & META STRIP                         */}
+					{/* ==================================================== */}
+					<header id="overview" class="flex flex-col gap-md pt-xs">
+						<div class="flex flex-wrap items-center gap-xs text-caption">
+							<a href={portfolioUrl} class="text-ink-subtle hover:text-ink transition-colors">
+								{ownerName}
+							</a>
+							<span class="text-ink-tertiary">/</span>
+							<a href={projectsListUrl} class="text-ink-subtle hover:text-ink transition-colors">
+								Projects
+							</a>
+							<span class="text-ink-tertiary">/</span>
+							<span class="font-medium text-accent">Case Study</span>
+						</div>
+
+						<div class="flex flex-col gap-sm">
+							<div class="flex flex-wrap items-center gap-xs">
+								<span class="badge badge-accent">Featured Case Study</span>
+								{project.role && <span class="badge badge-neutral">Role: {project.role}</span>}
+							</div>
+							<h1 class={`type-display ${presentation.display} text-ink break-words`}>
+								{project.name}
+							</h1>
+							{project.summary && (
+								<p class="type-lead text-ink-muted leading-relaxed max-w-3xl">
+									{project.summary}
+								</p>
+							)}
+						</div>
+
+						{/* Quick Meta Strip */}
+						<div class="flex flex-wrap items-center justify-between gap-md rounded-lg border border-hairline bg-surface-1 p-md shadow-card">
+							<div class="flex flex-col gap-xxs">
+								<span class="text-micro font-semibold uppercase tracking-wider text-ink-subtle">Technology Stack</span>
+								<div class="flex flex-wrap gap-xs">
+									{project.technologies.length > 0 ? (
+										project.technologies.map((tech: string) => <span class="pill pill-sm">{tech}</span>)
+									) : (
+										<span class="text-caption text-ink-subtle">Engineering details below</span>
+									)}
+								</div>
+							</div>
+
+							<div class="flex items-center gap-sm">
+								{project.liveUrl && (
+									<a
+										href={project.liveUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="btn btn-sm btn-primary inline-flex items-center gap-xs"
+										data-analytics-click="project_click"
+										data-analytics-project={project.id}
+									>
+										<Globe size="14" aria-hidden="true" />
+										<span>Live Project</span>
+									</a>
+								)}
+								{project.repositoryUrl && (
+									<a
+										href={project.repositoryUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="btn btn-sm btn-secondary inline-flex items-center gap-xs"
+										data-analytics-click="project_click"
+										data-analytics-project={project.id}
+									>
+										<ExternalLink size="14" aria-hidden="true" />
+										<span>Repository</span>
+									</a>
+								)}
+							</div>
+						</div>
+					</header>
+
+					{/* ==================================================== */}
+					{/* LIGHTWEIGHT CASE STUDY SECTION JUMP BAR              */}
+					{/* ==================================================== */}
+					{navItems.length > 2 && (
+						<nav
+							class="sticky top-14 z-30 flex items-center gap-xs overflow-x-auto py-xs px-xs border-y border-hairline-subtle bg-canvas/90 backdrop-blur-md no-scrollbar"
+							aria-label="Case study sections"
+						>
+							{navItems.map((item) => (
+								<a
+									href={`#${item.id}`}
+									class="pill pill-sm hover:border-accent hover:text-accent transition-colors shrink-0"
+								>
+									{item.label}
+								</a>
+							))}
+						</nav>
+					)}
+
+					{/* ==================================================== */}
+					{/* 1. PRIMARY MEDIA PREVIEW (HERO VISUAL)               */}
+					{/* ==================================================== */}
+					{project.hasMedia && project.media.length > 0 && (
+						<figure class="overflow-hidden rounded-xl border border-hairline bg-surface-subtle shadow-card">
+							<div class="relative group cursor-pointer" data-open-lightbox="0">
+								<img
+									src={project.media[0].url}
+									alt={project.media[0].alt || `${project.name} primary preview`}
+									class="w-full max-h-[500px] object-cover object-top transition-transform duration-slow group-hover:scale-[1.01]"
+								/>
+								<div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-fast group-hover:opacity-100">
+									<span class="btn btn-sm btn-secondary inline-flex items-center gap-xs shadow-md">
+										<Maximize2 size="14" aria-hidden="true" />
+										<span>Enlarge Screenshot</span>
+									</span>
+								</div>
+							</div>
+							{project.media[0].caption && (
+								<figcaption class="border-t border-hairline px-md py-xs text-caption text-ink-subtle bg-surface-1">
+									{project.media[0].caption}
+								</figcaption>
+							)}
+						</figure>
+					)}
+
+					{/* ==================================================== */}
+					{/* 2. THE PROBLEM & WHY IT MATTERED                     */}
+					{/* ==================================================== */}
+					{(project.caseStudy.problem || project.caseStudy.whyItMattered) && (
+						<section id="problem" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center gap-xs text-ink-subtle">
+								<div class="icon-box-accent icon-box-sm">
+									<AlertTriangle size="14" aria-hidden="true" />
+								</div>
+								<h2 class="type-heading-sub text-ink font-semibold">The Problem</h2>
+							</div>
+
+							<div class="grid grid-cols-1 gap-md md:grid-cols-2">
+								{project.caseStudy.problem && (
+									<div class="card card-p-md flex flex-col gap-xs border border-hairline bg-surface-1 border-l-4 border-l-amber-500/80">
+										<span class="text-caption font-semibold uppercase tracking-wider text-accent">Core Challenge</span>
+										<p class="type-body text-ink-muted leading-relaxed whitespace-pre-line max-w-prose break-words">
+											{project.caseStudy.problem}
+										</p>
+									</div>
+								)}
+								{project.caseStudy.whyItMattered && (
+									<div class="card card-p-md flex flex-col gap-xs border border-hairline bg-surface-1 border-l-4 border-l-accent">
+										<span class="text-caption font-semibold uppercase tracking-wider text-ink-subtle">Why It Mattered</span>
+										<p class="type-body text-ink-muted leading-relaxed whitespace-pre-line max-w-prose break-words">
+											{project.caseStudy.whyItMattered}
+										</p>
+									</div>
+								)}
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* 3. THE SOLUTION                                      */}
+					{/* ==================================================== */}
+					{project.caseStudy.solution && (
+						<section id="solution" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center gap-xs text-ink-subtle">
+								<div class="icon-box-accent icon-box-sm">
+									<Lightbulb size="14" aria-hidden="true" />
+								</div>
+								<h2 class="type-heading-sub text-ink font-semibold">The Solution</h2>
+							</div>
+
+							<div class="rounded-xl border border-hairline bg-gradient-to-br from-surface-1 via-surface-1 to-surface-2/60 p-md md:p-lg shadow-card">
+								<p class="type-body text-ink leading-relaxed whitespace-pre-line max-w-prose break-words">
+									{project.caseStudy.solution}
+								</p>
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* 4. SYSTEM ARCHITECTURE & IMPLEMENTATION              */}
+					{/* ==================================================== */}
+					{project.caseStudy.howItWasBuilt && (
+						<section id="architecture" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center gap-xs text-ink-subtle">
+								<div class="icon-box-accent icon-box-sm">
+									<Layers size="14" aria-hidden="true" />
+								</div>
+								<h2 class="type-heading-sub text-ink font-semibold">Architecture & Engineering</h2>
+							</div>
+
+							<div class="card card-p-md md:card-p-lg border border-hairline bg-surface-1/90 backdrop-blur-sm">
+								<div class="mb-xs inline-flex items-center gap-xxs text-micro font-semibold uppercase tracking-wider text-ink-subtle">
+									<Layers size="12" class="text-accent" aria-hidden="true" />
+									<span>System Blueprint</span>
+								</div>
+								<p class="type-body text-ink-muted leading-relaxed whitespace-pre-line max-w-prose break-words">
+									{project.caseStudy.howItWasBuilt}
+								</p>
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* 5. KEY HIGHLIGHTS & ARCHITECTURAL DECISIONS          */}
+					{/* ==================================================== */}
+					{project.highlights.length > 0 && (
+						<section id="highlights" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center gap-xs text-ink-subtle">
+								<div class="icon-box-accent icon-box-sm">
+									<Sparkles size="14" aria-hidden="true" />
+								</div>
+								<h2 class="type-heading-sub text-ink font-semibold">Key Highlights & Engineering Decisions</h2>
+							</div>
+
+							<div class="grid grid-cols-1 gap-sm md:grid-cols-2">
+								{project.highlights.map((highlight: string) => (
+									<div class="flex items-start gap-sm rounded-lg border border-hairline bg-surface-1/80 p-sm transition-colors hover:border-hairline-strong">
+										<CheckCircle2 size="16" class="text-accent shrink-0 mt-0.5" aria-hidden="true" />
+										<span class="type-body-sm text-ink leading-relaxed break-words">{highlight}</span>
+									</div>
+								))}
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* 6. ROLE & INDIVIDUAL CONTRIBUTION                    */}
+					{/* ==================================================== */}
+					{project.role && (
+						<section id="role" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center gap-xs text-ink-subtle">
+								<div class="icon-box-accent icon-box-sm">
+									<Compass size="14" aria-hidden="true" />
+								</div>
+								<h2 class="type-heading-sub text-ink font-semibold">Role & Personal Ownership</h2>
+							</div>
+
+							<div class="card card-p-md border border-hairline bg-surface-1 flex flex-col gap-xs border-l-4 border-l-neutral-400">
+								<span class="text-caption font-semibold uppercase tracking-wider text-accent">Responsibility & Ownership</span>
+								<p class="type-body text-ink leading-relaxed max-w-prose break-words">
+									{project.role}
+								</p>
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* 7. TECHNICAL CHALLENGES OVERCOME                     */}
+					{/* ==================================================== */}
+					{project.caseStudy.challenges && (
+						<section id="challenges" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center gap-xs text-ink-subtle">
+								<div class="icon-box-accent icon-box-sm">
+									<AlertTriangle size="14" aria-hidden="true" />
+								</div>
+								<h2 class="type-heading-sub text-ink font-semibold">Engineering Challenges Overcome</h2>
+							</div>
+
+							<div class="rounded-xl border border-hairline bg-surface-1 p-md md:p-lg flex flex-col gap-xs">
+								<div class="mb-xxs inline-flex items-center gap-xxs text-micro font-semibold uppercase tracking-wider text-amber-400/90">
+									<AlertTriangle size="12" aria-hidden="true" />
+									<span>Obstacles & Technical Trade-offs</span>
+								</div>
+								<p class="type-body text-ink-muted leading-relaxed whitespace-pre-line max-w-prose break-words">
+									{project.caseStudy.challenges}
+								</p>
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* 8. MEASURABLE RESULTS & OUTCOMES                     */}
+					{/* ==================================================== */}
+					{project.caseStudy.results && (
+						<section id="results" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center gap-xs text-ink-subtle">
+								<div class="icon-box-accent icon-box-sm">
+									<CheckCircle2 size="14" aria-hidden="true" />
+								</div>
+								<h2 class="type-heading-sub text-ink font-semibold">Results & Impact</h2>
+							</div>
+
+							<div class="rounded-xl border border-accent/40 bg-accent/5 p-md md:p-lg border-l-4 border-l-accent shadow-card">
+								<span class="mb-xxs block text-micro font-semibold uppercase tracking-wider text-accent">Verified Outcome</span>
+								<p class="type-body md:type-lead font-medium text-ink leading-relaxed whitespace-pre-line max-w-prose break-words">
+									{project.caseStudy.results}
+								</p>
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* 9. VISUAL GALLERY (CLICKABLE WITH LIGHTBOX)           */}
+					{/* ==================================================== */}
+					{project.hasMedia && project.media.length > 1 && (
+						<section id="gallery" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center justify-between">
+								<div class="flex items-center gap-xs text-ink-subtle">
+									<div class="icon-box-accent icon-box-sm">
+										<Monitor size="14" aria-hidden="true" />
+									</div>
+									<h2 class="type-heading-sub text-ink font-semibold">Evidence & Gallery</h2>
+								</div>
+								<span class="text-caption text-ink-subtle">{project.media.length} screenshots</span>
+							</div>
+
+							<div class="grid grid-cols-1 gap-md sm:grid-cols-2">
+								{project.media.map((item: ProjectMedia, idx: number) => (
+									<figure
+										class="group relative overflow-hidden rounded-lg border border-hairline bg-surface-1 transition-all hover:border-hairline-strong cursor-pointer shadow-card"
+										data-open-lightbox={idx}
+									>
+										<div class="aspect-video w-full overflow-hidden bg-surface-subtle">
+											<img
+												src={item.url}
+												alt={item.alt || `${project.name} screenshot ${idx + 1}`}
+												class="h-full w-full object-cover transition-transform duration-slow group-hover:scale-105"
+												loading="lazy"
+											/>
+										</div>
+										<div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-fast group-hover:opacity-100">
+											<span class="btn btn-sm btn-secondary inline-flex items-center gap-xs shadow-md">
+												<Maximize2 size="14" aria-hidden="true" />
+												<span>Inspect</span>
+											</span>
+										</div>
+										{item.caption && (
+											<figcaption class="px-sm py-xs text-caption text-ink-subtle truncate border-t border-hairline-subtle">
+												{item.caption}
+											</figcaption>
+										)}
+									</figure>
+								))}
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* 10. DEMO WALKTHROUGH VIDEO                          */}
+					{/* ==================================================== */}
+					{project.demoVideoUrl && (
+						<section id="walkthrough" class="flex flex-col gap-md pt-sm scroll-mt-24">
+							<div class="flex items-center gap-xs text-ink-subtle">
+								<div class="icon-box-accent icon-box-sm">
+									<Globe size="14" aria-hidden="true" />
+								</div>
+								<h2 class="type-heading-sub text-ink font-semibold">Demonstration Walkthrough</h2>
+							</div>
+
+							<div class="card card-p-md border border-hairline bg-surface-1 flex flex-col items-center gap-sm text-center">
+								<p class="type-body-sm text-ink-muted">
+									Watch an interactive walkthrough demonstrating the core workflows of {project.name}.
+								</p>
+								<a
+									href={project.demoVideoUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="btn btn-primary inline-flex items-center gap-xs"
+								>
+									<Globe size="16" aria-hidden="true" />
+									<span>Watch Demonstration</span>
+								</a>
+							</div>
+						</section>
+					)}
+
+					{/* ==================================================== */}
+					{/* PROJECT-TO-PROJECT BOTTOM NAVIGATION                 */}
+					{/* ==================================================== */}
+					<footer class="mt-xl border-t border-hairline pt-lg flex flex-col gap-lg">
+						<div class="grid grid-cols-1 gap-md sm:grid-cols-2">
+							{prevProject ? (
+								<a
+									href={`/portfolio/${slug}/project/${prevProject.slug}`}
+									class="card card-p-md card-interactive flex flex-col items-start gap-xs border border-hairline bg-surface-1 group text-left"
+								>
+									<span class="inline-flex items-center gap-xs text-caption font-semibold uppercase tracking-wider text-ink-subtle group-hover:text-accent transition-colors">
+										<ChevronLeft size="14" aria-hidden="true" />
+										Previous Project
+									</span>
+									<span class="type-heading-sub font-semibold text-ink group-hover:text-accent transition-colors">
+										{prevProject.name}
+									</span>
+									{prevProject.summary && (
+										<p class="type-caption text-ink-subtle line-clamp-1">
+											{prevProject.summary}
+										</p>
+									)}
+								</a>
+							) : (
+								<div class="hidden sm:block"></div>
+							)}
+
+							{nextProject ? (
+								<a
+									href={`/portfolio/${slug}/project/${nextProject.slug}`}
+									class="card card-p-md card-interactive flex flex-col items-end gap-xs border border-hairline bg-surface-1 group text-right sm:col-start-2"
+								>
+									<span class="inline-flex items-center gap-xs text-caption font-semibold uppercase tracking-wider text-ink-subtle group-hover:text-accent transition-colors">
+										Next Project
+										<ChevronRight size="14" aria-hidden="true" />
+									</span>
+									<span class="type-heading-sub font-semibold text-ink group-hover:text-accent transition-colors">
+										{nextProject.name}
+									</span>
+									{nextProject.summary && (
+										<p class="type-caption text-ink-subtle line-clamp-1">
+											{nextProject.summary}
+										</p>
+									)}
+								</a>
+							) : null}
+						</div>
+
+						<div class="flex items-center justify-between border-t border-hairline-subtle pt-md text-caption text-ink-subtle">
+							<a
+								href={projectsListUrl}
+								class="inline-flex items-center gap-xs hover:text-ink transition-colors font-medium"
+							>
+								<ArrowLeft size="14" aria-hidden="true" />
+								<span>Return to all projects</span>
+							</a>
+
+							<span>
+								Built with <a href="/" class="hover:text-ink underline">PortForge AI</a>
+							</span>
+						</div>
+					</footer>
+				</div>
+			)}
+		</main>
+
+		{/* ---------------------------------------------------------- */}
+		{/* 3. ACCESSIBLE SCREENSHOT LIGHTBOX MODAL                     */}
+		{/* ---------------------------------------------------------- */}
+		{project && project.hasMedia && project.media.length > 0 && (
+			<dialog id="gallery-lightbox" class="case-study-lightbox" aria-label="Screenshot Viewer" aria-modal="true">
+				<div class="relative flex flex-col items-center max-w-5xl max-h-[92vh] w-full p-sm">
+					{/* Lightbox Controls */}
+					<div class="w-full flex items-center justify-between text-white pb-xs">
+						<span id="lightbox-counter" class="text-caption font-medium bg-black/50 px-2 py-1 rounded backdrop-blur-sm">
+							Image 1 of {project.media.length}
+						</span>
+						<button
+							id="lightbox-close"
+							type="button"
+							class="rounded-full bg-black/60 p-1.5 text-white hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
+							aria-label="Close image viewer (Escape)"
+						>
+							<X size="20" aria-hidden="true" />
+						</button>
+					</div>
+
+					{/* Image Frame with Navigation */}
+					<div class="relative flex items-center justify-center w-full overflow-hidden rounded-lg bg-black/90">
+						{project.media.length > 1 && (
+							<button
+								id="lightbox-prev"
+								type="button"
+								class="absolute left-2 z-10 rounded-full bg-black/60 p-2 text-white hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
+								aria-label="Previous image (Left Arrow)"
+							>
+								<ChevronLeft size="24" aria-hidden="true" />
+							</button>
+						)}
+
+						<img
+							id="lightbox-image"
+							src={project.media[0].url}
+							alt={project.media[0].alt || `${project.name} screenshot`}
+							class="max-h-[75vh] max-w-full object-contain select-none transition-opacity duration-fast"
+						/>
+
+						{project.media.length > 1 && (
+							<button
+								id="lightbox-next"
+								type="button"
+								class="absolute right-2 z-10 rounded-full bg-black/60 p-2 text-white hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
+								aria-label="Next image (Right Arrow)"
+							>
+								<ChevronRight size="24" aria-hidden="true" />
+							</button>
+						)}
+					</div>
+
+					{/* Caption */}
+					<p
+						id="lightbox-caption"
+						class="mt-xs text-center text-body-sm text-gray-200 max-w-2xl bg-black/50 px-3 py-1.5 rounded backdrop-blur-sm"
+					>
+						{project.media[0].caption || ''}
+					</p>
+				</div>
+			</dialog>
+		)}
+
+		{/* ---------------------------------------------------------- */}
+		{/* 4. LIGHTBOX & GALLERY INTERACTION SCRIPT                   */}
+		{/* ---------------------------------------------------------- */}
+		<script is:inline define:vars={{ mediaData: project?.media ?? [] }}>
+			(function () {
+				if (!mediaData || mediaData.length === 0) return;
+
+				const dialog = document.getElementById('gallery-lightbox');
+				if (!dialog) return;
+
+				const imgEl = document.getElementById('lightbox-image');
+				const captionEl = document.getElementById('lightbox-caption');
+				const counterEl = document.getElementById('lightbox-counter');
+				const closeBtn = document.getElementById('lightbox-close');
+				const prevBtn = document.getElementById('lightbox-prev');
+				const nextBtn = document.getElementById('lightbox-next');
+
+				let currentIndex = 0;
+				let lastFocusedEl = null;
+
+				function showImage(index) {
+					if (index < 0) index = mediaData.length - 1;
+					if (index >= mediaData.length) index = 0;
+					currentIndex = index;
+
+					const item = mediaData[currentIndex];
+					if (imgEl) {
+						imgEl.src = item.url;
+						imgEl.alt = item.alt || 'Screenshot';
+					}
+					if (captionEl) {
+						captionEl.textContent = item.caption || '';
+						captionEl.style.display = item.caption ? 'block' : 'none';
+					}
+					if (counterEl) {
+						counterEl.textContent = `Image ${currentIndex + 1} of ${mediaData.length}`;
+					}
+				}
+
+				function openLightbox(index, triggerEl) {
+					lastFocusedEl = triggerEl || document.activeElement;
+					showImage(index);
+					if (typeof dialog.showModal === 'function') {
+						dialog.showModal();
+						document.body.style.overflow = 'hidden';
+					}
+				}
+
+				function closeLightbox() {
+					if (dialog.open) {
+						dialog.close();
+						document.body.style.overflow = '';
+						if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') {
+							lastFocusedEl.focus();
+						}
+					}
+				}
+
+				// Attach trigger clicks
+				document.querySelectorAll('[data-open-lightbox]').forEach((el) => {
+					el.addEventListener('click', () => {
+						const idx = parseInt(el.getAttribute('data-open-lightbox') || '0', 10);
+						openLightbox(isNaN(idx) ? 0 : idx, el);
+					});
+					el.addEventListener('keydown', (ev) => {
+						if (ev.key === 'Enter' || ev.key === ' ') {
+							ev.preventDefault();
+							const idx = parseInt(el.getAttribute('data-open-lightbox') || '0', 10);
+							openLightbox(isNaN(idx) ? 0 : idx, el);
+						}
+					});
+				});
+
+				closeBtn?.addEventListener('click', closeLightbox);
+				prevBtn?.addEventListener('click', () => showImage(currentIndex - 1));
+				nextBtn?.addEventListener('click', () => showImage(currentIndex + 1));
+
+				dialog.addEventListener('close', () => {
+					document.body.style.overflow = '';
+					if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') {
+						lastFocusedEl.focus();
+					}
+				});
+
+				// Backdrop click closes dialog
+				dialog.addEventListener('click', (e) => {
+					if (e.target === dialog) {
+						closeLightbox();
+					}
+				});
+
+				// Keyboard navigation (Arrow keys + Esc)
+				window.addEventListener('keydown', (e) => {
+					if (!dialog.open) return;
+					if (e.key === 'ArrowLeft') {
+						e.preventDefault();
+						showImage(currentIndex - 1);
+					} else if (e.key === 'ArrowRight') {
+						e.preventDefault();
+						showImage(currentIndex + 1);
+					} else if (e.key === 'Escape') {
+						closeLightbox();
+					}
+				});
+			})();
+		</script>
+	</body>
+</html>

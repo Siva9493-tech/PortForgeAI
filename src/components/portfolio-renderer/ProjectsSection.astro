@@ -1,20 +1,23 @@
 ---
-import { FolderGit2, Globe, ExternalLink } from 'lucide-astro';
+import { FolderGit2, Globe, ExternalLink, BookOpen, X, Sparkles } from 'lucide-astro';
 import type { PortfolioProject } from '../../lib/ai';
 import type { PortfolioTheme } from '../../lib/themes';
+import { resolveProjects } from '../../lib/portfolio/public-data';
 import SectionWrapper from './SectionWrapper.astro';
 
 interface Props {
 	projects: PortfolioProject[];
 	theme: PortfolioTheme;
+	portfolioSlug?: string;
 }
 
-const { projects, theme } = Astro.props;
+const { projects, theme, portfolioSlug } = Astro.props;
+const resolvedProjects = resolveProjects(projects);
 const presentation = theme.presentation;
 ---
 
 {
-	projects.length > 0 && (
+	resolvedProjects.length > 0 && (
 		<SectionWrapper
 			id="projects"
 			heading="Projects"
@@ -25,91 +28,413 @@ const presentation = theme.presentation;
 		>
 			<FolderGit2 slot="icon" size="20" class={presentation.accent} aria-hidden="true" />
 			{
-				projects.map((project, index) => {
-					const isFeatured = index === 0 && projects.length > 1;
+				resolvedProjects.map((project, index) => {
+					const isFeatured = index === 0 && resolvedProjects.length > 1;
 					const cardClass = isFeatured
 						? `${presentation.card} card-interactive edge-highlight flex flex-col justify-between gap-md card-p-sm md:card-p-lg md:col-span-2 emphasis-featured`
 						: `${presentation.card} card-interactive edge-highlight flex flex-col justify-between gap-sm card-p-sm md:card-p`;
+					const modalId = `modal-${project.id}`;
 
 					return (
-						<article class={cardClass} data-project-item={isFeatured || projects.length === 1 ? 'featured' : 'secondary'}>
+						<article class={cardClass} data-project-item={isFeatured || resolvedProjects.length === 1 ? 'featured' : 'secondary'}>
 							<div class="flex flex-col gap-xs">
+								{/* LEVEL 1: Title & Status Badges */}
 								<div class="flex items-start justify-between gap-xs min-w-0">
 									<h3 class={`${isFeatured ? 'type-heading-sub md:text-headline' : 'type-heading-sub'} ${presentation.display} text-ink break-words min-w-0`}>
 										{project.name}
 									</h3>
-									<div class="flex items-center gap-xs shrink-0">
+									<div class="flex items-center gap-xs shrink-0 flex-wrap justify-end">
 										{isFeatured && <span class="badge badge-accent">Featured</span>}
+										{project.hasCaseStudy && <span class="badge badge-featured">Case Study</span>}
 										{project.role && <span class="badge badge-neutral">{project.role}</span>}
 									</div>
 								</div>
-								{
-									project.description && (
-										<p class="type-body-sm text-ink-muted leading-relaxed break-words">{project.description}</p>
-									)
-								}
-								{
-									project.highlights.length > 0 && (
-										<ul class="flex flex-col gap-xxs pt-xxs">
-											{project.highlights.map((highlight) => (
-												<li class="type-body-sm flex items-start gap-xs text-ink-muted break-words">
-													<span class="text-ink-tertiary select-none" aria-hidden="true">•</span>
-													<span>{highlight}</span>
-												</li>
-											))}
-										</ul>
-									)
-								}
+
+								{/* LEVEL 4: Case Study Preview (Thumbnail or Outcome) */}
+								{project.hasMedia && project.media.length > 0 ? (
+									<div data-project-visual class="mt-xs aspect-video w-full overflow-hidden rounded-md border border-hairline-subtle bg-surface-subtle">
+										<img
+											src={project.media[0].url}
+											alt={project.media[0].alt || `${project.name} preview`}
+											class="h-full w-full object-cover transition-transform duration-slow hover:scale-105"
+											loading="lazy"
+										/>
+									</div>
+								) : null}
+
+								{/* LEVEL 2: Short Project Summary */}
+								{project.description && (
+									<p class="type-body-sm text-ink-muted leading-relaxed break-words line-clamp-3">
+										{project.description}
+									</p>
+								)}
+
+								{/* LEVEL 4 (alt): Highlights or Results preview when no image */}
+								{(!project.hasMedia || project.media.length === 0) && (project.caseStudy.results || project.highlights.length > 0) && (
+									<div class="mt-xxs flex items-center gap-xs text-caption text-ink-subtle">
+										<span class="size-1.5 rounded-full bg-accent shrink-0" aria-hidden="true"></span>
+										<span class="font-medium text-ink truncate">
+											{project.caseStudy.results || project.highlights[0]}
+										</span>
+									</div>
+								)}
 							</div>
-							<div class="flex flex-col gap-sm pt-xs">
-								{
-									project.technologies.length > 0 && (
-										<ul class="flex flex-wrap gap-xs" aria-label={`Technologies for ${project.name}`}>
-											{project.technologies.map((tech) => (
-												<li class="pill pill-sm">
-													{tech}
-												</li>
-											))}
-										</ul>
-									)
-								}
-								{
-									(project.repositoryUrl || project.liveUrl) && (
-										<div class="flex flex-wrap items-center gap-md border-t border-hairline-subtle pt-xs">
-											{project.repositoryUrl && (
-												<a
-													class="link-action group"
-													href={project.repositoryUrl}
-													target="_blank"
-													rel="noopener noreferrer"
-													data-analytics-click="project_click"
-													data-analytics-project={project.id ?? project.name}
-												>
-													<ExternalLink size="14" class="icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
-													<span>Repository</span>
-												</a>
-											)}
-											{project.liveUrl && (
-												<a
-													class="link-action group"
-													href={project.liveUrl}
-													target="_blank"
-													rel="noopener noreferrer"
-													data-analytics-click="project_click"
-													data-analytics-project={project.id ?? project.name}
-												>
-													<Globe size="14" class="icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true" />
-													<span>Live Demo</span>
-												</a>
-											)}
-										</div>
-									)
-								}
+
+							<div class="flex flex-col gap-sm pt-xs mt-auto">
+								{/* LEVEL 3: Technologies */}
+								{project.technologies.length > 0 && (
+									<ul class="flex flex-wrap gap-xs" aria-label={`Technologies for ${project.name}`}>
+										{project.technologies.slice(0, 5).map((tech) => (
+											<li class="pill pill-sm">
+												{tech}
+											</li>
+										))}
+										{project.technologies.length > 5 && (
+											<li class="pill pill-sm text-ink-tertiary">
+												+{project.technologies.length - 5}
+											</li>
+										)}
+									</ul>
+								)}
+
+								{/* LEVEL 5: Actions */}
+								<div class="flex flex-wrap items-center justify-between gap-sm border-t border-hairline-subtle pt-xs">
+									{project.hasCaseStudy ? (
+										portfolioSlug ? (
+											<a
+												href={`/portfolio/${portfolioSlug}/project/${project.slug}`}
+												class="btn btn-sm btn-secondary group/cs"
+												data-analytics-click="case_study_click"
+												data-analytics-project={project.id ?? project.name}
+											>
+												<BookOpen size="14" class="text-accent transition-transform duration-fast group-hover/cs:scale-110" aria-hidden="true" />
+												<span>View Case Study</span>
+											</a>
+										) : (
+											<button
+												type="button"
+												class="btn btn-sm btn-secondary group/cs"
+												data-open-case-study={modalId}
+												aria-haspopup="dialog"
+												aria-controls={modalId}
+											>
+												<BookOpen size="14" class="text-accent transition-transform duration-fast group-hover/cs:scale-110" aria-hidden="true" />
+												<span>View Case Study</span>
+											</button>
+										)
+									) : (
+										<span></span>
+									)}
+
+									<div class="flex items-center gap-md">
+										{project.liveUrl && (
+											<a
+												class="link-action group"
+												href={project.liveUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												data-analytics-click="project_click"
+												data-analytics-project={project.id ?? project.name}
+											>
+												<Globe size="14" class="icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true" />
+												<span>Live Demo</span>
+											</a>
+										)}
+										{project.repositoryUrl && (
+											<a
+												class="link-action group"
+												href={project.repositoryUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												data-analytics-click="project_click"
+												data-analytics-project={project.id ?? project.name}
+											>
+												<ExternalLink size="14" class="icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+												<span>Code</span>
+											</a>
+										)}
+									</div>
+								</div>
 							</div>
 						</article>
 					);
 				})
 			}
+
+			{/* ========================================================== */}
+			{/* DETAILED PROFESSIONAL CASE STUDY DIALOGS                   */}
+			{/* Rendered cleanly outside the scannable grid cards          */}
+			{/* ========================================================== */}
+			{
+				resolvedProjects
+					.filter((p) => p.hasCaseStudy)
+					.map((project) => {
+						const modalId = `modal-${project.id}`;
+						const titleId = `title-${project.id}`;
+
+						return (
+							<dialog
+								id={modalId}
+								class="case-study-dialog"
+								aria-labelledby={titleId}
+								aria-modal="true"
+							>
+								{/* Sticky Header */}
+								<header class="sticky top-0 z-20 flex items-center justify-between border-b border-hairline bg-surface-1/95 px-md py-sm backdrop-blur-md md:px-lg">
+									<div class="flex items-center gap-xs min-w-0">
+										<span class="badge badge-accent">Case Study</span>
+										<h3 id={titleId} class="type-heading-sub truncate text-ink">
+											{project.name}
+										</h3>
+									</div>
+									<button
+										type="button"
+										data-close-case-study
+										class="btn btn-sm btn-ghost p-1.5 rounded-full text-ink-muted hover:text-ink hover:bg-surface-2"
+										aria-label={`Close ${project.name} case study`}
+									>
+										<X size="18" aria-hidden="true" />
+									</button>
+								</header>
+
+								{/* Scrollable Editorial Content */}
+								<div class="flex-1 overflow-y-auto p-md md:p-xl flex flex-col gap-xl">
+									{/* Lead Context */}
+									<div class="flex flex-col gap-xs border-b border-hairline-subtle pb-lg">
+										<div class="flex flex-wrap items-center gap-xs">
+											{project.role && <span class="badge badge-neutral">{project.role}</span>}
+											{project.technologies.length > 0 && (
+												<span class="type-meta text-ink-subtle">{project.technologies.join(' · ')}</span>
+											)}
+										</div>
+										<h2 class="type-display text-ink text-balance">{project.name}</h2>
+										{project.description && (
+											<p class="type-body-lg text-ink-muted leading-relaxed max-w-prose pt-xs">
+												{project.description}
+											</p>
+										)}
+									</div>
+
+									{/* 01 — The Problem */}
+									{project.caseStudy.problem && (
+										<section class="flex flex-col gap-xs">
+											<p class="type-eyebrow text-ink-subtle">01 — The Problem</p>
+											<p class="text-body-lg text-ink font-medium leading-relaxed max-w-prose">
+												{project.caseStudy.problem}
+											</p>
+										</section>
+									)}
+
+									{/* 02 — Why It Mattered */}
+									{project.caseStudy.whyItMattered && (
+										<section class="flex flex-col gap-xs">
+											<p class="type-eyebrow text-ink-subtle">02 — Why It Mattered</p>
+											<div class="emphasis-callout py-xs text-body text-ink-muted leading-relaxed max-w-prose">
+												{project.caseStudy.whyItMattered}
+											</div>
+										</section>
+									)}
+
+									{/* 03 — The Solution */}
+									{project.caseStudy.solution && (
+										<section class="flex flex-col gap-xs">
+											<p class="type-eyebrow text-ink-subtle">03 — The Solution</p>
+											<div class="type-body text-ink leading-relaxed max-w-prose">
+												{project.caseStudy.solution}
+											</div>
+										</section>
+									)}
+
+									{/* 04 — How It Was Built */}
+									{project.caseStudy.howItWasBuilt && (
+										<section class="flex flex-col gap-xs">
+											<p class="type-eyebrow text-ink-subtle">04 — Architecture & Engineering</p>
+											<div class="rounded-lg border border-hairline bg-surface-2/60 p-md type-body-sm text-ink-muted leading-relaxed max-w-prose">
+												{project.caseStudy.howItWasBuilt}
+											</div>
+										</section>
+									)}
+
+									{/* 05 — Technologies */}
+									{project.technologies.length > 0 && (
+										<section class="flex flex-col gap-xs">
+											<p class="type-eyebrow text-ink-subtle">05 — Technologies & Tools</p>
+											<ul class="flex flex-wrap gap-xs" aria-label="Technologies used in this case study">
+												{project.technologies.map((tech) => (
+													<li class="pill pill-default font-mono text-xs">{tech}</li>
+												))}
+											</ul>
+										</section>
+									)}
+
+									{/* 06 — My Role */}
+									{project.caseStudy.role && (
+										<section class="flex flex-col gap-xs">
+											<p class="type-eyebrow text-ink-subtle">06 — My Role & Contribution</p>
+											<p class="type-body text-ink-muted max-w-prose">
+												Contributed as <span class="font-medium text-ink">{project.caseStudy.role}</span>.
+											</p>
+										</section>
+									)}
+
+									{/* 07 — Challenges */}
+									{project.caseStudy.challenges && (
+										<section class="flex flex-col gap-xs">
+											<p class="type-eyebrow text-ink-subtle">07 — Key Challenges Overcome</p>
+											<div class="rounded-lg border border-hairline-subtle bg-surface-subtle p-md type-body-sm text-ink-muted leading-relaxed max-w-prose">
+												{project.caseStudy.challenges}
+											</div>
+										</section>
+									)}
+
+									{/* 08 — Results */}
+									{project.caseStudy.results && (
+										<section class="flex flex-col gap-xs">
+											<p class="type-eyebrow text-accent">08 — Verified Results & Outcomes</p>
+											<div class="card-featured p-md md:p-lg flex items-start gap-md">
+												<div class="icon-box-accent icon-box-sm mt-0.5 shrink-0" aria-hidden="true">
+													<Sparkles size="16" />
+												</div>
+												<div class="flex flex-col gap-xxs">
+													<h4 class="text-body font-semibold text-ink">Impact & Verification</h4>
+													<p class="type-body-sm text-ink-muted leading-relaxed">
+														{project.caseStudy.results}
+													</p>
+												</div>
+											</div>
+										</section>
+									)}
+
+									{/* 09 — Visual Showcase & Media */}
+									{((project.hasMedia && project.media.length > 0) || project.demoVideoUrl) && (
+										<section class="flex flex-col gap-md">
+											<p class="type-eyebrow text-ink-subtle">09 — Visual Showcase & Media</p>
+											{project.media.length > 0 && (
+												<div class="grid grid-cols-1 gap-md md:grid-cols-2">
+													{project.media.map((item, mIdx) => (
+														<figure class="flex flex-col gap-xxs overflow-hidden rounded-lg border border-hairline bg-surface-subtle">
+															<img
+																src={item.url}
+																alt={item.alt || `${project.name} showcase image ${mIdx + 1}`}
+																class="aspect-video w-full object-cover transition-transform duration-medium hover:scale-[1.02]"
+																loading="lazy"
+															/>
+															{item.caption && (
+																<figcaption class="px-sm py-xs text-caption text-ink-tertiary">
+																	{item.caption}
+																</figcaption>
+															)}
+														</figure>
+													))}
+												</div>
+											)}
+											{project.demoVideoUrl && (
+												<div class="flex items-center gap-sm pt-xs">
+													<a
+														href={project.demoVideoUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														class="btn btn-secondary"
+													>
+														<ExternalLink size="15" />
+														<span>Watch Video Walkthrough</span>
+													</a>
+												</div>
+											)}
+										</section>
+									)}
+
+									{/* 10 — Links / CTAs */}
+									{(project.liveUrl || project.repositoryUrl) && (
+										<section class="flex flex-col gap-sm border-t border-hairline-subtle pt-lg">
+											<p class="type-eyebrow text-ink-subtle">10 — Explore & Verify</p>
+											<div class="flex flex-wrap items-center gap-sm">
+												{project.liveUrl && (
+													<a
+														href={project.liveUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														class="btn btn-primary"
+													>
+														<Globe size="15" />
+														<span>Launch Live Application</span>
+													</a>
+												)}
+												{project.repositoryUrl && (
+													<a
+														href={project.repositoryUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														class="btn btn-secondary"
+													>
+														<FolderGit2 size="15" />
+														<span>Browse GitHub Repository</span>
+													</a>
+												)}
+											</div>
+										</section>
+									)}
+								</div>
+							</dialog>
+						);
+					})
+			}
 		</SectionWrapper>
 	)
 }
+
+<script>
+	function setupCaseStudyModals(root: ParentNode = document): void {
+		const openBtns = root.querySelectorAll<HTMLButtonElement>('[data-open-case-study]');
+		openBtns.forEach((btn) => {
+			if (btn.dataset.modalBound) return;
+			btn.dataset.modalBound = 'true';
+			btn.addEventListener('click', () => {
+				const targetId = btn.getAttribute('data-open-case-study');
+				if (!targetId) return;
+				const dialog = document.getElementById(targetId) as HTMLDialogElement | null;
+				if (dialog && typeof dialog.showModal === 'function') {
+					dialog.showModal();
+					document.body.style.overflow = 'hidden';
+				}
+			});
+		});
+
+		const closeBtns = root.querySelectorAll<HTMLButtonElement>('[data-close-case-study]');
+		closeBtns.forEach((btn) => {
+			if (btn.dataset.modalBound) return;
+			btn.dataset.modalBound = 'true';
+			btn.addEventListener('click', () => {
+				const dialog = btn.closest('dialog') as HTMLDialogElement | null;
+				if (dialog) {
+					dialog.close();
+					document.body.style.overflow = '';
+				}
+			});
+		});
+
+		const dialogs = root.querySelectorAll<HTMLDialogElement>('dialog.case-study-dialog');
+		dialogs.forEach((dialog) => {
+			if (dialog.dataset.modalBound) return;
+			dialog.dataset.modalBound = 'true';
+			dialog.addEventListener('close', () => {
+				document.body.style.overflow = '';
+			});
+			dialog.addEventListener('click', (e) => {
+				const rect = dialog.getBoundingClientRect();
+				const isInDialog =
+					rect.top <= e.clientY &&
+					e.clientY <= rect.top + rect.height &&
+					rect.left <= e.clientX &&
+					e.clientX <= rect.left + rect.width;
+				if (!isInDialog) {
+					dialog.close();
+					document.body.style.overflow = '';
+				}
+			});
+		});
+	}
+
+	setupCaseStudyModals();
+	document.addEventListener('astro:page-load', () => setupCaseStudyModals());
+</script>

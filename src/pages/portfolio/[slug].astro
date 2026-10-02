@@ -127,7 +127,7 @@ const canonicalHref = Astro.site ? new URL(publicPath, Astro.site).href : public
 					<p class="text-body-sm text-ink-subtle">The portfolio you requested does not exist.</p>
 				</div>
 			) : (
-				<PortfolioRenderer portfolio={record.data} theme={theme} />
+				<PortfolioRenderer portfolio={record.data} theme={theme} portfolioSlug={record.slug ?? slug} />
 			)
 		}
 	</body>

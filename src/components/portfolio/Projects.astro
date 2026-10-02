@@ -1,5 +1,5 @@
 ---
-import { Folder, Link2 } from 'lucide-astro';
+import { Folder, Link2, BookOpen, ChevronDown, Image as ImageIcon } from 'lucide-astro';
 import { wizardStore } from '../../lib/portfolio';
 import BuilderEntryPanel from './BuilderEntryPanel.astro';
 import BuilderField from './BuilderField.astro';
@@ -19,7 +19,7 @@ const entries = wizardStore.getState().data.projects;
 	id="projects"
 	headingId="projects-heading"
 	title="Projects"
-	description="Showcase your best technical projects."
+	description="Showcase your best technical projects with deep case studies and verified results."
 	stepNumber={4}
 >
 	<BuilderRepeatedList
@@ -36,132 +36,35 @@ const entries = wizardStore.getState().data.projects;
 		{
 			entries.map((_, index) => (
 				<BuilderEntryPanel entryBase="Project" index={index}>
+					<!-- Basic Info -->
 					<BuilderField id={`project-name-${index}`} label="Project Name">
-							<input
-								id={`project-name-${index}`}
-								name="projectName"
-								type="text"
-								placeholder="PortForge AI"
-								class={builderInputClass}
-							/>
-						</BuilderField>
-
-						<BuilderField id={`project-role-${index}`} label="Project Role">
-							<input
-								id={`project-role-${index}`}
-								name="projectRole"
-								type="text"
-								placeholder="Full Stack Developer"
-								class={builderInputClass}
-							/>
-						</BuilderField>
-
-						<BuilderField
-							id={`project-technologies-${index}`}
-							label="Technologies Used"
-							className="md:col-span-2"
-							hint="Separate multiple technologies with commas."
-						>
-							<input
-								id={`project-technologies-${index}`}
-								name="technologies"
-								type="text"
-								placeholder="Astro, TypeScript, Tailwind CSS, Supabase"
-								class={builderInputClass}
-							/>
-						</BuilderField>
-
-						<BuilderField
-							id={`project-github-url-${index}`}
-							label="GitHub Repository"
-							icon={Link2}
-						>
-							<input
-								id={`project-github-url-${index}`}
-								name="githubUrl"
-								type="url"
-								placeholder="https://github.com/username/project"
-								class={builderInputWithIconClass}
-							/>
-						</BuilderField>
-
-						<BuilderField
-							id={`project-demo-url-${index}`}
-							label="Live Demo URL"
-							icon={Link2}
-						>
-							<input
-								id={`project-demo-url-${index}`}
-								name="demoUrl"
-								type="url"
-								placeholder="https://project.vercel.app"
-								class={builderInputWithIconClass}
-							/>
-						</BuilderField>
-
-						<BuilderField
-							id={`project-description-${index}`}
-							label="Project Description"
-							className="md:col-span-2"
-							hint="Describe the project, your contributions, features, and impact."
-						>
-							<textarea
-								id={`project-description-${index}`}
-								name="description"
-								rows="6"
-								placeholder="Describe the project, your contributions, features, and impact..."
-								class={builderTextareaClass}
-							></textarea>
-						</BuilderField>
-
-						<BuilderField
-							id={`project-key-highlights-${index}`}
-							label="Key Highlights"
-							className="md:col-span-2"
-							hint="One highlight per line."
-						>
-							<textarea
-								id={`project-key-highlights-${index}`}
-								name="highlights"
-								rows="4"
-								placeholder="Mention important achievements or results, one per line..."
-								class={builderTextareaClass}
-							></textarea>
-						</BuilderField>
-				</BuilderEntryPanel>
-			))
-		}
-
-		<template slot="template">
-			<BuilderEntryPanel entryBase="Project" index={0}>
-				<BuilderField id="project-name-template" label="Project Name">
 						<input
-						id="project-name-template"
-						name="projectName"
-						type="text"
-						placeholder="PortForge AI"
-						class={builderInputClass}
+							id={`project-name-${index}`}
+							name="projectName"
+							type="text"
+							placeholder="PortForge AI"
+							class={builderInputClass}
 						/>
 					</BuilderField>
 
-					<BuilderField id="project-role-template" label="Project Role">
+					<BuilderField id={`project-role-${index}`} label="Project Role">
 						<input
-						id="project-role-template"
-						name="projectRole"
-						type="text"
-						placeholder="Full Stack Developer"
-						class={builderInputClass}
+							id={`project-role-${index}`}
+							name="projectRole"
+							type="text"
+							placeholder="Full Stack Developer / Architect"
+							class={builderInputClass}
 						/>
 					</BuilderField>
 
 					<BuilderField
-						id="project-technologies-template"
+						id={`project-technologies-${index}`}
 						label="Technologies Used"
 						className="md:col-span-2"
 						hint="Separate multiple technologies with commas."
 					>
 						<input
-							id="project-technologies-template"
+							id={`project-technologies-${index}`}
 							name="technologies"
 							type="text"
 							placeholder="Astro, TypeScript, Tailwind CSS, Supabase"
@@ -170,22 +73,57 @@ const entries = wizardStore.getState().data.projects;
 					</BuilderField>
 
 					<BuilderField
-						id="project-github-url-template"
+						id={`project-description-${index}`}
+						label="Project Summary / Description"
+						className="md:col-span-2"
+						hint="A concise overview of the project's purpose and functionality."
+					>
+						<textarea
+							id={`project-description-${index}`}
+							name="description"
+							rows="4"
+							placeholder="Describe the project, its core value proposition, and key highlights..."
+							class={builderTextareaClass}
+						></textarea>
+					</BuilderField>
+
+					<BuilderField
+						id={`project-key-highlights-${index}`}
+						label="Key Highlights"
+						className="md:col-span-2"
+						hint="One key feature or milestone per line."
+					>
+						<textarea
+							id={`project-key-highlights-${index}`}
+							name="highlights"
+							rows="3"
+							placeholder="Key capability or feature, one per line..."
+							class={builderTextareaClass}
+						></textarea>
+					</BuilderField>
+
+					<!-- Links -->
+					<BuilderField
+						id={`project-github-url-${index}`}
 						label="GitHub Repository"
 						icon={Link2}
 					>
 						<input
-						id="project-github-url-template"
-						name="githubUrl"
-						type="url"
-						placeholder="https://github.com/username/project"
-						class={builderInputWithIconClass}
+							id={`project-github-url-${index}`}
+							name="githubUrl"
+							type="url"
+							placeholder="https://github.com/username/project"
+							class={builderInputWithIconClass}
 						/>
 					</BuilderField>
 
-					<BuilderField id="project-demo-url-template" label="Live Demo URL" icon={Link2}>
+					<BuilderField
+						id={`project-demo-url-${index}`}
+						label="Live Demo URL"
+						icon={Link2}
+					>
 						<input
-							id="project-demo-url-template"
+							id={`project-demo-url-${index}`}
 							name="demoUrl"
 							type="url"
 							placeholder="https://project.vercel.app"
@@ -193,37 +131,385 @@ const entries = wizardStore.getState().data.projects;
 						/>
 					</BuilderField>
 
-					<BuilderField
-						id="project-description-template"
-						label="Project Description"
-						className="md:col-span-2"
-						hint="Describe the project, your contributions, features, and impact."
-					>
-						<textarea
-							id="project-description-template"
-							name="description"
-							rows="6"
-							placeholder="Describe the project, your contributions, features, and impact..."
-							class={builderTextareaClass}
-						></textarea>
-					</BuilderField>
+					<!-- Professional Case Study (Progressive Disclosure) -->
+					<details class="group col-span-1 md:col-span-2 rounded-lg border border-hairline bg-surface-1/60 p-md transition-colors hover:border-hairline-strong">
+						<summary class="flex cursor-pointer list-none items-center justify-between text-caption font-semibold text-ink select-none">
+							<span class="flex flex-wrap items-center gap-xs">
+								<BookOpen size="16" class="text-accent" aria-hidden="true" />
+								<span>Professional Case Study</span>
+								<span class="text-ink-tertiary text-xs font-normal">(Optional — Problem, Solution, Architecture, Outcomes)</span>
+							</span>
+							<ChevronDown size="16" class="text-ink-muted transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+						</summary>
+						<div class="mt-md grid grid-cols-1 gap-md border-t border-hairline-subtle pt-md md:grid-cols-2">
+							<BuilderField
+								id={`project-problem-${index}`}
+								label="What was the core problem?"
+								hint="What problem, pain point, or goal did you set out to solve?"
+							>
+								<textarea
+									id={`project-problem-${index}`}
+									name="problem"
+									rows="3"
+									placeholder="Describe the initial problem or inefficiency..."
+									class={builderTextareaClass}
+								></textarea>
+							</BuilderField>
 
-					<BuilderField
-						id="project-key-highlights-template"
-						label="Key Highlights"
-						className="md:col-span-2"
-						hint="One highlight per line."
-					>
-						<textarea
-							id="project-key-highlights-template"
-							name="highlights"
-							rows="4"
-							placeholder="Mention important achievements or results, one per line..."
-							class={builderTextareaClass}
-						></textarea>
-					</BuilderField>
+							<BuilderField
+								id={`project-why-it-mattered-${index}`}
+								label="Why did this project matter?"
+								hint="Why was solving this important to users, stakeholders, or your learning?"
+							>
+								<textarea
+									id={`project-why-it-mattered-${index}`}
+									name="whyItMattered"
+									rows="3"
+									placeholder="Explain why solving this was valuable..."
+									class={builderTextareaClass}
+								></textarea>
+							</BuilderField>
+
+							<BuilderField
+								id={`project-solution-${index}`}
+								label="What was your solution?"
+								hint="What did you design or build to address the problem?"
+							>
+								<textarea
+									id={`project-solution-${index}`}
+									name="solution"
+									rows="3"
+									placeholder="Describe the solution built..."
+									class={builderTextareaClass}
+								></textarea>
+							</BuilderField>
+
+							<BuilderField
+								id={`project-how-it-was-built-${index}`}
+								label="How did you build it?"
+								hint="Key architecture, frameworks, database choices, or engineering patterns."
+							>
+								<textarea
+									id={`project-how-it-was-built-${index}`}
+									name="howItWasBuilt"
+									rows="3"
+									placeholder="Technical implementation details, architecture, trade-offs..."
+									class={builderTextareaClass}
+								></textarea>
+							</BuilderField>
+
+							<BuilderField
+								id={`project-challenges-${index}`}
+								label="What was technically difficult?"
+								hint="Obstacles, trade-offs, or tricky bugs you had to overcome."
+							>
+								<textarea
+									id={`project-challenges-${index}`}
+									name="challenges"
+									rows="3"
+									placeholder="Key technical hurdles encountered..."
+									class={builderTextareaClass}
+								></textarea>
+							</BuilderField>
+
+							<BuilderField
+								id={`project-results-${index}`}
+								label="What was the outcome or impact?"
+								hint="Real outcomes (e.g. deployed to Vercel, tested with users, completed MVP)."
+							>
+								<textarea
+									id={`project-results-${index}`}
+									name="results"
+									rows="3"
+									placeholder="Document actual outcomes (completed prototype, deployed live, validated with users)..."
+									class={builderTextareaClass}
+								></textarea>
+							</BuilderField>
+						</div>
+					</details>
+
+					<!-- Media & Screenshots (Progressive Disclosure) -->
+					<details class="group col-span-1 md:col-span-2 rounded-lg border border-hairline bg-surface-1/60 p-md transition-colors hover:border-hairline-strong">
+						<summary class="flex cursor-pointer list-none items-center justify-between text-caption font-semibold text-ink select-none">
+							<span class="flex flex-wrap items-center gap-xs">
+								<ImageIcon size="16" class="text-accent" aria-hidden="true" />
+								<span>Media & Screenshots</span>
+								<span class="text-ink-tertiary text-xs font-normal">(Optional — Screenshots & Video URL)</span>
+							</span>
+							<ChevronDown size="16" class="text-ink-muted transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+						</summary>
+						<div class="mt-md grid grid-cols-1 gap-md border-t border-hairline-subtle pt-md md:grid-cols-2">
+							<BuilderField
+								id={`project-media-urls-${index}`}
+								label="Screenshot URLs"
+								className="md:col-span-2"
+								hint="One image URL per line. Optional caption syntax: https://example.com/shot.png | Dashboard Preview"
+							>
+								<textarea
+									id={`project-media-urls-${index}`}
+									name="mediaUrls"
+									rows="3"
+									placeholder="https://example.com/screenshot1.png | Main view&#10;https://example.com/screenshot2.png"
+									class={builderTextareaClass}
+								></textarea>
+							</BuilderField>
+
+							<BuilderField
+								id={`project-demo-video-url-${index}`}
+								label="Demo Video URL"
+								className="md:col-span-2"
+								icon={Link2}
+								hint="Optional link to a demo recording (YouTube, Loom, etc.)."
+							>
+								<input
+									id={`project-demo-video-url-${index}`}
+									name="demoVideoUrl"
+									type="url"
+									placeholder="https://youtube.com/watch?v=... or https://loom.com/share/..."
+									class={builderInputWithIconClass}
+								/>
+							</BuilderField>
+						</div>
+					</details>
 				</BuilderEntryPanel>
-			</template>
+			))
+		}
+
+		<template slot="template">
+			<BuilderEntryPanel entryBase="Project" index={0}>
+				<!-- Basic Info -->
+				<BuilderField id="project-name-template" label="Project Name">
+					<input
+						id="project-name-template"
+						name="projectName"
+						type="text"
+						placeholder="PortForge AI"
+						class={builderInputClass}
+					/>
+				</BuilderField>
+
+				<BuilderField id="project-role-template" label="Project Role">
+					<input
+						id="project-role-template"
+						name="projectRole"
+						type="text"
+						placeholder="Full Stack Developer / Architect"
+						class={builderInputClass}
+					/>
+				</BuilderField>
+
+				<BuilderField
+					id="project-technologies-template"
+					label="Technologies Used"
+					className="md:col-span-2"
+					hint="Separate multiple technologies with commas."
+				>
+					<input
+						id="project-technologies-template"
+						name="technologies"
+						type="text"
+						placeholder="Astro, TypeScript, Tailwind CSS, Supabase"
+						class={builderInputClass}
+					/>
+				</BuilderField>
+
+				<BuilderField
+					id="project-description-template"
+					label="Project Summary / Description"
+					className="md:col-span-2"
+					hint="A concise overview of the project's purpose and functionality."
+				>
+					<textarea
+						id="project-description-template"
+						name="description"
+						rows="4"
+						placeholder="Describe the project, its core value proposition, and key highlights..."
+						class={builderTextareaClass}
+					></textarea>
+				</BuilderField>
+
+				<BuilderField
+					id="project-key-highlights-template"
+					label="Key Highlights"
+					className="md:col-span-2"
+					hint="One key feature or milestone per line."
+				>
+					<textarea
+						id="project-key-highlights-template"
+						name="highlights"
+						rows="3"
+						placeholder="Key capability or feature, one per line..."
+						class={builderTextareaClass}
+					></textarea>
+				</BuilderField>
+
+				<!-- Links -->
+				<BuilderField
+					id="project-github-url-template"
+					label="GitHub Repository"
+					icon={Link2}
+				>
+					<input
+						id="project-github-url-template"
+						name="githubUrl"
+						type="url"
+						placeholder="https://github.com/username/project"
+						class={builderInputWithIconClass}
+					/>
+				</BuilderField>
+
+				<BuilderField id="project-demo-url-template" label="Live Demo URL" icon={Link2}>
+					<input
+						id="project-demo-url-template"
+						name="demoUrl"
+						type="url"
+						placeholder="https://project.vercel.app"
+						class={builderInputWithIconClass}
+					/>
+				</BuilderField>
+
+				<!-- Professional Case Study (Progressive Disclosure) -->
+				<details class="group col-span-1 md:col-span-2 rounded-lg border border-hairline bg-surface-1/60 p-md transition-colors hover:border-hairline-strong">
+					<summary class="flex cursor-pointer list-none items-center justify-between text-caption font-semibold text-ink select-none">
+						<span class="flex flex-wrap items-center gap-xs">
+							<BookOpen size="16" class="text-accent" aria-hidden="true" />
+							<span>Professional Case Study</span>
+							<span class="text-ink-tertiary text-xs font-normal">(Optional — Problem, Solution, Architecture, Outcomes)</span>
+						</span>
+						<ChevronDown size="16" class="text-ink-muted transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+					</summary>
+					<div class="mt-md grid grid-cols-1 gap-md border-t border-hairline-subtle pt-md md:grid-cols-2">
+						<BuilderField
+							id="project-problem-template"
+							label="What was the core problem?"
+							hint="What problem, pain point, or goal did you set out to solve?"
+						>
+							<textarea
+								id="project-problem-template"
+								name="problem"
+								rows="3"
+								placeholder="Describe the initial problem or inefficiency..."
+								class={builderTextareaClass}
+							></textarea>
+						</BuilderField>
+
+						<BuilderField
+							id="project-why-it-mattered-template"
+							label="Why did this project matter?"
+							hint="Why was solving this important to users, stakeholders, or your learning?"
+						>
+							<textarea
+								id="project-why-it-mattered-template"
+								name="whyItMattered"
+								rows="3"
+								placeholder="Explain why solving this was valuable..."
+								class={builderTextareaClass}
+							></textarea>
+						</BuilderField>
+
+						<BuilderField
+							id="project-solution-template"
+							label="What was your solution?"
+							hint="What did you design or build to address the problem?"
+						>
+							<textarea
+								id="project-solution-template"
+								name="solution"
+								rows="3"
+								placeholder="Describe the solution built..."
+								class={builderTextareaClass}
+							></textarea>
+						</BuilderField>
+
+						<BuilderField
+							id="project-how-it-was-built-template"
+							label="How did you build it?"
+							hint="Key architecture, frameworks, database choices, or engineering patterns."
+						>
+							<textarea
+								id="project-how-it-was-built-template"
+								name="howItWasBuilt"
+								rows="3"
+								placeholder="Technical implementation details, architecture, trade-offs..."
+								class={builderTextareaClass}
+							></textarea>
+						</BuilderField>
+
+						<BuilderField
+							id="project-challenges-template"
+							label="What was technically difficult?"
+							hint="Obstacles, trade-offs, or tricky bugs you had to overcome."
+						>
+							<textarea
+								id="project-challenges-template"
+								name="challenges"
+								rows="3"
+								placeholder="Key technical hurdles encountered..."
+								class={builderTextareaClass}
+							></textarea>
+						</BuilderField>
+
+						<BuilderField
+							id="project-results-template"
+							label="What was the outcome or impact?"
+							hint="Real outcomes (e.g. deployed to Vercel, tested with users, completed MVP)."
+						>
+							<textarea
+								id="project-results-template"
+								name="results"
+								rows="3"
+								placeholder="Document actual outcomes (completed prototype, deployed live, validated with users)..."
+								class={builderTextareaClass}
+							></textarea>
+						</BuilderField>
+					</div>
+				</details>
+
+				<!-- Media & Screenshots (Progressive Disclosure) -->
+				<details class="group col-span-1 md:col-span-2 rounded-lg border border-hairline bg-surface-1/60 p-md transition-colors hover:border-hairline-strong">
+					<summary class="flex cursor-pointer list-none items-center justify-between text-caption font-semibold text-ink select-none">
+						<span class="flex flex-wrap items-center gap-xs">
+							<ImageIcon size="16" class="text-accent" aria-hidden="true" />
+							<span>Media & Screenshots</span>
+							<span class="text-ink-tertiary text-xs font-normal">(Optional — Screenshots & Video URL)</span>
+						</span>
+						<ChevronDown size="16" class="text-ink-muted transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+					</summary>
+					<div class="mt-md grid grid-cols-1 gap-md border-t border-hairline-subtle pt-md md:grid-cols-2">
+						<BuilderField
+							id="project-media-urls-template"
+							label="Screenshot URLs"
+							className="md:col-span-2"
+							hint="One image URL per line. Optional caption syntax: https://example.com/shot.png | Dashboard Preview"
+						>
+							<textarea
+								id="project-media-urls-template"
+								name="mediaUrls"
+								rows="3"
+								placeholder="https://example.com/screenshot1.png | Main view&#10;https://example.com/screenshot2.png"
+								class={builderTextareaClass}
+							></textarea>
+						</BuilderField>
+
+						<BuilderField
+							id="project-demo-video-url-template"
+							label="Demo Video URL"
+							className="md:col-span-2"
+							icon={Link2}
+							hint="Optional link to a demo recording (YouTube, Loom, etc.)."
+						>
+							<input
+								id="project-demo-video-url-template"
+								name="demoVideoUrl"
+								type="url"
+								placeholder="https://youtube.com/watch?v=... or https://loom.com/share/..."
+								class={builderInputWithIconClass}
+							/>
+						</BuilderField>
+					</div>
+				</details>
+			</BuilderEntryPanel>
+		</template>
 		</BuilderRepeatedList>
 
 		<BuilderSuggestions section="projects" />

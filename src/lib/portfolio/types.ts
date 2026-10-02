@@ -61,6 +61,14 @@ export interface ProjectEntry {
 	demoUrl: string;
 	description: string;
 	highlights: string;
+	problem?: string;
+	whyItMattered?: string;
+	solution?: string;
+	howItWasBuilt?: string;
+	challenges?: string;
+	results?: string;
+	demoVideoUrl?: string;
+	mediaUrls?: string;
 }
 
 export type ProjectsData = ProjectEntry[];
@@ -206,6 +214,14 @@ export function createEmptyProjectEntry(): ProjectEntry {
 		demoUrl: '',
 		description: '',
 		highlights: '',
+		problem: '',
+		whyItMattered: '',
+		solution: '',
+		howItWasBuilt: '',
+		challenges: '',
+		results: '',
+		demoVideoUrl: '',
+		mediaUrls: '',
 	};
 }
 

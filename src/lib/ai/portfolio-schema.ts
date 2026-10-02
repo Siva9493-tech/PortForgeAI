@@ -12,6 +12,7 @@ import type {
 	PortfolioSkill,
 	PortfolioSocial,
 	PortfolioTheme,
+	ProjectMedia,
 } from './types';
 
 /** Version of the normalized output schema. */
@@ -210,7 +211,25 @@ function normalizeSections(value: unknown): PortfolioSection[] {
 	});
 }
 
-function normalizeProjects(value: unknown): PortfolioProject[] {
+function normalizeProjectMedia(value: unknown): ProjectMedia[] | undefined {
+	if (!Array.isArray(value)) {
+		return undefined;
+	}
+	const media = value
+		.filter(isRecord)
+		.map((item): ProjectMedia | null => {
+			if (!isString(item.url) || item.url.trim() === '') return null;
+			return {
+				url: item.url.trim(),
+				alt: isString(item.alt) && item.alt.trim() !== '' ? item.alt.trim() : 'Project screenshot',
+				caption: isString(item.caption) && item.caption.trim() !== '' ? item.caption.trim() : undefined,
+			};
+		})
+		.filter((item): item is ProjectMedia => item !== null);
+	return media.length > 0 ? media : undefined;
+}
+
+export function normalizeProjects(value: unknown): PortfolioProject[] {
 	if (!Array.isArray(value)) {
 		return [];
 	}
@@ -223,6 +242,14 @@ function normalizeProjects(value: unknown): PortfolioProject[] {
 		highlights: isStringArray(entry.highlights) ? entry.highlights : [],
 		repositoryUrl: isString(entry.repositoryUrl) ? entry.repositoryUrl : undefined,
 		liveUrl: isString(entry.liveUrl) ? entry.liveUrl : undefined,
+		problem: isString(entry.problem) && entry.problem.trim() !== '' ? entry.problem.trim() : undefined,
+		whyItMattered: isString(entry.whyItMattered) && entry.whyItMattered.trim() !== '' ? entry.whyItMattered.trim() : undefined,
+		solution: isString(entry.solution) && entry.solution.trim() !== '' ? entry.solution.trim() : undefined,
+		howItWasBuilt: isString(entry.howItWasBuilt) && entry.howItWasBuilt.trim() !== '' ? entry.howItWasBuilt.trim() : undefined,
+		challenges: isString(entry.challenges) && entry.challenges.trim() !== '' ? entry.challenges.trim() : undefined,
+		results: isString(entry.results) && entry.results.trim() !== '' ? entry.results.trim() : undefined,
+		demoVideoUrl: isString(entry.demoVideoUrl) && entry.demoVideoUrl.trim() !== '' ? entry.demoVideoUrl.trim() : undefined,
+		media: normalizeProjectMedia(entry.media),
 	}));
 }
 

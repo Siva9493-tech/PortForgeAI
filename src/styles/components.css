@@ -937,6 +937,89 @@
 		transform: scale(1.03);
 	}
 
+	/* ------------------------------------------------------------------ */
+	/* 12. Case Study Modal & Presentation (Day 16 Visual Experience)     */
+	/* ------------------------------------------------------------------ */
+	.case-study-dialog {
+		position: fixed;
+		inset: 0;
+		margin: auto;
+		max-width: 58rem;
+		width: calc(100% - 2rem);
+		max-height: min(92vh, 900px);
+		border: 1px solid var(--color-hairline-strong);
+		border-radius: var(--radius-xl);
+		background-color: var(--color-surface-1);
+		color: var(--color-ink);
+		box-shadow: var(--shadow-elevated);
+		padding: 0;
+		overflow: hidden;
+		z-index: 100;
+	}
+
+	.case-study-dialog::backdrop {
+		background-color: rgba(0, 0, 0, 0.78);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+	}
+
+	.case-study-dialog[open] {
+		display: flex;
+		flex-direction: column;
+		animation: case-study-modal-in var(--duration-normal) var(--ease-cinematic);
+	}
+
+	@keyframes case-study-modal-in {
+		from {
+			opacity: 0;
+			transform: scale(0.97) translateY(12px);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1) translateY(0);
+		}
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* 13. Case Study Lightbox (Interactive Screenshot Inspection)        */
+	/* ------------------------------------------------------------------ */
+	.case-study-lightbox {
+		position: fixed;
+		inset: 0;
+		margin: auto;
+		max-width: 95vw;
+		max-height: 95vh;
+		background: transparent;
+		border: none;
+		padding: 0;
+		overflow: visible;
+		z-index: 120;
+	}
+
+	.case-study-lightbox::backdrop {
+		background-color: rgba(0, 0, 0, 0.88);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+	}
+
+	.case-study-lightbox[open] {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		animation: lightbox-fade-in var(--duration-fast) ease-out;
+	}
+
+	@keyframes lightbox-fade-in {
+		from {
+			opacity: 0;
+			transform: scale(0.96);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
 	/* Reduced motion: Complete strict override for accessibility */
 	@media (prefers-reduced-motion: reduce) {
 		html.js-reveal [data-reveal],

@@ -44,7 +44,14 @@ export interface PortfolioTheme {
 	keywords: string[];
 }
 
-/** A single generated project entry. */
+/** A media attachment (screenshot, diagram, or preview) for a project case study. */
+export interface ProjectMedia {
+	url: string;
+	alt: string;
+	caption?: string;
+}
+
+/** A single generated or crafted project entry / case study. */
 export interface PortfolioProject {
 	id?: string;
 	name: string;
@@ -54,6 +61,22 @@ export interface PortfolioProject {
 	liveUrl?: string;
 	description: string;
 	highlights: string[];
+	/** The specific core problem the project aimed to solve. */
+	problem?: string;
+	/** Why solving this problem was important, valuable, or urgent. */
+	whyItMattered?: string;
+	/** The practical technical solution implemented. */
+	solution?: string;
+	/** How the project was built, architectural and engineering approach. */
+	howItWasBuilt?: string;
+	/** Technical and product challenges encountered during development. */
+	challenges?: string;
+	/** Concrete qualitative or quantitative outcomes, deployment status, or results. */
+	results?: string;
+	/** Optional media (screenshots, mockups, or diagrams). */
+	media?: ProjectMedia[];
+	/** Optional link to a demonstration video or walkthrough. */
+	demoVideoUrl?: string;
 }
 
 /** A single generated work / experience entry. */

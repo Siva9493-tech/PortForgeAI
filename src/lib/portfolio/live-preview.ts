@@ -6,6 +6,7 @@ import {
 	resolveFooter,
 	resolveHero,
 	resolveIdentityLinks,
+	resolveProjects,
 	resolveSectionNav,
 	type PublicHeroData,
 	type PublicIdentityLink,
@@ -128,6 +129,18 @@ const ABOUT_USER_SVG =
 const HERO_MAP_PIN_SVG =
 	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>';
 
+const BOOK_OPEN_SVG =
+	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 text-accent transition-transform duration-fast group-hover/cs:scale-110" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
+
+const CLOSE_X_SVG =
+	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
+const PROJECT_REPO_SVG =
+	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+
+const PROJECT_GLOBE_SVG =
+	'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';
+
 function heroHtml(output: PortfolioOutput): string {
 	const hero = resolveHero(output);
 	const hasPhoto = Boolean(hero.photo?.dataUrl);
@@ -223,53 +236,227 @@ function aboutHtml(output: PortfolioOutput): string {
 }
 
 function projectsHtml(output: PortfolioOutput): string {
-	if (output.projects.length === 0) {
+	const resolved = resolveProjects(output.projects);
+	if (resolved.length === 0) {
 		return '';
 	}
-	const cards = output.projects
+	const cards = resolved
 		.map((project, index) => {
-			const isFeatured = index === 0 && output.projects.length > 1;
+			const isFeatured = index === 0 && resolved.length > 1;
 			const cardClass = isFeatured
 				? `${currentPresentation.card} card-interactive edge-highlight flex flex-col justify-between gap-md card-p-sm md:card-p-lg md:col-span-2 emphasis-featured`
 				: `${currentPresentation.card} card-interactive edge-highlight flex flex-col justify-between gap-sm card-p-sm md:card-p`;
+			const modalId = `modal-${escapeHtml(project.id)}`;
 
-			const highlights = project.highlights.length
-				? `<ul class="flex flex-col gap-xxs pt-xxs">${project.highlights
-						.map((item) => `<li class="type-body-sm flex items-start gap-xs text-ink-muted break-words"><span class="text-ink-tertiary select-none" aria-hidden="true">•</span><span>${escapeHtml(item)}</span></li>`)
-						.join('')}</ul>`
+			const previewMedia = project.hasMedia && project.media.length > 0
+				? `<div data-project-visual class="mt-xs aspect-video w-full overflow-hidden rounded-md border border-hairline-subtle bg-surface-subtle">
+					<img src="${escapeHtml(project.media[0].url)}" alt="${escapeHtml(project.media[0].alt || `${project.name} preview`)}" class="h-full w-full object-cover transition-transform duration-slow hover:scale-105" loading="lazy" />
+				</div>`
 				: '';
+
+			const outcomePreview = (!project.hasMedia || project.media.length === 0) && (project.caseStudy.results || project.highlights.length > 0)
+				? `<div class="mt-xxs flex items-center gap-xs text-caption text-ink-subtle">
+					<span class="size-1.5 rounded-full bg-accent shrink-0" aria-hidden="true"></span>
+					<span class="font-medium text-ink truncate">${escapeHtml(project.caseStudy.results || project.highlights[0])}</span>
+				</div>`
+				: '';
+
+			const displayedTechs = project.technologies.slice(0, 5);
+			const overflowTechsCount = project.technologies.length - 5;
 			const techs = project.technologies.length
-				? `<ul class="flex flex-wrap gap-xs" aria-label="Technologies for ${escapeHtml(project.name)}">${project.technologies.map((t) => `<li class="pill pill-sm">${escapeHtml(t)}</li>`).join('')}</ul>`
+				? `<ul class="flex flex-wrap gap-xs" aria-label="Technologies for ${escapeHtml(project.name)}">
+					${displayedTechs.map((t) => `<li class="pill pill-sm">${escapeHtml(t)}</li>`).join('')}
+					${overflowTechsCount > 0 ? `<li class="pill pill-sm text-ink-tertiary">+${overflowTechsCount}</li>` : ''}
+				</ul>`
 				: '';
+
 			const projectToken = escapeHtml(project.id ?? project.name);
 			const projectAttr = ` data-analytics-click="project_click" data-analytics-project="${projectToken}"`;
-			const links =
-				project.repositoryUrl || project.liveUrl
-					? `<div class="flex flex-wrap items-center gap-md border-t border-hairline-subtle pt-xs">
-						${project.repositoryUrl ? `<a href="${escapeHtml(project.repositoryUrl)}" target="_blank" rel="noopener noreferrer"${projectAttr} class="link-action group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg><span>Repository</span></a>` : ''}
-						${project.liveUrl ? `<a href="${escapeHtml(project.liveUrl)}" target="_blank" rel="noopener noreferrer"${projectAttr} class="link-action group"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5 icon-inline transition-transform duration-fast group-hover:scale-110" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span>Live Demo</span></a>` : ''}
-					</div>`
-					: '';
-			return `<article class="${cardClass}" data-project-item="${isFeatured || output.projects.length === 1 ? 'featured' : 'secondary'}" data-theme="card">
+
+			const caseStudyAction = project.hasCaseStudy
+				? `<button type="button" class="btn btn-sm btn-secondary group/cs" data-open-case-study="${modalId}" aria-haspopup="dialog" aria-controls="${modalId}">
+					${BOOK_OPEN_SVG}
+					<span>View Case Study</span>
+				</button>`
+				: '<span></span>';
+
+			const links = `
+				<div class="flex items-center gap-md">
+					${project.liveUrl ? `<a href="${escapeHtml(project.liveUrl)}" target="_blank" rel="noopener noreferrer"${projectAttr} class="link-action group">${PROJECT_GLOBE_SVG}<span>Live Demo</span></a>` : ''}
+					${project.repositoryUrl ? `<a href="${escapeHtml(project.repositoryUrl)}" target="_blank" rel="noopener noreferrer"${projectAttr} class="link-action group">${PROJECT_REPO_SVG}<span>Code</span></a>` : ''}
+				</div>
+			`;
+
+			const caseStudyBadge = project.hasCaseStudy ? '<span class="badge badge-featured">Case Study</span>' : '';
+			const roleBadge = project.role ? `<span class="badge badge-neutral">${escapeHtml(project.role)}</span>` : '';
+
+			return `<article class="${cardClass}" data-project-item="${isFeatured || resolved.length === 1 ? 'featured' : 'secondary'}" data-theme="card">
 				<div class="flex flex-col gap-xs">
 					<div class="flex items-start justify-between gap-xs min-w-0">
 						<h3 class="${isFeatured ? 'type-heading-sub md:text-headline' : 'type-heading-sub'} ${currentPresentation.display} text-ink break-words min-w-0" data-theme="display">${escapeHtml(project.name)}</h3>
-						<div class="flex items-center gap-xs shrink-0">
+						<div class="flex items-center gap-xs shrink-0 flex-wrap justify-end">
 							${isFeatured ? '<span class="badge badge-accent">Featured</span>' : ''}
-							${project.role ? `<span class="badge badge-neutral">${escapeHtml(project.role)}</span>` : ''}
+							${caseStudyBadge}
+							${roleBadge}
 						</div>
 					</div>
-					${project.description ? `<p class="type-body-sm text-ink-muted leading-relaxed break-words">${escapeHtml(project.description)}</p>` : ''}
-					${highlights}
+					${previewMedia}
+					${project.description ? `<p class="type-body-sm text-ink-muted leading-relaxed break-words line-clamp-3">${escapeHtml(project.description)}</p>` : ''}
+					${outcomePreview}
 				</div>
-				<div class="flex flex-col gap-sm pt-xs">
+				<div class="flex flex-col gap-sm pt-xs mt-auto">
 					${techs}
-					${links}
+					<div class="flex flex-wrap items-center justify-between gap-sm border-t border-hairline-subtle pt-xs">
+						${caseStudyAction}
+						${links}
+					</div>
 				</div>
 			</article>`;
 		})
 		.join('');
-	return section('projects', 'Projects', 'grid grid-cols-1 gap-lg md:grid-cols-2', cards, 'projects');
+
+	const dialogs = resolved
+		.filter((p) => p.hasCaseStudy)
+		.map((project) => {
+			const modalId = `modal-${escapeHtml(project.id)}`;
+			const titleId = `title-${escapeHtml(project.id)}`;
+
+			const problemSection = project.caseStudy.problem
+				? `<section class="flex flex-col gap-xs">
+					<p class="type-eyebrow text-ink-subtle">01 — The Problem</p>
+					<p class="text-body-lg text-ink font-medium leading-relaxed max-w-prose">${escapeHtml(project.caseStudy.problem)}</p>
+				</section>`
+				: '';
+
+			const whyItMatteredSection = project.caseStudy.whyItMattered
+				? `<section class="flex flex-col gap-xs">
+					<p class="type-eyebrow text-ink-subtle">02 — Why It Mattered</p>
+					<div class="emphasis-callout py-xs text-body text-ink-muted leading-relaxed max-w-prose">${escapeHtml(project.caseStudy.whyItMattered)}</div>
+				</section>`
+				: '';
+
+			const solutionSection = project.caseStudy.solution
+				? `<section class="flex flex-col gap-xs">
+					<p class="type-eyebrow text-ink-subtle">03 — The Solution</p>
+					<div class="type-body text-ink leading-relaxed max-w-prose">${escapeHtml(project.caseStudy.solution)}</div>
+				</section>`
+				: '';
+
+			const howItWasBuiltSection = project.caseStudy.howItWasBuilt
+				? `<section class="flex flex-col gap-xs">
+					<p class="type-eyebrow text-ink-subtle">04 — Architecture & Engineering</p>
+					<div class="rounded-lg border border-hairline bg-surface-2/60 p-md type-body-sm text-ink-muted leading-relaxed max-w-prose">${escapeHtml(project.caseStudy.howItWasBuilt)}</div>
+				</section>`
+				: '';
+
+			const technologiesSection = project.technologies.length > 0
+				? `<section class="flex flex-col gap-xs">
+					<p class="type-eyebrow text-ink-subtle">05 — Technologies & Tools</p>
+					<ul class="flex flex-wrap gap-xs" aria-label="Technologies used in this case study">
+						${project.technologies.map((t) => `<li class="pill pill-default font-mono text-xs">${escapeHtml(t)}</li>`).join('')}
+					</ul>
+				</section>`
+				: '';
+
+			const roleSection = project.caseStudy.role
+				? `<section class="flex flex-col gap-xs">
+					<p class="type-eyebrow text-ink-subtle">06 — My Role & Contribution</p>
+					<p class="type-body text-ink-muted max-w-prose">Contributed as <span class="font-medium text-ink">${escapeHtml(project.caseStudy.role)}</span>.</p>
+				</section>`
+				: '';
+
+			const challengesSection = project.caseStudy.challenges
+				? `<section class="flex flex-col gap-xs">
+					<p class="type-eyebrow text-ink-subtle">07 — Key Challenges Overcome</p>
+					<div class="rounded-lg border border-hairline-subtle bg-surface-subtle p-md type-body-sm text-ink-muted leading-relaxed max-w-prose">${escapeHtml(project.caseStudy.challenges)}</div>
+				</section>`
+				: '';
+
+			const resultsSection = project.caseStudy.results
+				? `<section class="flex flex-col gap-xs">
+					<p class="type-eyebrow text-accent">08 — Verified Results & Outcomes</p>
+					<div class="card-featured p-md md:p-lg flex items-start gap-md">
+						<div class="icon-box-accent icon-box-sm mt-0.5 shrink-0" aria-hidden="true">${HERO_SPARKLES_SVG}</div>
+						<div class="flex flex-col gap-xxs">
+							<h4 class="text-body font-semibold text-ink">Impact & Verification</h4>
+							<p class="type-body-sm text-ink-muted leading-relaxed">${escapeHtml(project.caseStudy.results)}</p>
+						</div>
+					</div>
+				</section>`
+				: '';
+
+			const mediaItems = project.media.length > 0
+				? `<div class="grid grid-cols-1 gap-md md:grid-cols-2">
+					${project.media.map((item, mIdx) => `
+						<figure class="flex flex-col gap-xxs overflow-hidden rounded-lg border border-hairline bg-surface-subtle">
+							<img src="${escapeHtml(item.url)}" alt="${escapeHtml(item.alt || `${project.name} showcase image ${mIdx + 1}`)}" class="aspect-video w-full object-cover transition-transform duration-medium hover:scale-[1.02]" loading="lazy" />
+							${item.caption ? `<figcaption class="px-sm py-xs text-caption text-ink-tertiary">${escapeHtml(item.caption)}</figcaption>` : ''}
+						</figure>
+					`).join('')}
+				</div>`
+				: '';
+
+			const videoItem = project.demoVideoUrl
+				? `<div class="flex items-center gap-sm pt-xs">
+					<a href="${escapeHtml(project.demoVideoUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">${PROJECT_REPO_SVG}<span>Watch Video Walkthrough</span></a>
+				</div>`
+				: '';
+
+			const mediaSection = ((project.hasMedia && project.media.length > 0) || project.demoVideoUrl)
+				? `<section class="flex flex-col gap-md">
+					<p class="type-eyebrow text-ink-subtle">09 — Visual Showcase & Media</p>
+					${mediaItems}
+					${videoItem}
+				</section>`
+				: '';
+
+			const linksSection = (project.liveUrl || project.repositoryUrl)
+				? `<section class="flex flex-col gap-sm border-t border-hairline-subtle pt-lg">
+					<p class="type-eyebrow text-ink-subtle">10 — Explore & Verify</p>
+					<div class="flex flex-wrap items-center gap-sm">
+						${project.liveUrl ? `<a href="${escapeHtml(project.liveUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">${PROJECT_GLOBE_SVG}<span>Launch Live Application</span></a>` : ''}
+						${project.repositoryUrl ? `<a href="${escapeHtml(project.repositoryUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">${PROJECT_REPO_SVG}<span>Browse GitHub Repository</span></a>` : ''}
+					</div>
+				</section>`
+				: '';
+
+			return `
+				<dialog id="${modalId}" class="case-study-dialog" aria-labelledby="${titleId}" aria-modal="true">
+					<header class="sticky top-0 z-20 flex items-center justify-between border-b border-hairline bg-surface-1/95 px-md py-sm backdrop-blur-md md:px-lg">
+						<div class="flex items-center gap-xs min-w-0">
+							<span class="badge badge-accent">Case Study</span>
+							<h3 id="${titleId}" class="type-heading-sub truncate text-ink">${escapeHtml(project.name)}</h3>
+						</div>
+						<button type="button" data-close-case-study class="btn btn-sm btn-ghost p-1.5 rounded-full text-ink-muted hover:text-ink hover:bg-surface-2" aria-label="Close ${escapeHtml(project.name)} case study">
+							${CLOSE_X_SVG}
+						</button>
+					</header>
+					<div class="flex-1 overflow-y-auto p-md md:p-xl flex flex-col gap-xl">
+						<div class="flex flex-col gap-xs border-b border-hairline-subtle pb-lg">
+							<div class="flex flex-wrap items-center gap-xs">
+								${project.role ? `<span class="badge badge-neutral">${escapeHtml(project.role)}</span>` : ''}
+								${project.technologies.length > 0 ? `<span class="type-meta text-ink-subtle">${escapeHtml(project.technologies.join(' · '))}</span>` : ''}
+							</div>
+							<h2 class="type-display text-ink text-balance">${escapeHtml(project.name)}</h2>
+							${project.description ? `<p class="type-body-lg text-ink-muted leading-relaxed max-w-prose pt-xs">${escapeHtml(project.description)}</p>` : ''}
+						</div>
+						${problemSection}
+						${whyItMatteredSection}
+						${solutionSection}
+						${howItWasBuiltSection}
+						${technologiesSection}
+						${roleSection}
+						${challengesSection}
+						${resultsSection}
+						${mediaSection}
+						${linksSection}
+					</div>
+				</dialog>
+			`;
+		})
+		.join('');
+
+	return section('projects', 'Projects', 'grid grid-cols-1 gap-lg md:grid-cols-2', `${cards}${dialogs}`, 'projects');
 }
 
 function experienceHtml(output: PortfolioOutput): string {
@@ -590,12 +777,58 @@ function mount(): HTMLElement | null {
 	return document.querySelector<HTMLElement>(MOUNT_SELECTOR);
 }
 
+function setupCaseStudyModals(root: HTMLElement): void {
+	const openBtns = root.querySelectorAll<HTMLButtonElement>('[data-open-case-study]');
+	openBtns.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const targetId = btn.getAttribute('data-open-case-study');
+			if (!targetId) return;
+			const dialog = root.querySelector<HTMLDialogElement>(`#${targetId}`);
+			if (dialog && typeof dialog.showModal === 'function') {
+				dialog.showModal();
+				document.body.style.overflow = 'hidden';
+			}
+		});
+	});
+
+	const closeBtns = root.querySelectorAll<HTMLButtonElement>('[data-close-case-study]');
+	closeBtns.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const dialog = btn.closest('dialog');
+			if (dialog) {
+				dialog.close();
+				document.body.style.overflow = '';
+			}
+		});
+	});
+
+	const dialogs = root.querySelectorAll<HTMLDialogElement>('dialog.case-study-dialog');
+	dialogs.forEach((dialog) => {
+		dialog.addEventListener('close', () => {
+			document.body.style.overflow = '';
+		});
+		dialog.addEventListener('click', (e) => {
+			const rect = dialog.getBoundingClientRect();
+			const isInDialog =
+				rect.top <= e.clientY &&
+				e.clientY <= rect.top + rect.height &&
+				rect.left <= e.clientX &&
+				e.clientX <= rect.left + rect.width;
+			if (!isInDialog) {
+				dialog.close();
+				document.body.style.overflow = '';
+			}
+		});
+	});
+}
+
 function renderOutput(output: PortfolioOutput): void {
 	const root = mount();
 	if (!root) {
 		return;
 	}
 	root.innerHTML = `<main id="portfolio-preview" class="mx-auto w-full ${currentPresentation.layout} px-md py-xl md:px-xl md:py-section ${currentPresentation.font}" data-theme="layout font">${buildPreviewHTML(output)}</main>`;
+	setupCaseStudyModals(root);
 	setupSectionNavActive();
 	setupSectionReveal();
 }

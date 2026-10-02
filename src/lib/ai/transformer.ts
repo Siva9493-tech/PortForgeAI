@@ -1,6 +1,6 @@
 import type { PortfolioData } from '../portfolio/types';
-import { getTemplate } from './templates';
-import { PORTFOLIO_SCHEMA_VERSION } from './portfolio-schema';
+import { getTemplate } from './templates.ts';
+import { PORTFOLIO_SCHEMA_VERSION } from './portfolio-schema.ts';
 import type {
 	PortfolioAchievement,
 	PortfolioBuilderExtras,
@@ -16,6 +16,7 @@ import type {
 	PortfolioSection,
 	PortfolioSkill,
 	PortfolioSocial,
+	ProjectMedia,
 } from './types';
 
 /* -------------------------------------------------------------------------- */
@@ -149,19 +150,49 @@ export function transformExperience(input: PortfolioInput): PortfolioExperience[
 		.filter((entry) => entry.role !== '' || entry.company !== '');
 }
 
-/** Transforms wizard projects, deduping technologies and highlights. */
+function parseMediaUrls(urlsString: string | undefined, projectName: string): ProjectMedia[] | undefined {
+	if (!urlsString) return undefined;
+	const lines = urlsString
+		.split(/[\n,]/)
+		.map((u) => u.trim())
+		.filter((u) => u !== '');
+	const media = lines.map((line, i): ProjectMedia => {
+		const parts = line.split('|').map((s) => s.trim());
+		const url = parts[0];
+		const caption = parts[1] || undefined;
+		return {
+			url,
+			alt: caption || (projectName ? `${projectName} screenshot ${i + 1}` : `Project screenshot ${i + 1}`),
+			caption,
+		};
+	});
+	return media.length > 0 ? media : undefined;
+}
+
+/** Transforms wizard projects, deduping technologies, highlights, and case study details. */
 export function transformProjects(input: PortfolioInput): PortfolioProject[] {
 	return input.data.projects
-		.map((entry, index): PortfolioProject => ({
-			id: `prj-${index + 1}`,
-			name: normalizeText(entry.projectName),
-			role: normalizeText(entry.projectRole),
-			technologies: normalizeArray(entry.technologies),
-			repositoryUrl: normalizeText(entry.githubUrl) || undefined,
-			liveUrl: normalizeText(entry.demoUrl) || undefined,
-			description: normalizeText(entry.description),
-			highlights: normalizeArray(entry.highlights, /\n/),
-		}))
+		.map((entry, index): PortfolioProject => {
+			const name = normalizeText(entry.projectName);
+			return {
+				id: `prj-${index + 1}`,
+				name,
+				role: normalizeText(entry.projectRole),
+				technologies: normalizeArray(entry.technologies),
+				repositoryUrl: normalizeText(entry.githubUrl) || undefined,
+				liveUrl: normalizeText(entry.demoUrl) || undefined,
+				description: normalizeText(entry.description),
+				highlights: normalizeArray(entry.highlights, /\n/),
+				problem: normalizeText(entry.problem) || undefined,
+				whyItMattered: normalizeText(entry.whyItMattered) || undefined,
+				solution: normalizeText(entry.solution) || undefined,
+				howItWasBuilt: normalizeText(entry.howItWasBuilt) || undefined,
+				challenges: normalizeText(entry.challenges) || undefined,
+				results: normalizeText(entry.results) || undefined,
+				demoVideoUrl: normalizeText(entry.demoVideoUrl) || undefined,
+				media: parseMediaUrls(entry.mediaUrls, name),
+			};
+		})
 		.filter((entry) => entry.name !== '');
 }
 

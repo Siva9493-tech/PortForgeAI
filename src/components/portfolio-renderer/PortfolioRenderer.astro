@@ -30,9 +30,11 @@ interface Props {
 	portfolio: PortfolioOutput;
 	/** The selected presentation theme. */
 	theme: PortfolioTheme;
+	/** Optional slug for published portfolio dedicated detail links. */
+	portfolioSlug?: string;
 }
 
-const { portfolio, theme } = Astro.props;
+const { portfolio, theme, portfolioSlug } = Astro.props;
 const presentation = theme.presentation;
 
 const projects: PortfolioProject[] = portfolio.projects;
@@ -52,7 +54,7 @@ const sectionNav = resolveSectionNav(portfolio);
 	{sectionNav.length > 0 && <SectionNav items={sectionNav} />}
 	<HeroSection portfolio={portfolio} theme={theme} />
 	<AboutSection portfolio={portfolio} theme={theme} />
-	<ProjectsSection projects={projects} theme={theme} />
+	<ProjectsSection projects={projects} theme={theme} portfolioSlug={portfolioSlug} />
 	<ExperienceSection experience={experience} theme={theme} />
 	<EducationSection education={education} theme={theme} />
 	<SkillsSection skills={skills} theme={theme} />

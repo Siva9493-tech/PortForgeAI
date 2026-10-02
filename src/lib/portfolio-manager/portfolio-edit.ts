@@ -93,6 +93,14 @@ export function portfolioOutputToData(output: PortfolioOutput): PortfolioData {
 		demoUrl: entry.liveUrl ?? '',
 		description: entry.description,
 		highlights: entry.highlights.join('\n'),
+		problem: entry.problem ?? '',
+		whyItMattered: entry.whyItMattered ?? '',
+		solution: entry.solution ?? '',
+		howItWasBuilt: entry.howItWasBuilt ?? '',
+		challenges: entry.challenges ?? '',
+		results: entry.results ?? '',
+		demoVideoUrl: entry.demoVideoUrl ?? '',
+		mediaUrls: (entry.media ?? []).map((m) => m.url).join('\n'),
 	}));
 
 	base.certifications = output.certifications.map((entry) => ({

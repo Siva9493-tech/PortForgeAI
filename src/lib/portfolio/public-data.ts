@@ -1,4 +1,4 @@
-import type { PortfolioOutput, PortfolioSocial } from '../ai';
+import type { PortfolioOutput, PortfolioProject, PortfolioSocial, ProjectMedia } from '../ai';
 import type { ProfilePhotoData } from './types';
 
 /** Every social platform the saved data model supports, plus Email. */
@@ -333,4 +333,249 @@ export function resolveAbout(output: PortfolioOutput): PublicAboutData {
 	return {
 		introduction: (output.builder?.about ?? '').trim(),
 	};
+}
+
+/** A fully resolved project / case study for public rendering and preview. */
+export interface ResolvedProject {
+	id: string;
+	/** Deterministic URL slug for project detail routing. */
+	slug: string;
+	/** Direct reference to raw source project. */
+	raw: PortfolioProject;
+	/** Display title of the project. */
+	title: string;
+	/** Backward-compatible alias for title. */
+	name: string;
+	/** User's role on the project. */
+	role: string;
+	/** Short description / summary of the project. */
+	summary: string;
+	/** Backward-compatible alias for summary. */
+	description: string;
+	/** Array of technologies used. */
+	technologies: string[];
+	/** Validated GitHub repository URL (null if missing or invalid). */
+	repositoryUrl: string | null;
+	/** Alias for repositoryUrl. */
+	githubUrl: string | null;
+	/** Validated live demo URL (null if missing or invalid). */
+	liveUrl: string | null;
+	/** Key bullet highlights. */
+	highlights: string[];
+	/** Case study: problem statement. */
+	problem: string | null;
+	/** Case study: why solving this problem mattered. */
+	whyItMattered: string | null;
+	/** Case study: technical solution implemented. */
+	solution: string | null;
+	/** Case study: architectural and implementation approach. */
+	howItWasBuilt: string | null;
+	/** Case study: key technical challenges overcome. */
+	challenges: string | null;
+	/** Case study: qualitative or quantitative results and outcomes. */
+	results: string | null;
+	/** Grouped case study data for structured rendering. */
+	caseStudy: ResolvedCaseStudy;
+	/** Validated project screenshots and diagrams. */
+	media: ProjectMedia[];
+	/** Validated demo video URL. */
+	demoVideoUrl: string | null;
+	/** Whether any case study narrative or media exists. */
+	hasCaseStudy: boolean;
+	/** Whether any valid external links (repository or demo) exist. */
+	hasLinks: boolean;
+	/** Whether any valid screenshots or media exist. */
+	hasMedia: boolean;
+}
+
+export interface ResolvedCaseStudy {
+	problem: string | null;
+	whyItMattered: string | null;
+	solution: string | null;
+	howItWasBuilt: string | null;
+	role: string | null;
+	challenges: string | null;
+	results: string | null;
+}
+
+/** Checks if a URL is a valid, safe web destination (http or https). */
+export function isSafeWebUrl(url: string | undefined | null): boolean {
+	if (!url) return false;
+	const trimmed = url.trim();
+	return /^https?:\/\//i.test(trimmed);
+}
+
+/** Checks if a media item URL is safe to render (http, https, relative path, or data URI). */
+function isSafeMediaUrl(url: string | undefined | null): boolean {
+	if (!url) return false;
+	const trimmed = url.trim();
+	return /^https?:\/\//i.test(trimmed) || trimmed.startsWith('/') || trimmed.startsWith('data:image/');
+}
+
+/**
+ * Resolves a single project entry into a stable, fully normalized `ResolvedProject`.
+ * Safe against missing/undefined fields, enforces link safety, and computes
+ * case-study flags without mutating the original input.
+ */
+export function resolveProject(project: PortfolioProject, index = 0): ResolvedProject {
+	const title = (project.name ?? '').trim();
+	const role = (project.role ?? '').trim();
+	const summary = (project.description ?? '').trim();
+	const technologies = (project.technologies ?? [])
+		.map((t) => t.trim())
+		.filter((t) => t !== '');
+	const highlights = (project.highlights ?? [])
+		.map((h) => h.trim())
+		.filter((h) => h !== '');
+
+	const repositoryUrl = isSafeWebUrl(project.repositoryUrl) ? (project.repositoryUrl ?? '').trim() : null;
+	const liveUrl = isSafeWebUrl(project.liveUrl) ? (project.liveUrl ?? '').trim() : null;
+	const demoVideoUrl = isSafeWebUrl(project.demoVideoUrl) ? (project.demoVideoUrl ?? '').trim() : null;
+
+	const problem = project.problem?.trim() ? project.problem.trim() : null;
+	const whyItMattered = project.whyItMattered?.trim() ? project.whyItMattered.trim() : null;
+	const solution = project.solution?.trim() ? project.solution.trim() : null;
+	const howItWasBuilt = project.howItWasBuilt?.trim() ? project.howItWasBuilt.trim() : null;
+	const challenges = project.challenges?.trim() ? project.challenges.trim() : null;
+	const results = project.results?.trim() ? project.results.trim() : null;
+
+	const media: ProjectMedia[] = (project.media ?? [])
+		.filter((item) => isSafeMediaUrl(item?.url))
+		.map((item, mIdx) => ({
+			url: item.url.trim(),
+			alt: item.alt?.trim() ? item.alt.trim() : `${title || 'Project'} screenshot ${mIdx + 1}`,
+			caption: item.caption?.trim() ? item.caption.trim() : undefined,
+		}));
+
+	const hasCaseStudy = Boolean(
+		problem ||
+		whyItMattered ||
+		solution ||
+		howItWasBuilt ||
+		challenges ||
+		results ||
+		demoVideoUrl ||
+		media.length > 0
+	);
+
+	const hasLinks = Boolean(repositoryUrl || liveUrl);
+	const hasMedia = media.length > 0;
+
+	const caseStudy: ResolvedCaseStudy = {
+		problem,
+		whyItMattered,
+		solution,
+		howItWasBuilt,
+		role: role || null,
+		challenges,
+		results,
+	};
+
+	const slug = getProjectSlug(project, index);
+
+	return {
+		id: project.id ?? `prj-${index + 1}`,
+		slug,
+		raw: project,
+		title,
+		name: title,
+		role,
+		summary,
+		description: summary,
+		technologies,
+		repositoryUrl,
+		githubUrl: repositoryUrl,
+		liveUrl,
+		highlights,
+		problem,
+		whyItMattered,
+		solution,
+		howItWasBuilt,
+		challenges,
+		results,
+		caseStudy,
+		media,
+		demoVideoUrl,
+		hasCaseStudy,
+		hasLinks,
+		hasMedia,
+	};
+}
+
+/**
+ * Computes a clean, deterministic URL slug for a project.
+ * Uses name slugification with fallback to id or project index.
+ */
+export function getProjectSlug(project: PortfolioProject, index = 0): string {
+	const name = (project.name ?? '').trim();
+	if (name) {
+		const slug = name
+			.toLowerCase()
+			.normalize('NFKD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '')
+			.slice(0, 60);
+		if (slug) return slug;
+	}
+	if (project.id && typeof project.id === 'string' && project.id.trim()) {
+		const cleanId = project.id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+		if (cleanId) return cleanId;
+	}
+	return `project-${index + 1}`;
+}
+
+export interface ProjectMatch {
+	project: ResolvedProject;
+	index: number;
+	prevProject: ResolvedProject | null;
+	nextProject: ResolvedProject | null;
+}
+
+/**
+ * Finds a project in a portfolio by matching its generated slug, raw id, or name slug.
+ * Also returns clean previous / next project navigation pointers preserving portfolio order.
+ */
+export function findProjectBySlug(
+	source: PortfolioOutput | readonly PortfolioProject[] | undefined | null,
+	targetSlug: string
+): ProjectMatch | null {
+	if (!targetSlug) return null;
+	const resolved = resolveProjects(source);
+	if (resolved.length === 0) return null;
+
+	const normalizedTarget = targetSlug.trim().toLowerCase();
+
+	const foundIndex = resolved.findIndex((p, idx) => {
+		if (p.slug.toLowerCase() === normalizedTarget) return true;
+		if (p.id.toLowerCase() === normalizedTarget) return true;
+		if (getProjectSlug(p.raw, idx).toLowerCase() === normalizedTarget) return true;
+		return false;
+	});
+
+	if (foundIndex === -1) return null;
+
+	const project = resolved[foundIndex];
+	const prevProject = foundIndex > 0 ? resolved[foundIndex - 1] : null;
+	const nextProject = foundIndex < resolved.length - 1 ? resolved[foundIndex + 1] : null;
+
+	return {
+		project,
+		index: foundIndex,
+		prevProject,
+		nextProject,
+	};
+}
+
+/**
+ * Resolves all projects from a portfolio or project list into normalized case studies.
+ */
+export function resolveProjects(
+	source: PortfolioOutput | readonly PortfolioProject[] | undefined | null
+): ResolvedProject[] {
+	if (!source) return [];
+	const list: readonly PortfolioProject[] = Array.isArray(source)
+		? source
+		: ('projects' in source && Array.isArray(source.projects) ? source.projects : []);
+	return list.map((project: PortfolioProject, idx: number) => resolveProject(project, idx));
 }
