@@ -1,0 +1,686 @@
+---
+import {
+	AlertCircle,
+	ArrowLeft,
+	Bug,
+	CheckCircle2,
+	Loader2,
+	Send,
+	Upload,
+} from 'lucide-astro';
+import DashboardLayout from '../components/dashboard/DashboardLayout.astro';
+import {
+	builderButtonPrimary,
+	builderButtonSecondary,
+	builderDropzoneClass,
+	builderInputClass,
+	builderTextareaClass,
+} from '../components/portfolio/builder-ui';
+
+const title = 'Report a Bug — PortForge AI';
+const description =
+	'Found something broken or something that could work better? Tell us what happened so it can be investigated.';
+---
+
+<DashboardLayout title={title} description={description} pageLabel="Report a Bug">
+	<div class="mx-auto max-w-3xl pb-16">
+		<!-- Header -->
+		<header class="mb-8 flex flex-col gap-2">
+			<a
+				href="/dashboard"
+				class="inline-flex items-center gap-1.5 text-caption font-medium text-ink-tertiary transition-colors duration-200 hover:text-ink w-fit mb-1"
+			>
+				<ArrowLeft size="14" aria-hidden="true" />
+				Back to Dashboard
+			</a>
+			<div class="flex items-center gap-2">
+				<span class="text-caption font-semibold tracking-wider uppercase text-primary">
+					Help Us Improve
+				</span>
+			</div>
+			<h1 class="text-2xl font-bold tracking-tight text-ink md:text-3xl">
+				Report a Bug
+			</h1>
+			<p class="text-body text-ink-subtle leading-relaxed">
+				Found something broken or something that could work better? Tell us what happened so it can be investigated.
+			</p>
+		</header>
+
+		<!-- Success State Banner / Confirmation Card (Hidden by default) -->
+		<div
+			id="success-card"
+			class="hidden card rounded-xl border border-primary/30 bg-surface-1 p-lg sm:p-xl shadow-subtle animate-fade-in"
+			role="region"
+			aria-live="polite"
+		>
+			<div class="flex flex-col items-center text-center py-6 gap-4">
+				<div
+					class="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary"
+					aria-hidden="true"
+				>
+					<CheckCircle2 size="36" />
+				</div>
+				<div class="flex flex-col gap-1 max-w-md">
+					<h2 class="text-xl font-semibold text-ink">Report submitted successfully.</h2>
+					<p class="text-body text-ink-subtle">
+						Thanks — your feedback has been recorded. Our team will review the issue and work on a fix.
+					</p>
+					<p id="success-report-id" class="text-caption text-ink-tertiary font-mono mt-2"></p>
+				</div>
+				<div class="flex flex-wrap items-center justify-center gap-3 mt-4">
+					<button
+						type="button"
+						id="btn-report-another"
+						class={builderButtonPrimary}
+					>
+						Submit Another Report
+					</button>
+					<a
+						href="/dashboard"
+						class={builderButtonSecondary}
+					>
+						Back to Dashboard
+					</a>
+				</div>
+			</div>
+		</div>
+
+		<!-- Bug Report Form Card -->
+		<div
+			id="form-card"
+			class="card rounded-xl border border-hairline bg-surface-1 p-lg sm:p-xl shadow-subtle"
+		>
+			<!-- Global Form Error Alert (Hidden by default) -->
+			<div
+				id="global-error"
+				class="hidden mb-6 flex items-start gap-3 rounded-md border border-semantic-danger/30 bg-semantic-danger/10 p-md text-body-sm text-semantic-danger"
+				role="alert"
+			>
+				<AlertCircle size="18" class="shrink-0 mt-0.5" aria-hidden="true" />
+				<div class="flex-1">
+					<p class="font-medium">Unable to submit report</p>
+					<p id="global-error-msg" class="text-caption text-semantic-danger/90 mt-0.5"></p>
+				</div>
+			</div>
+
+			<form id="bug-report-form" class="flex flex-col gap-6" novalidate>
+				<!-- Category Selector -->
+				<div class="flex flex-col gap-2">
+					<label for="bug-category" class="text-body-sm font-medium text-ink">
+						Category <span class="text-semantic-danger" aria-hidden="true">*</span>
+					</label>
+					<select
+						id="bug-category"
+						name="category"
+						class={builderInputClass}
+						required
+					>
+						<option value="Bug" selected>Bug</option>
+						<option value="UI / Design Issue">UI / Design Issue</option>
+						<option value="Feature Request">Feature Request</option>
+						<option value="Improvement">Improvement</option>
+						<option value="Other">Other</option>
+					</select>
+					<p class="text-caption text-ink-tertiary">
+						Select the category that best matches what you want to share.
+					</p>
+				</div>
+
+				<!-- Bug Title -->
+				<div class="flex flex-col gap-2">
+					<label for="bug-title" class="text-body-sm font-medium text-ink">
+						Bug Title <span class="text-semantic-danger" aria-hidden="true">*</span>
+					</label>
+					<input
+						type="text"
+						id="bug-title"
+						name="title"
+						class={builderInputClass}
+						placeholder="e.g. Portfolio preview does not save changes"
+						required
+					/>
+					<p id="bug-title-error" class="hidden text-caption text-semantic-danger" role="alert"></p>
+				</div>
+
+				<!-- What happened? -->
+				<div class="flex flex-col gap-2">
+					<label for="bug-description" class="text-body-sm font-medium text-ink">
+						What happened? <span class="text-semantic-danger" aria-hidden="true">*</span>
+					</label>
+					<textarea
+						id="bug-description"
+						name="description"
+						rows="4"
+						class={builderTextareaClass}
+						placeholder="Describe what went wrong…"
+						required
+					></textarea>
+					<p id="bug-description-error" class="hidden text-caption text-semantic-danger" role="alert"></p>
+				</div>
+
+				<!-- What did you expect to happen? -->
+				<div class="flex flex-col gap-2">
+					<label for="bug-expected" class="text-body-sm font-medium text-ink">
+						What did you expect to happen? <span class="text-semantic-danger" aria-hidden="true">*</span>
+					</label>
+					<textarea
+						id="bug-expected"
+						name="expectedBehavior"
+						rows="3"
+						class={builderTextareaClass}
+						placeholder="Describe what you expected instead…"
+						required
+					></textarea>
+					<p id="bug-expected-error" class="hidden text-caption text-semantic-danger" role="alert"></p>
+				</div>
+
+				<!-- Steps to reproduce (Optional) -->
+				<div class="flex flex-col gap-2">
+					<div class="flex items-center justify-between">
+						<label for="bug-steps" class="text-body-sm font-medium text-ink">
+							Steps to reproduce
+						</label>
+						<span class="text-caption text-ink-tertiary">Optional</span>
+					</div>
+					<textarea
+						id="bug-steps"
+						name="reproductionSteps"
+						rows="3"
+						class={builderTextareaClass}
+						placeholder="1. Open...&#10;2. Click...&#10;3. Notice..."
+					></textarea>
+				</div>
+
+				<!-- Screenshot / Evidence Upload Area -->
+				<div class="flex flex-col gap-3">
+					<div class="flex items-center justify-between">
+						<label class="text-body-sm font-medium text-ink">
+							Screenshot / Evidence
+						</label>
+						<span class="text-caption text-ink-tertiary">Optional · Up to 6 images</span>
+					</div>
+
+					<input
+						type="file"
+						id="screenshot-file-input"
+						class="sr-only"
+						accept="image/png,image/jpeg,image/webp,image/gif"
+						multiple
+					/>
+
+					<!-- Dropzone area -->
+					<div
+						id="screenshot-dropzone"
+						class={`${builderDropzoneClass} cursor-pointer group`}
+						role="button"
+						tabindex="0"
+						aria-label="Upload screenshots (click or drag and drop)"
+					>
+						<div class="flex flex-col items-center gap-2 pointer-events-none">
+							<span
+								class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-1 text-ink-subtle group-hover:text-primary transition-colors duration-200"
+								aria-hidden="true"
+							>
+								<Upload size="22" />
+							</span>
+							<p class="text-body-sm font-medium text-ink">
+								Click to attach screenshots or drag &amp; drop
+							</p>
+							<p class="text-caption text-ink-tertiary">
+								PNG, JPG, WEBP, GIF · Maximum 8 MB per image · Up to 6 screenshots
+							</p>
+						</div>
+					</div>
+
+					<!-- Upload Error Message -->
+					<p
+						id="screenshot-upload-error"
+						class="hidden text-caption text-semantic-danger"
+						role="alert"
+					></p>
+
+					<!-- Screenshot Previews List -->
+					<div
+						id="screenshot-previews-container"
+						class="hidden flex flex-col gap-2 mt-1"
+					>
+						<div class="flex items-center justify-between">
+							<span class="text-caption font-medium text-ink-subtle" id="screenshot-count-label">
+								Attached Screenshots (0/6)
+							</span>
+							<button
+								type="button"
+								id="btn-clear-screenshots"
+								class="text-caption text-ink-tertiary hover:text-semantic-danger transition-colors duration-200"
+							>
+								Clear all
+							</button>
+						</div>
+						<div
+							id="screenshot-previews-grid"
+							class="grid grid-cols-2 gap-3 sm:grid-cols-3"
+						>
+							<!-- Dynamically populated thumbnail cards -->
+						</div>
+					</div>
+				</div>
+
+				<!-- Optional Additional Message -->
+				<div class="flex flex-col gap-2">
+					<div class="flex items-center justify-between">
+						<label for="bug-additional" class="text-body-sm font-medium text-ink">
+							Optional Additional Message
+						</label>
+						<span class="text-caption text-ink-tertiary">Optional</span>
+					</div>
+					<textarea
+						id="bug-additional"
+						name="additionalMessage"
+						rows="2"
+						class={builderTextareaClass}
+						placeholder="Anything else we should know?"
+					></textarea>
+				</div>
+
+				<!-- Submit Button & Disclaimer -->
+				<div class="pt-4 border-t border-hairline flex flex-col sm:flex-row items-center justify-between gap-4">
+					<div class="text-caption text-ink-tertiary flex items-center gap-1.5 order-2 sm:order-1">
+						<Bug size="14" class="text-ink-tertiary shrink-0" aria-hidden="true" />
+						Reports include browser &amp; environment info to help debugging.
+					</div>
+					<button
+						type="submit"
+						id="btn-submit-report"
+						class={`${builderButtonPrimary} w-full sm:w-auto min-w-36 order-1 sm:order-2`}
+					>
+						<span id="submit-icon" class="flex items-center justify-center">
+							<Send size="16" aria-hidden="true" />
+						</span>
+						<span id="submit-spinner" class="hidden animate-spin">
+							<Loader2 size="16" aria-hidden="true" />
+						</span>
+						<span id="submit-btn-text">Submit Report</span>
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</DashboardLayout>
+
+<script>
+	import { submitBugReport } from '../lib/bug-report';
+	import type { BugReportCategory, BugReportScreenshot } from '../lib/bug-report';
+
+	const MAX_SCREENSHOTS = 6;
+	const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
+	const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
+	let attachedScreenshots: BugReportScreenshot[] = [];
+	let isSubmitting = false;
+
+	// Elements
+	const form = document.getElementById('bug-report-form') as HTMLFormElement | null;
+	const formCard = document.getElementById('form-card');
+	const successCard = document.getElementById('success-card');
+	const successReportId = document.getElementById('success-report-id');
+	const btnReportAnother = document.getElementById('btn-report-another');
+	const globalError = document.getElementById('global-error');
+	const globalErrorMsg = document.getElementById('global-error-msg');
+
+	// Inputs
+	const categorySelect = document.getElementById('bug-category') as HTMLSelectElement | null;
+	const titleInput = document.getElementById('bug-title') as HTMLInputElement | null;
+	const descTextarea = document.getElementById('bug-description') as HTMLTextAreaElement | null;
+	const expectedTextarea = document.getElementById('bug-expected') as HTMLTextAreaElement | null;
+	const stepsTextarea = document.getElementById('bug-steps') as HTMLTextAreaElement | null;
+	const additionalTextarea = document.getElementById('bug-additional') as HTMLTextAreaElement | null;
+
+	// Error elements
+	const titleError = document.getElementById('bug-title-error');
+	const descError = document.getElementById('bug-description-error');
+	const expectedError = document.getElementById('bug-expected-error');
+
+	// Upload elements
+	const fileInput = document.getElementById('screenshot-file-input') as HTMLInputElement | null;
+	const dropzone = document.getElementById('screenshot-dropzone');
+	const uploadError = document.getElementById('screenshot-upload-error');
+	const previewsContainer = document.getElementById('screenshot-previews-container');
+	const previewsGrid = document.getElementById('screenshot-previews-grid');
+	const countLabel = document.getElementById('screenshot-count-label');
+	const btnClearScreenshots = document.getElementById('btn-clear-screenshots');
+
+	// Submit button elements
+	const submitBtn = document.getElementById('btn-submit-report') as HTMLButtonElement | null;
+	const submitIcon = document.getElementById('submit-icon');
+	const submitSpinner = document.getElementById('submit-spinner');
+	const submitBtnText = document.getElementById('submit-btn-text');
+
+	function formatBytes(bytes: number): string {
+		if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+		if (bytes > 0) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+		return '0 KB';
+	}
+
+	function setUploadError(message: string | null) {
+		if (!uploadError) return;
+		if (message) {
+			uploadError.textContent = message;
+			uploadError.classList.remove('hidden');
+		} else {
+			uploadError.textContent = '';
+			uploadError.classList.add('hidden');
+		}
+	}
+
+	function renderScreenshotPreviews() {
+		if (!previewsContainer || !previewsGrid || !countLabel) return;
+
+		countLabel.textContent = `Attached Screenshots (${attachedScreenshots.length}/${MAX_SCREENSHOTS})`;
+
+		if (attachedScreenshots.length === 0) {
+			previewsContainer.classList.add('hidden');
+			previewsGrid.innerHTML = '';
+			return;
+		}
+
+		previewsContainer.classList.remove('hidden');
+		previewsGrid.innerHTML = '';
+
+		attachedScreenshots.forEach((item, index) => {
+			const card = document.createElement('div');
+			card.className =
+				'group relative flex flex-col overflow-hidden rounded-md border border-hairline bg-surface-2 p-2 transition-all duration-200 hover:border-hairline-strong';
+
+			const imgWrapper = document.createElement('div');
+			imgWrapper.className = 'relative aspect-video w-full overflow-hidden rounded bg-surface-3';
+
+			const img = document.createElement('img');
+			img.src = item.dataUrl;
+			img.alt = item.name;
+			img.className = 'h-full w-full object-cover';
+
+			const removeBtn = document.createElement('button');
+			removeBtn.type = 'button';
+			removeBtn.title = 'Remove screenshot';
+			removeBtn.setAttribute('aria-label', `Remove screenshot ${item.name}`);
+			removeBtn.className =
+				'absolute top-1 right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-surface-1/90 text-ink-subtle backdrop-blur-sm transition-colors duration-200 hover:bg-semantic-danger hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-focus';
+			removeBtn.innerHTML = `
+				<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+			`;
+			removeBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				removeScreenshot(index);
+			});
+
+			imgWrapper.appendChild(img);
+			imgWrapper.appendChild(removeBtn);
+
+			const meta = document.createElement('div');
+			meta.className = 'mt-1.5 flex flex-col gap-0.5';
+
+			const name = document.createElement('span');
+			name.className = 'truncate text-caption font-medium text-ink';
+			name.textContent = item.name;
+
+			const size = document.createElement('span');
+			size.className = 'text-caption text-ink-tertiary text-xs';
+			size.textContent = formatBytes(item.size);
+
+			meta.appendChild(name);
+			meta.appendChild(size);
+
+			card.appendChild(imgWrapper);
+			card.appendChild(meta);
+			previewsGrid.appendChild(card);
+		});
+	}
+
+	function removeScreenshot(index: number) {
+		attachedScreenshots.splice(index, 1);
+		setUploadError(null);
+		renderScreenshotPreviews();
+	}
+
+	async function handleFiles(files: FileList | File[]) {
+		setUploadError(null);
+		const fileArray = Array.from(files);
+
+		if (attachedScreenshots.length + fileArray.length > MAX_SCREENSHOTS) {
+			setUploadError(`You can attach a maximum of ${MAX_SCREENSHOTS} screenshots in total.`);
+			return;
+		}
+
+		for (const file of fileArray) {
+			if (!ALLOWED_TYPES.includes(file.type)) {
+				setUploadError(`"${file.name}" has an unsupported format. Please upload PNG, JPG, WEBP, or GIF.`);
+				return;
+			}
+			if (file.size > MAX_FILE_SIZE_BYTES) {
+				setUploadError(`"${file.name}" exceeds the 8 MB limit (${formatBytes(file.size)}).`);
+				return;
+			}
+		}
+
+		// Read each file
+		for (const file of fileArray) {
+			try {
+				const dataUrl = await new Promise<string>((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => resolve(reader.result as string);
+					reader.onerror = () => reject(new Error('Failed to read file'));
+					reader.readAsDataURL(file);
+				});
+
+				attachedScreenshots.push({
+					id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+					name: file.name,
+					size: file.size,
+					type: file.type,
+					dataUrl,
+				});
+			} catch {
+				setUploadError(`Failed to process "${file.name}". Please try another image.`);
+			}
+		}
+
+		renderScreenshotPreviews();
+		if (fileInput) fileInput.value = '';
+	}
+
+	// Dropzone triggers
+	if (dropzone && fileInput) {
+		dropzone.addEventListener('click', () => {
+			if (attachedScreenshots.length >= MAX_SCREENSHOTS) {
+				setUploadError(`Maximum of ${MAX_SCREENSHOTS} screenshots reached.`);
+				return;
+			}
+			fileInput.click();
+		});
+
+		dropzone.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				if (attachedScreenshots.length >= MAX_SCREENSHOTS) {
+					setUploadError(`Maximum of ${MAX_SCREENSHOTS} screenshots reached.`);
+					return;
+				}
+				fileInput.click();
+			}
+		});
+
+		fileInput.addEventListener('change', () => {
+			if (fileInput.files && fileInput.files.length > 0) {
+				handleFiles(fileInput.files);
+			}
+		});
+
+		// Drag & Drop
+		['dragenter', 'dragover'].forEach((eventName) => {
+			dropzone.addEventListener(eventName, (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				dropzone.classList.add('border-primary', 'bg-surface-3');
+			});
+		});
+
+		['dragleave', 'drop'].forEach((eventName) => {
+			dropzone.addEventListener(eventName, (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				dropzone.classList.remove('border-primary', 'bg-surface-3');
+			});
+		});
+
+		dropzone.addEventListener('drop', (e: DragEvent) => {
+			const dt = e.dataTransfer;
+			if (dt?.files && dt.files.length > 0) {
+				handleFiles(dt.files);
+			}
+		});
+	}
+
+	if (btnClearScreenshots) {
+		btnClearScreenshots.addEventListener('click', () => {
+			attachedScreenshots = [];
+			setUploadError(null);
+			renderScreenshotPreviews();
+		});
+	}
+
+	// Form validation
+	function clearErrors() {
+		if (globalError) globalError.classList.add('hidden');
+		[titleError, descError, expectedError].forEach((el) => {
+			if (el) {
+				el.textContent = '';
+				el.classList.add('hidden');
+			}
+		});
+		[titleInput, descTextarea, expectedTextarea].forEach((input) => {
+			input?.classList.remove('border-semantic-danger');
+		});
+	}
+
+	function validateForm(): boolean {
+		clearErrors();
+		let isValid = true;
+
+		if (!titleInput?.value.trim()) {
+			if (titleError) {
+				titleError.textContent = 'Please enter a bug title.';
+				titleError.classList.remove('hidden');
+			}
+			titleInput?.classList.add('border-semantic-danger');
+			isValid = false;
+		}
+
+		if (!descTextarea?.value.trim()) {
+			if (descError) {
+				descError.textContent = 'Please describe what went wrong.';
+				descError.classList.remove('hidden');
+			}
+			descTextarea?.classList.add('border-semantic-danger');
+			isValid = false;
+		}
+
+		if (!expectedTextarea?.value.trim()) {
+			if (expectedError) {
+				expectedError.textContent = 'Please describe what you expected to happen.';
+				expectedError.classList.remove('hidden');
+			}
+			expectedTextarea?.classList.add('border-semantic-danger');
+			isValid = false;
+		}
+
+		return isValid;
+	}
+
+	function setSubmitting(submitting: boolean) {
+		isSubmitting = submitting;
+		if (submitBtn) {
+			submitBtn.disabled = submitting;
+		}
+		if (submitIcon && submitSpinner && submitBtnText) {
+			if (submitting) {
+				submitIcon.classList.add('hidden');
+				submitSpinner.classList.remove('hidden');
+				submitBtnText.textContent = 'Submitting Report…';
+			} else {
+				submitIcon.classList.remove('hidden');
+				submitSpinner.classList.add('hidden');
+				submitBtnText.textContent = 'Submit Report';
+			}
+		}
+	}
+
+	// Submit handling
+	form?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		if (isSubmitting) return;
+
+		if (!validateForm()) {
+			return;
+		}
+
+		setSubmitting(true);
+		if (globalError) globalError.classList.add('hidden');
+
+		const category = (categorySelect?.value || 'Bug') as BugReportCategory;
+		const titleVal = titleInput?.value.trim() || '';
+		const descriptionVal = descTextarea?.value.trim() || '';
+		const expectedVal = expectedTextarea?.value.trim() || '';
+		const stepsVal = stepsTextarea?.value.trim() || undefined;
+		const additionalVal = additionalTextarea?.value.trim() || undefined;
+
+		try {
+			const result = await submitBugReport({
+				category,
+				title: titleVal,
+				description: descriptionVal,
+				expectedBehavior: expectedVal,
+				reproductionSteps: stepsVal,
+				additionalMessage: additionalVal,
+				screenshots: attachedScreenshots,
+			});
+
+			if (result.success) {
+				// Show success card, hide form card
+				if (formCard) formCard.classList.add('hidden');
+				if (successCard) successCard.classList.remove('hidden');
+				if (successReportId && result.reportId) {
+					successReportId.textContent = `Report Reference: #${result.reportId}`;
+				}
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			} else {
+				// Show error and preserve data
+				if (globalError && globalErrorMsg) {
+					globalErrorMsg.textContent =
+						result.error || 'Failed to submit your report. Please check your connection and try again.';
+					globalError.classList.remove('hidden');
+				}
+			}
+		} catch (err: unknown) {
+			if (globalError && globalErrorMsg) {
+				const msg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+				globalErrorMsg.textContent = `${msg} Your inputs have been preserved.`;
+				globalError.classList.remove('hidden');
+			}
+		} finally {
+			setSubmitting(false);
+		}
+	});
+
+	// Reset / Submit Another
+	btnReportAnother?.addEventListener('click', () => {
+		if (form) form.reset();
+		attachedScreenshots = [];
+		setUploadError(null);
+		clearErrors();
+		renderScreenshotPreviews();
+
+		if (successCard) successCard.classList.add('hidden');
+		if (formCard) formCard.classList.remove('hidden');
+		titleInput?.focus();
+	});
+</script>
