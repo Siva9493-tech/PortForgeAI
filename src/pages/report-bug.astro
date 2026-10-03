@@ -66,6 +66,7 @@ const description =
 						Thanks — your feedback has been recorded. Our team will review the issue and work on a fix.
 					</p>
 					<p id="success-report-id" class="text-caption text-ink-tertiary font-mono mt-2"></p>
+					<p id="success-notification-status" class="hidden text-caption text-ink-subtle mt-1 text-xs"></p>
 				</div>
 				<div class="flex flex-wrap items-center justify-center gap-3 mt-4">
 					<button
@@ -323,6 +324,7 @@ const description =
 	const formCard = document.getElementById('form-card');
 	const successCard = document.getElementById('success-card');
 	const successReportId = document.getElementById('success-report-id');
+	const successNotificationStatus = document.getElementById('success-notification-status');
 	const btnReportAnother = document.getElementById('btn-report-another');
 	const globalError = document.getElementById('global-error');
 	const globalErrorMsg = document.getElementById('global-error-msg');
@@ -596,23 +598,51 @@ const description =
 		return isValid;
 	}
 
+	function setFormInputsDisabled(disabled: boolean) {
+		if (!form) return;
+		const controls = form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>(
+			'input, select, textarea, button'
+		);
+		for (const control of controls) {
+			if (control.id !== 'btn-submit-report') {
+				control.disabled = disabled;
+			}
+		}
+	}
+
 	function setSubmitting(submitting: boolean) {
 		isSubmitting = submitting;
 		if (submitBtn) {
 			submitBtn.disabled = submitting;
+			if (submitting) {
+				submitBtn.classList.add('pointer-events-none', 'opacity-60', 'cursor-not-allowed');
+				submitBtn.setAttribute('aria-busy', 'true');
+			} else {
+				submitBtn.classList.remove('pointer-events-none', 'opacity-60', 'cursor-not-allowed');
+				submitBtn.removeAttribute('aria-busy');
+			}
 		}
 		if (submitIcon && submitSpinner && submitBtnText) {
 			if (submitting) {
 				submitIcon.classList.add('hidden');
 				submitSpinner.classList.remove('hidden');
-				submitBtnText.textContent = 'Submitting Report…';
+				submitBtnText.textContent = 'Submitting...';
 			} else {
 				submitIcon.classList.remove('hidden');
 				submitSpinner.classList.add('hidden');
 				submitBtnText.textContent = 'Submit Report';
 			}
 		}
+		setFormInputsDisabled(submitting);
 	}
+
+	// Prevent duplicate clicks on button
+	submitBtn?.addEventListener('click', (e) => {
+		if (isSubmitting) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+	});
 
 	// Submit handling
 	form?.addEventListener('submit', async (e) => {
@@ -651,6 +681,20 @@ const description =
 				if (successReportId && result.reportId) {
 					successReportId.textContent = `Report Reference: #${result.reportId}`;
 				}
+				if (successNotificationStatus) {
+					if (result.notificationStatus === 'sent') {
+						successNotificationStatus.textContent =
+							'Developer notification sent to mamidalasivabalaji@gmail.com.';
+						successNotificationStatus.classList.remove('hidden');
+					} else if (result.notificationStatus === 'failed') {
+						successNotificationStatus.textContent =
+							'Report safely saved in database (developer email notification was not delivered).';
+						successNotificationStatus.classList.remove('hidden');
+					} else {
+						successNotificationStatus.textContent = '';
+						successNotificationStatus.classList.add('hidden');
+					}
+				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			} else {
 				// Show error and preserve data
@@ -676,11 +720,16 @@ const description =
 	// Reset / Submit Another
 	btnReportAnother?.addEventListener('click', () => {
 		if (form) form.reset();
+		setFormInputsDisabled(false);
 		attachedScreenshots = [];
 		setUploadError(null);
 		clearErrors();
 		renderScreenshotPreviews();
 
+		if (successNotificationStatus) {
+			successNotificationStatus.textContent = '';
+			successNotificationStatus.classList.add('hidden');
+		}
 		if (successCard) successCard.classList.add('hidden');
 		if (formCard) formCard.classList.remove('hidden');
 		titleInput?.focus();

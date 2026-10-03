@@ -51,4 +51,5 @@ export interface SubmitBugReportResult {
 	reportId?: string;
 	error?: string;
 	persistedTo: 'supabase' | 'local_storage';
+	notificationStatus?: 'sent' | 'failed' | 'unconfigured';
 }

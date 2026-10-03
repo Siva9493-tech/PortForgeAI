@@ -269,8 +269,27 @@ Attached Screenshots: ${screenshotCount} (stored in Supabase bug_reports row)
 
 				const errData = await resendRes.text();
 				console.error('[notify-bug-report] Resend API responded with error:', errData);
-			} catch (resendError) {
+				return new Response(
+					JSON.stringify({
+						success: true,
+						notified: false,
+						reason: 'RESEND_DISPATCH_FAILED',
+						error: errData,
+					}),
+					{ status: 200, headers: { 'Content-Type': 'application/json' } }
+				);
+			} catch (resendError: unknown) {
+				const errMsg = resendError instanceof Error ? resendError.message : 'Unknown Resend error';
 				console.error('[notify-bug-report] Failed sending email via Resend:', resendError);
+				return new Response(
+					JSON.stringify({
+						success: true,
+						notified: false,
+						reason: 'RESEND_DISPATCH_FAILED',
+						error: errMsg,
+					}),
+					{ status: 200, headers: { 'Content-Type': 'application/json' } }
+				);
 			}
 		}
 

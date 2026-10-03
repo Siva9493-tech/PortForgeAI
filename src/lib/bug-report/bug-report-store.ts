@@ -9,6 +9,9 @@ import { generateId } from './bug-report-utils.ts';
 
 const LOCAL_STORAGE_KEY = 'portforge:bug_reports:v1';
 
+// In-flight mutex lock to prevent duplicate clicks and duplicate simultaneous submissions
+let activeSubmissionPromise: Promise<SubmitBugReportResult> | null = null;
+
 /**
  * Retrieves bug reports saved locally in the browser.
  */
@@ -44,14 +47,18 @@ export function saveBugReportToLocal(report: BugReportRecord): void {
 }
 
 /**
- * Dispatches a background request to the server-side developer notification endpoint.
- * Private credentials (RESEND_API_KEY / SMTP) stay on the server and are never exposed.
+ * Dispatches a request to the server-side developer notification endpoint.
+ * Private credentials (RESEND_API_KEY / SMTP) stay strictly on the server.
  */
-async function notifyDeveloper(record: BugReportRecord): Promise<void> {
-	if (typeof window === 'undefined') return;
+async function notifyDeveloper(
+	record: BugReportRecord
+): Promise<{ notified: boolean; reason?: string }> {
+	if (typeof window === 'undefined') {
+		return { notified: false, reason: 'SSR' };
+	}
 
 	try {
-		await fetch('/api/notify-bug-report', {
+		const res = await fetch('/api/notify-bug-report', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -75,27 +82,22 @@ async function notifyDeveloper(record: BugReportRecord): Promise<void> {
 				})),
 			}),
 		});
+
+		if (res.ok) {
+			const data = await res.json();
+			return { notified: Boolean(data.notified), reason: data.reason };
+		}
+		return { notified: false, reason: 'HTTP_ERROR' };
 	} catch (e) {
 		console.warn('[bug-report] Failed to dispatch developer notification:', e);
+		return { notified: false, reason: 'FETCH_FAILED' };
 	}
 }
 
 /**
- * Submits a bug report with Supabase as the single authoritative source of truth.
- *
- * 1. Resolves authenticated user session if available.
- * 2. Compiles device environment metadata for fast diagnosis.
- * 3. Inserts the record into the Supabase `public.bug_reports` table.
- * 4. SUCCESS:
- *    - Triggers server-side developer notification (/api/notify-bug-report).
- *    - Retains a local cache for offline reference.
- *    - Returns { success: true, reportId, persistedTo: 'supabase' }.
- * 5. FAILURE:
- *    - Does NOT claim delivery to the developer.
- *    - Preserves input in localStorage as an unsent draft.
- *    - Returns { success: false, error: string, persistedTo: 'local_storage' }.
+ * Internal submission worker.
  */
-export async function submitBugReport(
+async function doSubmitBugReport(
 	input: BugReportInput
 ): Promise<SubmitBugReportResult> {
 	const reportId = generateId();
@@ -165,7 +167,8 @@ export async function submitBugReport(
 
 			let userFriendlyError = "We couldn't submit your report right now. Please try again.";
 			if (error.code === 'PGRST205') {
-				userFriendlyError = 'The bug reports database table is not initialized yet. Please notify the administrator.';
+				userFriendlyError =
+					'The bug reports database table is not initialized yet. Please apply the Supabase migration.';
 			} else if (error.message) {
 				userFriendlyError = `Submission failed: ${error.message}`;
 			}
@@ -179,10 +182,13 @@ export async function submitBugReport(
 		}
 
 		// Supabase remote insertion succeeded!
-		// Trigger server-side developer notification (async, non-blocking)
-		notifyDeveloper(record).catch((notifyErr) => {
-			console.warn('[bug-report] Developer notification background error:', notifyErr);
-		});
+		// Trigger server-side developer notification (awaited for accurate status delivery)
+		const notifyRes = await notifyDeveloper(record);
+		const notificationStatus: 'sent' | 'failed' | 'unconfigured' = notifyRes.notified
+			? 'sent'
+			: notifyRes.reason === 'EMAIL_PROVIDER_NOT_CONFIGURED'
+				? 'unconfigured'
+				: 'failed';
 
 		// Cache successful report locally for user reference
 		saveBugReportToLocal(record);
@@ -191,6 +197,7 @@ export async function submitBugReport(
 			success: true,
 			reportId,
 			persistedTo: 'supabase',
+			notificationStatus,
 		};
 	} catch (remoteError: unknown) {
 		console.error('[bug-report] Connection/network error during submission:', remoteError);
@@ -208,5 +215,24 @@ export async function submitBugReport(
 			error: `Connection error: ${msg}. Please check your connection and try again.`,
 			persistedTo: 'local_storage',
 		};
+	}
+}
+
+/**
+ * Submits a bug report with Supabase as the single authoritative source of truth.
+ * Protects against duplicate concurrent clicks by sharing the in-flight promise.
+ */
+export async function submitBugReport(
+	input: BugReportInput
+): Promise<SubmitBugReportResult> {
+	if (activeSubmissionPromise) {
+		return activeSubmissionPromise;
+	}
+
+	activeSubmissionPromise = doSubmitBugReport(input);
+	try {
+		return await activeSubmissionPromise;
+	} finally {
+		activeSubmissionPromise = null;
 	}
 }
