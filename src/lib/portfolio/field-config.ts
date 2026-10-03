@@ -5,8 +5,8 @@ import {
 	createEmptyExperienceEntry,
 	createEmptyProjectEntry,
 	createEmptySocialLinks,
-} from './types';
-import type { PortfolioData } from './types';
+} from './types.ts';
+import type { PortfolioData } from './types.ts';
 
 export type BindingMode = 'object' | 'list';
 

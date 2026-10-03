@@ -7,8 +7,8 @@ import {
 	getStepIndex,
 	isStepId,
 	type WizardStep,
-} from './steps';
-import { createEmptyPortfolioData, type PortfolioData, type StepId } from './types';
+} from './steps.ts';
+import { createEmptyPortfolioData, type PortfolioData, type StepId } from './types.ts';
 
 export interface WizardState {
 	currentStep: StepId;

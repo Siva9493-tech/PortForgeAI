@@ -174,23 +174,61 @@ export function transformProjects(input: PortfolioInput): PortfolioProject[] {
 	return input.data.projects
 		.map((entry, index): PortfolioProject => {
 			const name = normalizeText(entry.projectName);
+			const role = normalizeText(entry.projectRole);
+			const technologies = normalizeArray(entry.technologies);
+			const repositoryUrl = normalizeText(entry.githubUrl) || undefined;
+			const liveUrl = normalizeText(entry.demoUrl) || undefined;
+			const description = normalizeText(entry.description);
+			const highlights = normalizeArray(entry.highlights, /\n/);
+			const problem = normalizeText(entry.problem) || undefined;
+			const whyItMattered = normalizeText(entry.whyItMattered) || undefined;
+			const solution = normalizeText(entry.solution) || undefined;
+			const howItWasBuilt = normalizeText(entry.howItWasBuilt) || undefined;
+			const challenges = normalizeText(entry.challenges) || undefined;
+			const results = normalizeText(entry.results) || undefined;
+			const demoVideoUrl = normalizeText(entry.demoVideoUrl) || undefined;
+			const media = parseMediaUrls(entry.mediaUrls, name);
+
+			const hasMeaningfulContent = Boolean(
+				role ||
+				technologies.length > 0 ||
+				repositoryUrl ||
+				liveUrl ||
+				description ||
+				highlights.length > 0 ||
+				problem ||
+				whyItMattered ||
+				solution ||
+				howItWasBuilt ||
+				challenges ||
+				results ||
+				demoVideoUrl ||
+				(media && media.length > 0)
+			);
+
+			if (!name && hasMeaningfulContent) {
+				throw new Error(
+					`Project ${index + 1} has details but is missing a Project Name. Please provide a name to save your portfolio.`
+				);
+			}
+
 			return {
 				id: `prj-${index + 1}`,
 				name,
-				role: normalizeText(entry.projectRole),
-				technologies: normalizeArray(entry.technologies),
-				repositoryUrl: normalizeText(entry.githubUrl) || undefined,
-				liveUrl: normalizeText(entry.demoUrl) || undefined,
-				description: normalizeText(entry.description),
-				highlights: normalizeArray(entry.highlights, /\n/),
-				problem: normalizeText(entry.problem) || undefined,
-				whyItMattered: normalizeText(entry.whyItMattered) || undefined,
-				solution: normalizeText(entry.solution) || undefined,
-				howItWasBuilt: normalizeText(entry.howItWasBuilt) || undefined,
-				challenges: normalizeText(entry.challenges) || undefined,
-				results: normalizeText(entry.results) || undefined,
-				demoVideoUrl: normalizeText(entry.demoVideoUrl) || undefined,
-				media: parseMediaUrls(entry.mediaUrls, name),
+				role,
+				technologies,
+				repositoryUrl,
+				liveUrl,
+				description,
+				highlights,
+				problem,
+				whyItMattered,
+				solution,
+				howItWasBuilt,
+				challenges,
+				results,
+				demoVideoUrl,
+				media,
 			};
 		})
 		.filter((entry) => entry.name !== '');

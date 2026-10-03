@@ -1,6 +1,6 @@
-import { EMPTY_ENTRY_FACTORIES, SECTION_BINDINGS } from './field-config';
-import { wizardStore } from './wizard-store';
-import type { PortfolioData } from './types';
+import { EMPTY_ENTRY_FACTORIES, SECTION_BINDINGS } from './field-config.ts';
+import { wizardStore } from './wizard-store.ts';
+import type { PortfolioData } from './types.ts';
 
 type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
@@ -56,21 +56,44 @@ export function syncRepeatableRows(sectionRoot: HTMLElement, stepId: keyof Portf
 	const data = wizardStore.getState().data[stepId] as unknown;
 	const list = Array.isArray(data) ? data : [];
 	const targetCount = list.length;
-	if (targetCount === 0) return;
+	if (targetCount === 0) {
+		const groups = Array.from(sectionRoot.querySelectorAll<HTMLElement>('[data-list-index]'));
+		for (const group of groups) {
+			group.remove();
+		}
+		return;
+	}
 
 	const groups = Array.from(sectionRoot.querySelectorAll<HTMLElement>('[data-list-index]'));
 	while (groups.length > targetCount) {
 		groups.pop()?.remove();
 	}
 
-	const template = groups[groups.length - 1];
-	if (!template) return;
+	const entryTemplate = sectionRoot.querySelector<HTMLTemplateElement>('[data-entry-template]');
+	let templateElement = groups[groups.length - 1] as HTMLElement | undefined;
+
+	if (!templateElement && entryTemplate) {
+		let first = entryTemplate.content.firstElementChild as HTMLElement | null;
+		while (first && ((typeof HTMLTemplateElement !== 'undefined' && first instanceof HTMLTemplateElement) || first.tagName === 'TEMPLATE')) {
+			first = (first as HTMLTemplateElement).content.firstElementChild as HTMLElement | null;
+		}
+		if (first) {
+			templateElement = first;
+		}
+	}
+
+	if (!templateElement) return;
 
 	while (groups.length < targetCount) {
-		const entryClone = template.cloneNode(true) as HTMLElement;
+		const entryClone = templateElement.cloneNode(true) as HTMLElement;
 		clearGroupValues(entryClone);
 		entryClone.dataset.listIndex = String(groups.length);
-		template.after(entryClone);
+		const anchor = groups[groups.length - 1] ?? entryTemplate;
+		if (anchor) {
+			anchor.after(entryClone);
+		} else {
+			sectionRoot.appendChild(entryClone);
+		}
 		groups.push(entryClone);
 	}
 }
@@ -136,8 +159,8 @@ export function addRepeatEntry(sectionRoot: HTMLElement, stepId: keyof Portfolio
 		last.after(entryClone);
 	} else if (template) {
 		let first = template.content.firstElementChild as HTMLElement | null;
-		while (first instanceof HTMLTemplateElement) {
-			first = first.content.firstElementChild as HTMLElement | null;
+		while (first && ((typeof HTMLTemplateElement !== 'undefined' && first instanceof HTMLTemplateElement) || first.tagName === 'TEMPLATE')) {
+			first = (first as HTMLTemplateElement).content.firstElementChild as HTMLElement | null;
 		}
 		if (!first) return false;
 		entryClone = first.cloneNode(true) as HTMLElement;

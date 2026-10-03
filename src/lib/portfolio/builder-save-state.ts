@@ -22,13 +22,14 @@ function clone<T>(value: T): T {
 	return JSON.parse(JSON.stringify(value)) as T;
 }
 
+import { deepSemanticEquals } from '../portfolio-manager/portfolio-manager-utils';
+
 /**
- * Structural equality for builder wizard data. Wizard data is plain
- * JSON-serializable content, so a JSON comparison is a dependable deep
- * equality check (same strategy as the existing portfolio store).
+ * Structural semantic equality for builder wizard data.
+ * Compares fields recursively and independently of key ordering.
  */
 export function portfolioDataEquals(a: PortfolioData, b: PortfolioData): boolean {
-	return JSON.stringify(a) === JSON.stringify(b);
+	return deepSemanticEquals(a, b);
 }
 
 /**

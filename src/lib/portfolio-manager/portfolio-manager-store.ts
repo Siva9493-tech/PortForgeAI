@@ -12,6 +12,7 @@ import {
 	isPortfolioStatus,
 	isoNow,
 	portfolioOutputEquals,
+	safePersistCache,
 } from './portfolio-manager-utils';
 import {
 	create as createPortfolioRow,
@@ -156,6 +157,7 @@ export class PortfolioManagerStore {
 	private currentUserId: string | null = null;
 	private hydrationPromise: Promise<void> | null = null;
 	private sessionResolved = false;
+	private activeMutations = 0;
 
 	constructor(options: PortfolioManagerStoreOptions = {}) {
 		this.persistKey = options.persistKey ?? STORAGE_KEY;
@@ -195,22 +197,27 @@ export class PortfolioManagerStore {
 	 * an unauthenticated user this is purely local (existing behavior).
 	 */
 	async createPortfolio(input: CreatePortfolioInput): Promise<PortfolioRecord> {
-		await this.ensureHydrated(true);
-		const record = this.buildDraftRecord(input);
+		this.activeMutations++;
+		try {
+			await this.ensureHydrated(true);
+			const record = this.buildDraftRecord(input);
 
-		if (!this.currentUserId) {
-			this.records.push(record);
+			if (!this.currentUserId) {
+				this.records.push(record);
+				this.notify();
+				return record;
+			}
+
+			const authoritative = await createPortfolioRow(record, this.currentUserId).catch((error) => {
+				console.error('[portfolio-store] Failed to create portfolio in Supabase.', error);
+				throw error;
+			});
+			this.records.push(authoritative);
 			this.notify();
-			return record;
+			return authoritative;
+		} finally {
+			this.activeMutations--;
 		}
-
-		const authoritative = await createPortfolioRow(record, this.currentUserId).catch((error) => {
-			console.error('[portfolio-store] Failed to create portfolio in Supabase.', error);
-			throw error;
-		});
-		this.records.push(authoritative);
-		this.notify();
-		return authoritative;
 	}
 
 	/**
@@ -226,40 +233,45 @@ export class PortfolioManagerStore {
 	 * authoritative record's timestamps/status/data are adopted.
 	 */
 	async updatePortfolio(id: string, input: UpdatePortfolioInput): Promise<PortfolioRecord | undefined> {
-		await this.ensureHydrated();
-		const record = this.records.find((entry) => entry.id === id);
-		if (!record) {
-			return undefined;
-		}
-
-		if (!this.updateHasChanges(record, input)) {
-			return record;
-		}
-
-		if (!this.currentUserId) {
-			const committed = this.applyUpdate(id, input);
-			this.notify();
-			return committed;
-		}
-
-		const patch = this.buildUpdatePatch(record, input);
-		let authoritative: PortfolioRecord | null;
+		this.activeMutations++;
 		try {
-			authoritative = await updatePortfolioRow(id, patch);
-		} catch (error) {
-			console.error('[portfolio-store] Failed to update portfolio in Supabase.', error);
-			throw error;
-		}
-		if (!authoritative) {
-			return undefined;
-		}
+			await this.ensureHydrated();
+			const record = this.records.find((entry) => entry.id === id);
+			if (!record) {
+				return undefined;
+			}
 
-		const committed = this.applyUpdate(id, input);
-		if (committed) {
-			this.adoptAuthoritativeMetadata(committed, authoritative);
-			this.notify();
+			if (!this.updateHasChanges(record, input)) {
+				return record;
+			}
+
+			if (!this.currentUserId) {
+				const committed = this.applyUpdate(id, input);
+				this.notify();
+				return committed;
+			}
+
+			const patch = this.buildUpdatePatch(record, input);
+			let authoritative: PortfolioRecord | null;
+			try {
+				authoritative = await updatePortfolioRow(id, patch);
+			} catch (error) {
+				console.error('[portfolio-store] Failed to update portfolio in Supabase.', error);
+				throw error;
+			}
+			if (!authoritative) {
+				return undefined;
+			}
+
+			const committed = this.applyUpdate(id, input);
+			if (committed) {
+				this.adoptAuthoritativeMetadata(committed, authoritative);
+				this.notify();
+			}
+			return committed ?? authoritative;
+		} finally {
+			this.activeMutations--;
 		}
-		return committed ?? authoritative;
 	}
 
 	/**
@@ -478,7 +490,9 @@ export class PortfolioManagerStore {
 				this.markLastUser(userId);
 				try {
 					const remote = await listForUser(userId);
-					this.records = remote;
+					if (this.activeMutations === 0) {
+						this.records = remote;
+					}
 				} catch (error) {
 					// Supabase is authoritative but unreachable — keep the cached
 					// copy intact rather than destroying valid local data.
@@ -520,13 +534,7 @@ export class PortfolioManagerStore {
 		if (!canUseStorage()) {
 			return false;
 		}
-		try {
-			const payload: PersistedState = { records: this.records };
-			localStorage.setItem(this.activeStorageKey(), JSON.stringify(payload));
-			return true;
-		} catch {
-			return false;
-		}
+		return safePersistCache(this.records, this.activeStorageKey());
 	}
 
 	private restoreFrom(key: string): boolean {
@@ -728,6 +736,9 @@ export class PortfolioManagerStore {
 				data: next,
 				createdAt: now,
 			});
+			if (record.versions.length > 10) {
+				record.versions = record.versions.slice(-10);
+			}
 			record.data = next;
 		}
 

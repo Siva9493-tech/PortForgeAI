@@ -147,7 +147,6 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 	import {
 		createPortfolioFromBuilder,
 		portfolioManagerStore,
-		portfolioOutputEquals,
 		portfolioOutputToData,
 		savePortfolioFromBuilder,
 	} from '../../lib/portfolio-manager';
@@ -225,33 +224,7 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 			}, 400);
 		};
 
-		/**
-		 * The existing store persists synchronously but swallows storage write
-		 * failures (a blocked/quota-exceeded localStorage still returns the
-		 * in-memory record). Before reporting "Saved" we read the persisted
-		 * collection back and confirm the current content actually landed, so
-		 * a success message is never shown for a save that did not persist.
-		 * The key is the store's active key (user-scoped when authenticated).
-		 */
-		const isSavePersisted = (id: string): boolean => {
-			try {
-				const raw = localStorage.getItem(portfolioManagerStore.getPersistKey());
-				if (!raw) return false;
-				const parsed = JSON.parse(raw) as {
-					records?: Array<{ id?: string; data?: unknown }>;
-				};
-				const current = portfolioManagerStore.getPortfolio(id);
-				if (!current || !Array.isArray(parsed.records)) return false;
-				const persisted = parsed.records.find((record) => record.id === id);
-				if (!persisted) return false;
-				return portfolioOutputEquals(
-					current.data,
-					persisted.data as Parameters<typeof portfolioOutputEquals>[0]
-				);
-			} catch {
-				return false;
-			}
-		};
+
 
 		/**
 		 * Browser-level unsaved-change protection. Only armed while genuinely
@@ -423,12 +396,13 @@ const finalLabel = isEdit ? 'Save Changes' : 'Save Portfolio';
 					}
 				} else {
 					const created = await createPortfolioFromBuilder(wizardStore.getState().data);
+					if (!created || !created.id) {
+						fail('Could not create portfolio. Please try again.');
+						return;
+					}
 					targetId = created.id;
 				}
-				if (!isSavePersisted(targetId)) {
-					fail('Could not save the portfolio right now. Please try again.');
-					return;
-				}
+
 				saveState.completeSave(
 					wizardStore.getState().data,
 					isEditMode ? 'Changes saved.' : 'Portfolio saved.'
