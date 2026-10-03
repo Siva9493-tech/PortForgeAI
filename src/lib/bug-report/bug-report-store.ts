@@ -5,15 +5,9 @@ import type {
 	BugReportRecord,
 	SubmitBugReportResult,
 } from './types';
+import { generateId } from './bug-report-utils.ts';
 
 const LOCAL_STORAGE_KEY = 'portforge:bug_reports:v1';
-
-function generateId(): string {
-	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-		return crypto.randomUUID();
-	}
-	return `br_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-}
 
 /**
  * Retrieves bug reports saved locally in the browser.
@@ -34,7 +28,7 @@ export function getLocalBugReports(): BugReportRecord[] {
 }
 
 /**
- * Persists a bug report to browser localStorage as a fallback or cache.
+ * Persists a bug report to browser localStorage as a fallback draft or cache.
  */
 export function saveBugReportToLocal(report: BugReportRecord): void {
 	if (typeof window === 'undefined' || !window.localStorage) {
@@ -50,13 +44,56 @@ export function saveBugReportToLocal(report: BugReportRecord): void {
 }
 
 /**
- * Submits a bug report with fallback resilience.
+ * Dispatches a background request to the server-side developer notification endpoint.
+ * Private credentials (RESEND_API_KEY / SMTP) stay on the server and are never exposed.
+ */
+async function notifyDeveloper(record: BugReportRecord): Promise<void> {
+	if (typeof window === 'undefined') return;
+
+	try {
+		await fetch('/api/notify-bug-report', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				reportId: record.id,
+				category: record.category,
+				title: record.title,
+				description: record.description,
+				expectedBehavior: record.expectedBehavior,
+				reproductionSteps: record.reproductionSteps,
+				additionalMessage: record.additionalMessage,
+				userEmail: record.userEmail,
+				userId: record.userId,
+				createdAt: record.createdAt,
+				deviceInfo: record.deviceInfo,
+				screenshotCount: record.screenshots.length,
+				screenshots: record.screenshots.slice(0, 3).map((s) => ({
+					name: s.name,
+					type: s.type,
+					size: s.size,
+					dataUrl: s.size < 1024 * 1024 ? s.dataUrl : undefined,
+				})),
+			}),
+		});
+	} catch (e) {
+		console.warn('[bug-report] Failed to dispatch developer notification:', e);
+	}
+}
+
+/**
+ * Submits a bug report with Supabase as the single authoritative source of truth.
  *
  * 1. Resolves authenticated user session if available.
  * 2. Compiles device environment metadata for fast diagnosis.
- * 3. Tries remote insertion into Supabase `bug_reports` table.
- * 4. If remote table is absent (e.g. PGRST205 before migration) or network fails,
- *    gracefully persists the report in localStorage so customer feedback is never lost.
+ * 3. Inserts the record into the Supabase `public.bug_reports` table.
+ * 4. SUCCESS:
+ *    - Triggers server-side developer notification (/api/notify-bug-report).
+ *    - Retains a local cache for offline reference.
+ *    - Returns { success: true, reportId, persistedTo: 'supabase' }.
+ * 5. FAILURE:
+ *    - Does NOT claim delivery to the developer.
+ *    - Preserves input in localStorage as an unsent draft.
+ *    - Returns { success: false, error: string, persistedTo: 'local_storage' }.
  */
 export async function submitBugReport(
 	input: BugReportInput
@@ -103,7 +140,7 @@ export async function submitBugReport(
 		deviceInfo,
 	};
 
-	// Attempt Supabase insert
+	// Attempt Supabase insert as authoritative destination
 	try {
 		const { error } = await supabase.from('bug_reports').insert({
 			id: record.id,
@@ -121,39 +158,54 @@ export async function submitBugReport(
 			created_at: record.createdAt,
 		});
 
-		if (!error) {
-			// Remote insertion succeeded, also keep local copy for immediate review
+		if (error) {
+			console.error('[bug-report] Supabase database insert failed:', error);
+			// Retain unsent local draft so user's work isn't lost
 			saveBugReportToLocal(record);
+
+			let userFriendlyError = "We couldn't submit your report right now. Please try again.";
+			if (error.code === 'PGRST205') {
+				userFriendlyError = 'The bug reports database table is not initialized yet. Please notify the administrator.';
+			} else if (error.message) {
+				userFriendlyError = `Submission failed: ${error.message}`;
+			}
+
 			return {
-				success: true,
+				success: false,
 				reportId,
-				persistedTo: 'supabase',
+				error: userFriendlyError,
+				persistedTo: 'local_storage',
 			};
 		}
 
-		console.info(
-			`[bug-report] Supabase remote insert notice (${error.code || error.message}). Falling back to client-safe persistence.`
-		);
-	} catch (remoteError) {
-		console.info(
-			'[bug-report] Supabase remote insert failed. Falling back to client-safe persistence:',
-			remoteError
-		);
-	}
+		// Supabase remote insertion succeeded!
+		// Trigger server-side developer notification (async, non-blocking)
+		notifyDeveloper(record).catch((notifyErr) => {
+			console.warn('[bug-report] Developer notification background error:', notifyErr);
+		});
 
-	// Fallback to local storage
-	try {
+		// Cache successful report locally for user reference
 		saveBugReportToLocal(record);
+
 		return {
 			success: true,
 			reportId,
-			persistedTo: 'local_storage',
+			persistedTo: 'supabase',
 		};
-	} catch (localError: unknown) {
-		const msg = localError instanceof Error ? localError.message : 'Unknown storage error';
+	} catch (remoteError: unknown) {
+		console.error('[bug-report] Connection/network error during submission:', remoteError);
+		// Retain unsent local draft
+		saveBugReportToLocal(record);
+
+		const msg =
+			remoteError instanceof Error
+				? remoteError.message
+				: 'Network connection failed';
+
 		return {
 			success: false,
-			error: `Unable to save report: ${msg}`,
+			reportId,
+			error: `Connection error: ${msg}. Please check your connection and try again.`,
 			persistedTo: 'local_storage',
 		};
 	}

@@ -656,9 +656,10 @@ const description =
 				// Show error and preserve data
 				if (globalError && globalErrorMsg) {
 					globalErrorMsg.textContent =
-						result.error || 'Failed to submit your report. Please check your connection and try again.';
+						result.error || "We couldn't submit your report right now. Please try again.";
 					globalError.classList.remove('hidden');
 				}
+				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}
 		} catch (err: unknown) {
 			if (globalError && globalErrorMsg) {
@@ -666,6 +667,7 @@ const description =
 				globalErrorMsg.textContent = `${msg} Your inputs have been preserved.`;
 				globalError.classList.remove('hidden');
 			}
+			window.scrollTo({ top: 0, behavior: 'smooth' });
 		} finally {
 			setSubmitting(false);
 		}
