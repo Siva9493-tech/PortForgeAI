@@ -102,20 +102,21 @@
 
 /* Container max-widths (reclaims container scale from spacing collision) */
 @utility max-w-xs {
-	max-width: 20rem;
+	max-width: 20rem !important;
 }
 @utility max-w-sm {
-	max-width: 24rem;
+	max-width: 24rem !important;
 }
 @utility max-w-md {
-	max-width: 28rem;
+	max-width: 28rem !important;
 }
 @utility max-w-lg {
-	max-width: 32rem;
+	max-width: 32rem !important;
 }
 @utility max-w-xl {
-	max-width: 36rem;
+	max-width: 36rem !important;
 }
+
 
 /* Hairline top-edge highlight for lifted panels ("pixel rendered" feel). */
 @utility edge-highlight {
