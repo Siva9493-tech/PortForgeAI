@@ -90,7 +90,8 @@ export const POST: APIRoute = async ({ request }) => {
 		const sendgridApiKey = getEnv('SENDGRID_API_KEY')?.trim();
 		const webhookUrl = getEnv('NOTIFICATION_WEBHOOK_URL')?.trim();
 
-		const subject = `[PortForge AI] New Bug Report — ${title}`;
+		// Unique subject line prevents Gmail conversation threading from grouping separate bug reports
+		const subject = `[PortForge AI] [${category || 'Bug'}] #${reportId.slice(0, 8)} — ${title}`;
 
 		const htmlContent = `
 <!DOCTYPE html>
@@ -238,7 +239,9 @@ Attached Screenshots: ${screenshotCount} (stored in Supabase bug_reports row)
 						};
 					});
 
-				const resendRes = await fetch('https://api.resend.com/emails', {
+				console.info(`[notify-bug-report] Dispatching Resend email for report #${reportId} to ${recipient} (attachments: ${emailAttachments.length})...`);
+
+				let resendRes = await fetch('https://api.resend.com/emails', {
 					method: 'POST',
 					headers: {
 						Authorization: `Bearer ${resendApiKey}`,
@@ -254,8 +257,33 @@ Attached Screenshots: ${screenshotCount} (stored in Supabase bug_reports row)
 					}),
 				});
 
+				// Fallback: If sending with attachments failed (e.g. 422 or 400), retry without attachments
+				if (!resendRes.ok && emailAttachments.length > 0) {
+					const firstErr = await resendRes.text();
+					console.warn(
+						`[notify-bug-report] Resend rejected payload with attachments (${resendRes.status}: ${firstErr}). Retrying core email without attachments...`
+					);
+					resendRes = await fetch('https://api.resend.com/emails', {
+						method: 'POST',
+						headers: {
+							Authorization: `Bearer ${resendApiKey}`,
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							from: fromEmail,
+							to: recipient,
+							subject,
+							html: htmlContent,
+							text: textContent,
+						}),
+					});
+				}
+
 				if (resendRes.ok) {
 					const data = await resendRes.json();
+					console.info(
+						`[notify-bug-report] Resend email sent successfully for report #${reportId}. Resend Email ID: ${data.id}`
+					);
 					return new Response(
 						JSON.stringify({
 							success: true,
@@ -268,13 +296,16 @@ Attached Screenshots: ${screenshotCount} (stored in Supabase bug_reports row)
 				}
 
 				const errData = await resendRes.text();
-				console.error('[notify-bug-report] Resend API responded with error:', errData);
+				console.error(
+					`[notify-bug-report] Resend API failed for report #${reportId} (${resendRes.status}):`,
+					errData
+				);
 				return new Response(
 					JSON.stringify({
 						success: true,
 						notified: false,
 						reason: 'RESEND_DISPATCH_FAILED',
-						error: errData,
+						error: `Resend error (${resendRes.status}): ${errData}`,
 					}),
 					{ status: 200, headers: { 'Content-Type': 'application/json' } }
 				);

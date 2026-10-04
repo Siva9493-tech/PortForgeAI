@@ -52,4 +52,7 @@ export interface SubmitBugReportResult {
 	error?: string;
 	persistedTo: 'supabase' | 'local_storage';
 	notificationStatus?: 'sent' | 'failed' | 'unconfigured';
+	emailId?: string;
+	notificationError?: string;
 }
+

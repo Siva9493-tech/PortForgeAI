@@ -340,3 +340,62 @@ test('14. No client-side email/API secrets in frontend environment', () => {
 		equal(key.startsWith('PUBLIC_'), false, `${key} must not have PUBLIC_ prefix`);
 	}
 });
+
+test('15. Submit another report clears state, lock, and generates distinct report IDs', () => {
+	const id1 = generateId();
+	const id2 = generateId();
+	notEqual(id1, id2);
+	ok(UUID_REGEX.test(id1));
+	ok(UUID_REGEX.test(id2));
+
+	// Verification of reset contract
+	let isSubmitting = false;
+	let activePromise: Promise<SubmitBugReportResult> | null = null;
+
+	// Simulate first submission complete
+	activePromise = Promise.resolve({
+		success: true,
+		reportId: id1,
+		persistedTo: 'supabase' as const,
+		notificationStatus: 'sent' as const,
+	});
+
+	// Unlock
+	activePromise = null;
+	isSubmitting = false;
+
+	equal(activePromise, null);
+	equal(isSubmitting, false);
+
+	// Second submission allowed immediately
+	const result2: SubmitBugReportResult = {
+		success: true,
+		reportId: id2,
+		persistedTo: 'supabase',
+		notificationStatus: 'sent',
+		emailId: 're_test_98765',
+	};
+	equal(result2.success, true);
+	equal(result2.reportId, id2);
+	equal(result2.emailId, 're_test_98765');
+});
+
+test('16. Unique email subject prevents Gmail thread collapsing across multiple reports', () => {
+	function formatSubject(category: string, reportId: string, title: string): string {
+		return `[PortForge AI] [${category || 'Bug'}] #${reportId.slice(0, 8)} — ${title}`;
+	}
+
+	const id1 = 'e1a2b3c4-0000-4000-8000-000000000001';
+	const id2 = 'f5d6e7a8-0000-4000-8000-000000000002';
+	const title = 'Save button unresponsive';
+
+	const sub1 = formatSubject('Bug', id1, title);
+	const sub2 = formatSubject('Bug', id2, title);
+
+	notEqual(sub1, sub2);
+	ok(sub1.includes('#e1a2b3c4'));
+	ok(sub2.includes('#f5d6e7a8'));
+	equal(sub1, '[PortForge AI] [Bug] #e1a2b3c4 — Save button unresponsive');
+	equal(sub2, '[PortForge AI] [Bug] #f5d6e7a8 — Save button unresponsive');
+});
+

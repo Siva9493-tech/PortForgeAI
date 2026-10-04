@@ -49,24 +49,24 @@ const description =
 		<!-- Success State Banner / Confirmation Card (Hidden by default) -->
 		<div
 			id="success-card"
-			class="hidden card rounded-xl border border-primary/30 bg-surface-1 p-lg sm:p-xl shadow-subtle animate-fade-in"
+			class="hidden w-full card rounded-xl border border-primary/30 bg-surface-1 p-lg sm:p-xl shadow-subtle animate-fade-in"
 			role="region"
 			aria-live="polite"
 		>
-			<div class="flex flex-col items-center text-center py-6 gap-4">
+			<div class="flex flex-col items-center text-center py-6 gap-4 w-full">
 				<div
 					class="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary"
 					aria-hidden="true"
 				>
 					<CheckCircle2 size="36" />
 				</div>
-				<div class="flex flex-col gap-1 max-w-md">
-					<h2 class="text-xl font-semibold text-ink">Report submitted successfully.</h2>
-					<p class="text-body text-ink-subtle">
+				<div class="flex flex-col items-center text-center gap-2 w-full max-w-lg mx-auto">
+					<h2 class="text-xl font-semibold text-ink w-full">Report submitted successfully.</h2>
+					<p class="text-body text-ink-subtle leading-relaxed w-full max-w-md mx-auto">
 						Thanks — your feedback has been recorded. Our team will review the issue and work on a fix.
 					</p>
-					<p id="success-report-id" class="text-caption text-ink-tertiary font-mono mt-2"></p>
-					<p id="success-notification-status" class="hidden text-caption text-ink-subtle mt-1 text-xs"></p>
+					<p id="success-report-id" class="text-caption text-ink-tertiary font-mono mt-2 w-full break-all"></p>
+					<p id="success-notification-status" class="hidden text-caption text-ink-subtle mt-1 text-xs w-full max-w-md mx-auto break-words"></p>
 				</div>
 				<div class="flex flex-wrap items-center justify-center gap-3 mt-4">
 					<button
@@ -309,7 +309,7 @@ const description =
 </DashboardLayout>
 
 <script>
-	import { submitBugReport } from '../lib/bug-report';
+	import { submitBugReport, resetBugReportLock } from '../lib/bug-report';
 	import type { BugReportCategory, BugReportScreenshot } from '../lib/bug-report';
 
 	const MAX_SCREENSHOTS = 6;
@@ -683,16 +683,19 @@ const description =
 				}
 				if (successNotificationStatus) {
 					if (result.notificationStatus === 'sent') {
+						const idDetail = result.emailId ? ` (ID: ${result.emailId})` : '';
 						successNotificationStatus.textContent =
-							'Developer notification sent to mamidalasivabalaji@gmail.com.';
+							`Developer notification sent to mamidalasivabalaji@gmail.com${idDetail}.`;
 						successNotificationStatus.classList.remove('hidden');
 					} else if (result.notificationStatus === 'failed') {
+						const errDetail = result.notificationError ? `: ${result.notificationError}` : '';
 						successNotificationStatus.textContent =
-							'Report safely saved in database (developer email notification was not delivered).';
+							`Report safely saved in database (developer email notification was not delivered${errDetail}).`;
 						successNotificationStatus.classList.remove('hidden');
 					} else {
-						successNotificationStatus.textContent = '';
-						successNotificationStatus.classList.add('hidden');
+						successNotificationStatus.textContent =
+							'Report safely saved in database (email notifications pending server configuration).';
+						successNotificationStatus.classList.remove('hidden');
 					}
 				}
 				window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -719,19 +722,39 @@ const description =
 
 	// Reset / Submit Another
 	btnReportAnother?.addEventListener('click', () => {
+		// Reset form controls
 		if (form) form.reset();
-		setFormInputsDisabled(false);
+		if (titleInput) titleInput.value = '';
+		if (descTextarea) descTextarea.value = '';
+		if (expectedTextarea) expectedTextarea.value = '';
+		if (stepsTextarea) stepsTextarea.value = '';
+		if (additionalTextarea) additionalTextarea.value = '';
+		if (categorySelect) categorySelect.value = 'Bug';
+		if (fileInput) fileInput.value = '';
+
+		// Reset screenshots
 		attachedScreenshots = [];
 		setUploadError(null);
 		clearErrors();
 		renderScreenshotPreviews();
 
+		// Reset submission state & unlock mutex
+		resetBugReportLock();
+		setFormInputsDisabled(false);
+		setSubmitting(false);
+
+		// Clear success status
+		if (successReportId) successReportId.textContent = '';
 		if (successNotificationStatus) {
 			successNotificationStatus.textContent = '';
 			successNotificationStatus.classList.add('hidden');
 		}
+
+		// Transition view: hide success, show form
 		if (successCard) successCard.classList.add('hidden');
 		if (formCard) formCard.classList.remove('hidden');
+
+		// Focus title input for next submission
 		titleInput?.focus();
 	});
 </script>

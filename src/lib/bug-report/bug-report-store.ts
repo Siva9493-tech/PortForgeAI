@@ -52,7 +52,7 @@ export function saveBugReportToLocal(report: BugReportRecord): void {
  */
 async function notifyDeveloper(
 	record: BugReportRecord
-): Promise<{ notified: boolean; reason?: string }> {
+): Promise<{ notified: boolean; reason?: string; emailId?: string; error?: string }> {
 	if (typeof window === 'undefined') {
 		return { notified: false, reason: 'SSR' };
 	}
@@ -85,12 +85,22 @@ async function notifyDeveloper(
 
 		if (res.ok) {
 			const data = await res.json();
-			return { notified: Boolean(data.notified), reason: data.reason };
+			return {
+				notified: Boolean(data.notified),
+				reason: data.reason,
+				emailId: data.emailId,
+				error: data.error,
+			};
 		}
-		return { notified: false, reason: 'HTTP_ERROR' };
+		const errText = await res.text().catch(() => '');
+		return { notified: false, reason: 'HTTP_ERROR', error: errText || `HTTP ${res.status}` };
 	} catch (e) {
 		console.warn('[bug-report] Failed to dispatch developer notification:', e);
-		return { notified: false, reason: 'FETCH_FAILED' };
+		return {
+			notified: false,
+			reason: 'FETCH_FAILED',
+			error: e instanceof Error ? e.message : 'Network error',
+		};
 	}
 }
 
@@ -198,6 +208,8 @@ async function doSubmitBugReport(
 			reportId,
 			persistedTo: 'supabase',
 			notificationStatus,
+			emailId: notifyRes.emailId,
+			notificationError: notifyRes.error,
 		};
 	} catch (remoteError: unknown) {
 		console.error('[bug-report] Connection/network error during submission:', remoteError);
@@ -216,6 +228,13 @@ async function doSubmitBugReport(
 			persistedTo: 'local_storage',
 		};
 	}
+}
+
+/**
+ * Resets the in-flight mutex lock so subsequent submissions are immediately allowed.
+ */
+export function resetBugReportLock(): void {
+	activeSubmissionPromise = null;
 }
 
 /**
